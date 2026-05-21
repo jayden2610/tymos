@@ -1,22 +1,23 @@
-# Pomodoro Timer
+# Tymos
 
-A minimal, distraction-free Pomodoro timer with task management.
+A minimal, distraction-free focus timer with task management.
 
-**Live:** https://inspiring-selkie-cf508f.netlify.app/
+**Live:** https://tymos.netlify.app/
 
 ## Features
 
 - 25 / 50 / 90 min focus presets
-- Break mode (5 / 10 / 15 min)
+- Break mode with soft chime on completion
 - Task cards with priority (high / medium / low)
 - Sections and sub-items per task
 - Notes per task
-- Tasks persist across sessions (localStorage)
+- Tasks and stats persist across sessions (localStorage)
+- Mobile responsive
 
 ## Run locally
 
 ```bash
-python3 -m http.server 8080
+python -m http.server 8080
 # open http://localhost:8080
 ```
 
