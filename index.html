@@ -212,6 +212,7 @@ body {
   font-size: 14px; transition: all 0.15s;
 }
 .icon-btn:hover { background: var(--surface2); color: var(--text); }
+.icon-btn.confirm-delete { background: rgba(184,79,58,0.12); color: var(--red); font-size: 11px; width: auto; padding: 0 6px; }
 
 /* Expanded */
 .task-sections {
@@ -240,6 +241,7 @@ body {
 }
 .section-block:hover .section-del-btn { opacity: 1; }
 .section-del-btn:hover { background: rgba(184,79,58,0.12); color: var(--red); }
+.section-del-btn.confirm-delete { opacity: 1; background: rgba(184,79,58,0.12); color: var(--red); font-size: 9px; width: auto; padding: 0 5px; }
 
 .section-items { display: flex; flex-direction: column; gap: 4px; }
 .section-item {
@@ -285,29 +287,23 @@ body {
 }
 .add-section-btn:hover { background: var(--accent-bg); }
 
-/* Inline add-section input */
-.inline-section-row {
+/* Inline add-section row */
+.inline-section-add {
   display: flex; align-items: center; gap: 6px; margin-top: 6px;
-  background: var(--surface2); border-radius: 6px; padding: 6px 8px;
-  border: 1px solid var(--border2);
+  padding: 6px 8px; background: var(--surface2); border-radius: 6px;
+  border: 1px dashed var(--border2);
 }
 .inline-section-input {
   flex: 1; background: transparent; border: none; outline: none;
-  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600;
-  color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--text);
 }
-.inline-section-input::placeholder { color: var(--muted); font-weight: 400; }
+.inline-section-input::placeholder { color: var(--muted); }
 .inline-section-confirm {
   font-size: 11px; font-weight: 700; color: var(--accent);
   background: none; border: none; cursor: pointer; padding: 2px 6px;
   border-radius: 4px; font-family: 'Nunito', sans-serif;
 }
 .inline-section-confirm:hover { background: var(--accent-bg); }
-.inline-section-cancel {
-  font-size: 13px; color: var(--muted); background: none; border: none;
-  cursor: pointer; padding: 2px 4px; border-radius: 4px;
-}
-.inline-section-cancel:hover { color: var(--red); }
 
 /* ── MODAL ── */
 .modal-overlay {
@@ -357,7 +353,6 @@ body {
 .pri-chip.sel-medium { background: rgba(184,144,58,0.15); border-color: var(--yellow); color: var(--yellow); }
 .pri-chip.sel-low    { background: rgba(74,140,92,0.15); border-color: var(--green); color: var(--green); }
 
-/* Modal sections editor */
 .modal-sections { display: flex; flex-direction: column; gap: 8px; }
 
 .modal-section-row {
@@ -365,8 +360,7 @@ body {
   overflow: hidden; transition: border-color 0.15s;
 }
 .modal-section-row:focus-within { border-color: var(--border2); }
-
-.modal-section-top { display: flex; align-items: center; gap: 0; }
+.modal-section-top { display: flex; align-items: center; }
 
 .modal-section-name {
   flex: 1; background: transparent; border: none;
@@ -386,16 +380,13 @@ body {
   border-top: 1px solid var(--border); padding: 6px 10px 8px;
   display: flex; flex-direction: column; gap: 4px;
 }
-
 .modal-item-row { display: flex; align-items: center; gap: 6px; }
-
 .modal-item-input {
   flex: 1; background: transparent; border: none;
   font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--text);
   padding: 4px 2px; outline: none;
 }
 .modal-item-input::placeholder { color: var(--muted); }
-
 .modal-item-del {
   width: 22px; height: 22px; border: none; background: transparent;
   color: var(--muted); cursor: pointer; border-radius: 4px;
@@ -404,11 +395,9 @@ body {
 }
 .modal-item-row:hover .modal-item-del { opacity: 1; }
 .modal-item-del:hover { background: rgba(184,79,58,0.1); color: var(--red); }
-
 .modal-item-add {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--muted); cursor: pointer;
-  padding: 3px 2px; border: none; background: transparent;
+  display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
+  cursor: pointer; padding: 3px 2px; border: none; background: transparent;
   font-family: 'Nunito', sans-serif; transition: color 0.12s;
 }
 .modal-item-add:hover { color: var(--accent2); }
@@ -439,37 +428,6 @@ body {
 }
 .btn-save:hover { background: var(--accent2); }
 
-/* ── CONFIRM DIALOG ── */
-.confirm-overlay {
-  position: fixed; inset: 0; background: rgba(30,18,8,0.4);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.15s;
-}
-.confirm-overlay.open { opacity: 1; pointer-events: all; }
-.confirm-box {
-  background: var(--surface); border: 1px solid var(--border2);
-  border-radius: 12px; padding: 24px 24px 20px;
-  width: 320px; max-width: 94vw; box-shadow: var(--shadow2);
-  transform: translateY(8px); transition: transform 0.15s;
-}
-.confirm-overlay.open .confirm-box { transform: translateY(0); }
-.confirm-msg {
-  font-size: 14px; color: var(--text); margin-bottom: 18px; line-height: 1.5;
-}
-.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.confirm-cancel {
-  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600;
-  border: 1px solid var(--border2); background: transparent; color: var(--text2);
-  cursor: pointer; border-radius: 7px; padding: 7px 14px; transition: all 0.15s;
-}
-.confirm-cancel:hover { background: var(--surface2); }
-.confirm-ok {
-  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
-  border: none; background: var(--red); color: #fff;
-  cursor: pointer; border-radius: 7px; padding: 7px 16px; transition: all 0.15s;
-}
-.confirm-ok:hover { opacity: 0.88; }
-
 /* Notify */
 .notif {
   position: fixed; bottom: 20px; left: 50%;
@@ -478,7 +436,7 @@ body {
   border-radius: 8px; padding: 10px 18px;
   font-size: 13px; font-weight: 600;
   transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
-  z-index: 300; white-space: nowrap; pointer-events: none;
+  z-index: 200; white-space: nowrap; pointer-events: none;
 }
 .notif.show { transform: translateX(-50%) translateY(0); }
 
@@ -486,36 +444,15 @@ body.break-mode .ring-fill { stroke: var(--ring-break); }
 body.break-mode .btn-primary { background: var(--ring-break); box-shadow: 0 2px 8px rgba(58,107,140,0.25); }
 
 /* ── MOBILE ── */
-@media (max-width: 700px) {
-  body { overflow: auto; }
-
-  .main {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    overflow: visible;
-  }
-
+@media (max-width: 680px) {
+  body { overflow: auto; height: auto; }
+  .main { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: visible; }
   .divider { display: none; }
-
-  .timer-panel {
-    padding: 28px 20px;
-    gap: 20px;
-    justify-content: flex-start;
-  }
-
+  .timer-panel { padding: 28px 20px; gap: 20px; }
+  .task-panel { min-height: 50vh; }
   .ring-wrap { width: 180px; height: 180px; }
-  .ring-svg  { width: 180px; height: 180px; }
+  .ring-svg { width: 180px; height: 180px; }
   .timer-time { font-size: 38px; }
-
-  .task-panel {
-    min-height: 50vh;
-    overflow: visible;
-  }
-
-  .task-list { overflow-y: visible; }
-
-  .header { padding: 12px 16px; }
-  .mode-tag { display: none; }
 }
 </style>
 </head>
@@ -577,7 +514,6 @@ body.break-mode .btn-primary { background: var(--ring-break); box-shadow: 0 2px 
   </div>
 </div>
 
-<!-- Task modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-title" id="modalTitle">New Task</div>
@@ -588,9 +524,9 @@ body.break-mode .btn-primary { background: var(--ring-break); box-shadow: 0 2px 
     <div class="form-field">
       <label class="form-label">Priority</label>
       <div class="pri-row">
-        <button class="pri-chip sel-high" data-pri="high" onclick="selectPri(this)">🔴 High</button>
-        <button class="pri-chip" data-pri="medium" onclick="selectPri(this)">🟡 Medium</button>
-        <button class="pri-chip" data-pri="low" onclick="selectPri(this)">🟢 Low</button>
+        <button class="pri-chip sel-high" data-pri="high" onclick="selectPri(this)">High</button>
+        <button class="pri-chip" data-pri="medium" onclick="selectPri(this)">Medium</button>
+        <button class="pri-chip" data-pri="low" onclick="selectPri(this)">Low</button>
       </div>
     </div>
     <div class="form-field">
@@ -609,74 +545,17 @@ body.break-mode .btn-primary { background: var(--ring-break); box-shadow: 0 2px 
   </div>
 </div>
 
-<!-- Custom confirm dialog -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <div class="confirm-msg" id="confirmMsg"></div>
-    <div class="confirm-actions">
-      <button class="confirm-cancel" onclick="confirmResolve(false)">Cancel</button>
-      <button class="confirm-ok" onclick="confirmResolve(true)">Delete</button>
-    </div>
-  </div>
-</div>
-
 <div class="notif" id="notif"></div>
 
 <script>
-// ── HTML ESCAPE (XSS fix) ──
+// ── HTML ESCAPE (XSS prevention) ──
 function esc(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-// ── CUSTOM CONFIRM ──
-let confirmResolve = null;
-function showConfirm(msg) {
-  return new Promise(resolve => {
-    confirmResolve = ok => {
-      document.getElementById('confirmOverlay').classList.remove('open');
-      resolve(ok);
-    };
-    document.getElementById('confirmMsg').textContent = msg;
-    document.getElementById('confirmOverlay').classList.add('open');
-  });
-}
-
-// ── LOCALSTORAGE KEYS ──
-const LS_TASKS    = 'tymos_tasks';
-const LS_NEXT_ID  = 'tymos_next_id';
-const LS_STATS    = 'tymos_stats';
-
-// ── TIMER ──
-const CIRC = 2 * Math.PI * 98;
-let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
-let running = false, isBreak = false, interval = null;
-
-// Load persisted stats
-const savedStats = JSON.parse(localStorage.getItem(LS_STATS) || '{}');
-let sessionsComplete = savedStats.sessions || 0;
-let totalFocusSecs   = savedStats.focusSecs || 0;
-let tasksDone        = savedStats.tasksDone || 0;
-
-const ringEl = document.getElementById('ring');
-ringEl.style.strokeDasharray = CIRC;
-
-const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const updateRing = () => { ringEl.style.strokeDashoffset = CIRC * (1 - remaining/totalSecs); };
-
-function saveStats() {
-  localStorage.setItem(LS_STATS, JSON.stringify({
-    sessions: sessionsComplete,
-    focusSecs: totalFocusSecs,
-    tasksDone: tasksDone
-  }));
-}
-
-// Web Audio chime
+// ── SOUND ──
 function playChime() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -684,16 +563,26 @@ function playChime() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
+      osc.type = 'sine'; osc.frequency.value = freq;
       const t = ctx.currentTime + i * 0.18;
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.18, t + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-      osc.start(t); osc.stop(t + 0.6);
+      gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t); osc.stop(t + 0.5);
     });
   } catch(e) {}
 }
+
+// ── TIMER ──
+const CIRC = 2 * Math.PI * 98;
+let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
+let running = false, isBreak = false, interval = null;
+
+const ringEl = document.getElementById('ring');
+ringEl.style.strokeDasharray = CIRC;
+
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const updateRing = () => { ringEl.style.strokeDashoffset = CIRC * (1 - remaining/totalSecs); };
 
 function setPreset(min, el) {
   if (running) return;
@@ -721,14 +610,14 @@ function tick() {
     playChime();
     if (!isBreak) {
       sessionsComplete++; totalFocusSecs += workSecs;
-      saveStats();
       notify('Session complete — take a break!');
       enterBreak();
     } else {
       notify('Break over — back to work.');
       enterWork();
     }
-    updateStats(); buildDots(); return;
+    saveStats(); updateStats(); buildDots();
+    return;
   }
   remaining--;
   if (!isBreak) totalFocusSecs++;
@@ -767,6 +656,37 @@ function resetTimer() {
 
 function skipPhase() { clearInterval(interval); running = false; isBreak ? enterWork() : enterBreak(); }
 
+// ── LOCALSTORAGE ──
+const LS_TASKS   = 'tymos_tasks';
+const LS_NEXT_ID = 'tymos_next_id';
+const LS_STATS   = 'tymos_stats';
+
+function saveTasks() {
+  localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
+  localStorage.setItem(LS_NEXT_ID, nextId);
+}
+function loadTasks() {
+  try {
+    const t = localStorage.getItem(LS_TASKS);
+    const id = localStorage.getItem(LS_NEXT_ID);
+    if (t) tasks = JSON.parse(t);
+    if (id) nextId = parseInt(id);
+  } catch(e) { tasks = []; }
+}
+function saveStats() {
+  localStorage.setItem(LS_STATS, JSON.stringify({sessionsComplete, totalFocusSecs, tasksDone}));
+}
+function loadStats() {
+  try {
+    const s = localStorage.getItem(LS_STATS);
+    if (s) { const d = JSON.parse(s); sessionsComplete = d.sessionsComplete||0; totalFocusSecs = d.totalFocusSecs||0; tasksDone = d.tasksDone||0; }
+  } catch(e) {}
+}
+
+// ── STATS ──
+let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
+loadStats();
+
 function updateStats() {
   document.getElementById('statSessions').textContent = sessionsComplete;
   document.getElementById('statTime').textContent = Math.floor(totalFocusSecs/60) + 'm';
@@ -785,25 +705,19 @@ function buildDots() {
   }
 }
 
+updateStats(); buildDots();
+
+const notify = msg => {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2800);
+};
+
 // ── TASKS ──
-function saveTasks() {
-  localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
-  localStorage.setItem(LS_NEXT_ID, nextId);
-}
-
-function loadTasks() {
-  try {
-    const saved   = localStorage.getItem(LS_TASKS);
-    const savedId = localStorage.getItem(LS_NEXT_ID);
-    if (saved)   tasks  = JSON.parse(saved);
-    if (savedId) nextId = parseInt(savedId);
-  } catch(e) { tasks = []; }
-}
-
 let tasks = [];
 let nextId = 1, editingId = null, selectedPri = 'high', expandedId = null;
 let draftSections = [];
-let addingSectionFor = null;
+let pendingDeleteTask = null, pendingDeleteSection = null, pendingInlineAdd = null;
 
 loadTasks();
 
@@ -825,42 +739,36 @@ function taskCardHTML(t) {
   const total = t.sections.reduce((a,s) => a + s.items.length, 0);
   const done  = t.sections.reduce((a,s) => a + s.items.filter(i=>i.done).length, 0);
   const isOpen = expandedId === t.id;
+  const isConfirmDel = pendingDeleteTask === t.id;
 
-  const sectionsHTML = t.sections.map((sec, si) => `
+  const sectionsHTML = t.sections.map((sec, si) => {
+    const isConfirmSec = pendingDeleteSection && pendingDeleteSection.tid===t.id && pendingDeleteSection.si===si;
+    return `
     <div class="section-block">
       <div class="section-header">
         <span class="section-name-text">${esc(sec.name)}</span>
         <div class="section-divider-line"></div>
-        <button class="section-del-btn" title="Delete section"
-          onclick="event.stopPropagation();deleteSectionTask(${t.id},${si})">✕</button>
+        <button class="section-del-btn${isConfirmSec?' confirm-delete':''}"
+          onclick="event.stopPropagation();deleteSectionClick(${t.id},${si})">${isConfirmSec?'Sure?':'✕'}</button>
       </div>
       <div class="section-items">
-        ${sec.items.map((item, ii) => `
-          <div class="section-item${item.done ? ' done-item' : ''}"
+        ${sec.items.map((item,ii) => `
+          <div class="section-item${item.done?' done-item':''}"
             onclick="event.stopPropagation();toggleItem(${t.id},${si},${ii})">
-            <div class="check-box">${item.done ? '✓' : ''}</div>
+            <div class="check-box">${item.done?'✓':''}</div>
             <span class="item-text">${esc(item.text)}</span>
-          </div>
-        `).join('')}
+          </div>`).join('')}
         <div class="section-add-row" onclick="event.stopPropagation()">
           <input class="section-add-input" placeholder="+ Add item"
             onkeydown="addItem(event,${t.id},${si})">
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`; }).join('');
 
-  const inlineRow = addingSectionFor === t.id ? `
-    <div class="inline-section-row" onclick="event.stopPropagation()">
-      <input class="inline-section-input" id="inlineSecInput-${t.id}"
-        placeholder="Section name" autofocus
-        onkeydown="inlineSectionKey(event,${t.id})">
-      <button class="inline-section-confirm" onclick="event.stopPropagation();commitInlineSection(${t.id})">Add</button>
-      <button class="inline-section-cancel" onclick="event.stopPropagation();cancelInlineSection()">✕</button>
-    </div>` : '';
+  const showInline = isOpen && pendingInlineAdd === t.id;
 
   return `
-  <div class="task-card${t.done?' done':''}${t.id===expandedId?' active':''}" id="task-${t.id}">
+  <div class="task-card${t.done?' done':''}${isOpen?' active':''}" id="task-${t.id}">
     <div class="task-card-header" onclick="toggleExpand(${t.id})">
       <div class="task-priority-bar pri-${t.priority}"></div>
       <div class="task-card-body">
@@ -871,67 +779,76 @@ function taskCardHTML(t) {
         </div>
       </div>
       <div class="task-card-actions" onclick="event.stopPropagation()">
-        <button class="icon-btn" title="Edit" onclick="openModal(${t.id})">✏️</button>
-        <button class="icon-btn" title="${t.done?'Reopen':'Mark done'}" onclick="toggleDone(${t.id})">${t.done?'↩':'✓'}</button>
-        <button class="icon-btn" title="Delete" onclick="deleteTask(${t.id})">🗑</button>
+        <button class="icon-btn" onclick="openModal(${t.id})">✏️</button>
+        <button class="icon-btn" onclick="toggleDone(${t.id})">${t.done?'↩':'✓'}</button>
+        <button class="icon-btn${isConfirmDel?' confirm-delete':''}"
+          onclick="deleteTaskClick(${t.id})">${isConfirmDel?'Sure?':'🗑'}</button>
       </div>
     </div>
     <div class="task-sections${isOpen?' open':''}">
       <div class="task-notes" contenteditable="true"
         onblur="saveNotes(${t.id},this)">${esc(t.notes||'')}</div>
       ${sectionsHTML}
-      ${inlineRow}
       <div class="task-footer">
-        <button class="add-section-btn" onclick="event.stopPropagation();startInlineSection(${t.id})">+ Add Section</button>
+        <button class="add-section-btn" onclick="event.stopPropagation();showInlineAddSection(${t.id})">+ Add Section</button>
       </div>
+      ${showInline ? `
+        <div class="inline-section-add" onclick="event.stopPropagation()">
+          <input class="inline-section-input" id="inlineSecInput-${t.id}"
+            placeholder="Section name..."
+            onkeydown="inlineSectionKeydown(event,${t.id})">
+          <button class="inline-section-confirm" onclick="commitInlineSection(${t.id})">Add</button>
+        </div>` : ''}
     </div>
   </div>`;
 }
 
-function startInlineSection(tid) {
-  addingSectionFor = tid;
-  expandedId = tid;
-  renderTasks();
-  setTimeout(() => {
-    const inp = document.getElementById(`inlineSecInput-${tid}`);
-    if (inp) inp.focus();
-  }, 30);
+function showInlineAddSection(tid) {
+  pendingInlineAdd = tid; expandedId = tid; renderTasks();
+  setTimeout(() => { const el = document.getElementById(`inlineSecInput-${tid}`); if(el) el.focus(); }, 30);
 }
-
-function commitInlineSection(tid) {
-  const inp = document.getElementById(`inlineSecInput-${tid}`);
-  const name = inp ? inp.value.trim() : '';
-  if (!name) { cancelInlineSection(); return; }
-  tasks.find(x=>x.id===tid).sections.push({name, items:[]});
-  addingSectionFor = null;
-  expandedId = tid;
-  saveTasks(); renderTasks();
-}
-
-function inlineSectionKey(e, tid) {
+function inlineSectionKeydown(e, tid) {
   if (e.key === 'Enter') { e.preventDefault(); commitInlineSection(tid); }
-  if (e.key === 'Escape') { e.preventDefault(); cancelInlineSection(); }
+  if (e.key === 'Escape') { pendingInlineAdd = null; renderTasks(); }
+}
+function commitInlineSection(tid) {
+  const el = document.getElementById(`inlineSecInput-${tid}`);
+  const name = el ? el.value.trim() : '';
+  if (!name) { pendingInlineAdd = null; renderTasks(); return; }
+  tasks.find(x=>x.id===tid).sections.push({name, items:[]});
+  pendingInlineAdd = null; expandedId = tid; saveTasks(); renderTasks();
 }
 
-function cancelInlineSection() {
-  addingSectionFor = null;
-  renderTasks();
+function toggleExpand(id) {
+  pendingDeleteTask = null; pendingDeleteSection = null; pendingInlineAdd = null;
+  expandedId = expandedId === id ? null : id; renderTasks();
 }
 
-function toggleExpand(id) { expandedId = expandedId === id ? null : id; addingSectionFor = null; renderTasks(); }
+function deleteTaskClick(id) {
+  if (pendingDeleteTask === id) {
+    tasks = tasks.filter(x=>x.id!==id);
+    if (expandedId===id) expandedId = null;
+    pendingDeleteTask = null; saveTasks(); renderTasks();
+  } else {
+    pendingDeleteTask = id; renderTasks();
+    setTimeout(() => { if (pendingDeleteTask===id) { pendingDeleteTask=null; renderTasks(); } }, 3000);
+  }
+}
+
+function deleteSectionClick(tid, si) {
+  if (pendingDeleteSection && pendingDeleteSection.tid===tid && pendingDeleteSection.si===si) {
+    tasks.find(x=>x.id===tid).sections.splice(si,1);
+    pendingDeleteSection = null; expandedId = tid; saveTasks(); renderTasks();
+  } else {
+    pendingDeleteSection = {tid,si}; renderTasks();
+    setTimeout(() => { if(pendingDeleteSection&&pendingDeleteSection.tid===tid&&pendingDeleteSection.si===si){pendingDeleteSection=null;renderTasks();} }, 3000);
+  }
+}
 
 function toggleDone(id) {
   const t = tasks.find(x=>x.id===id); t.done = !t.done;
   tasksDone += t.done ? 1 : -1; tasksDone = Math.max(0, tasksDone);
-  updateStats(); saveStats(); saveTasks(); renderTasks();
-}
-
-async function deleteTask(id) {
-  const ok = await showConfirm('Delete this task?');
-  if (!ok) return;
-  tasks = tasks.filter(x=>x.id!==id);
-  if (expandedId===id) expandedId = null;
-  saveTasks(); renderTasks();
+  updateStats(); saveTasks(); saveStats(); renderTasks();
 }
 
 function toggleItem(tid, si, ii) {
@@ -941,49 +858,34 @@ function toggleItem(tid, si, ii) {
 
 function addItem(e, tid, si) {
   if (e.key !== 'Enter') return;
-  const val = e.target.value.trim();
-  if (!val) return;
+  const val = e.target.value.trim(); if (!val) return;
   tasks.find(x=>x.id===tid).sections[si].items.push({text:val,done:false});
   expandedId = tid; saveTasks(); renderTasks();
 }
 
-async function deleteSectionTask(tid, si) {
-  const ok = await showConfirm('Delete this section?');
-  if (!ok) return;
-  tasks.find(x=>x.id===tid).sections.splice(si,1);
-  expandedId = tid; saveTasks(); renderTasks();
-}
-
 function saveNotes(tid, el) {
-  tasks.find(x=>x.id===tid).notes = el.innerText.trim();
-  saveTasks();
+  tasks.find(x=>x.id===tid).notes = el.innerText.trim(); saveTasks();
 }
 
 // ── MODAL ──
 function openModal(id = null) {
   editingId = id; selectedPri = 'high'; draftSections = [];
   document.getElementById('modalTitle').textContent = id ? 'Edit Task' : 'New Task';
-
   if (id) {
     const t = tasks.find(x=>x.id===id);
     document.getElementById('mTaskName').value = t.title;
     document.getElementById('mTaskNotes').value = t.notes;
     selectedPri = t.priority;
-    draftSections = t.sections.map(s => ({
-      name: s.name,
-      items: s.items.map(i => ({text: i.text, done: i.done}))
-    }));
+    draftSections = t.sections.map(s => ({name:s.name, items:s.items.map(i=>({text:i.text,done:i.done}))}));
   } else {
     document.getElementById('mTaskName').value = '';
     document.getElementById('mTaskNotes').value = '';
     draftSections = [];
   }
-
   document.querySelectorAll('.pri-chip').forEach(c => {
     c.className = 'pri-chip';
     if (c.dataset.pri === selectedPri) c.classList.add('sel-' + selectedPri);
   });
-
   renderModalSections();
   document.getElementById('modalOverlay').classList.add('open');
   setTimeout(() => document.getElementById('mTaskName').focus(), 150);
@@ -993,7 +895,6 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
   editingId = null; draftSections = [];
 }
-
 function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
 
 function selectPri(el) {
@@ -1005,113 +906,63 @@ function selectPri(el) {
 }
 
 function renderModalSections() {
-  const container = document.getElementById('modalSections');
-  container.innerHTML = draftSections.map((sec, si) => `
+  document.getElementById('modalSections').innerHTML = draftSections.map((sec,si) => `
     <div class="modal-section-row" id="msec-${si}">
       <div class="modal-section-top">
-        <input class="modal-section-name" value="${esc(sec.name)}"
-          placeholder="Section name"
-          oninput="draftSections[${si}].name = this.value">
-        <button class="modal-sec-del" title="Delete section"
-          onclick="deleteModalSection(${si})">✕</button>
+        <input class="modal-section-name" value="${esc(sec.name)}" placeholder="Section name"
+          oninput="draftSections[${si}].name=this.value">
+        <button class="modal-sec-del" onclick="deleteModalSection(${si})">✕</button>
       </div>
       <div class="modal-section-items" id="msec-items-${si}">
-        ${sec.items.map((item, ii) => `
+        ${sec.items.map((item,ii) => `
           <div class="modal-item-row">
-            <input class="modal-item-input" value="${esc(item.text)}"
-              placeholder="Item..."
-              oninput="draftSections[${si}].items[${ii}].text = this.value"
+            <input class="modal-item-input" value="${esc(item.text)}" placeholder="Item..."
+              oninput="draftSections[${si}].items[${ii}].text=this.value"
               onkeydown="modalItemKeydown(event,${si},${ii})">
             <button class="modal-item-del" onclick="deleteModalItem(${si},${ii})">✕</button>
-          </div>
-        `).join('')}
+          </div>`).join('')}
         <button class="modal-item-add" onclick="addModalItem(${si})">+ Add item</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function addModalSection() {
-  draftSections.push({name: '', items: []});
-  renderModalSections();
-  setTimeout(() => {
-    const inputs = document.querySelectorAll('.modal-section-name');
-    if (inputs.length) inputs[inputs.length-1].focus();
-  }, 50);
+  draftSections.push({name:'',items:[]}); renderModalSections();
+  setTimeout(() => { const i = document.querySelectorAll('.modal-section-name'); if(i.length) i[i.length-1].focus(); }, 50);
 }
-
-function deleteModalSection(si) {
-  draftSections.splice(si, 1);
-  renderModalSections();
-}
-
+function deleteModalSection(si) { draftSections.splice(si,1); renderModalSections(); }
 function addModalItem(si) {
-  draftSections[si].items.push({text: '', done: false});
-  renderModalSections();
-  setTimeout(() => {
-    const rows = document.querySelectorAll(`#msec-items-${si} .modal-item-input`);
-    if (rows.length) rows[rows.length-1].focus();
-  }, 50);
+  draftSections[si].items.push({text:'',done:false}); renderModalSections();
+  setTimeout(() => { const r = document.querySelectorAll(`#msec-items-${si} .modal-item-input`); if(r.length) r[r.length-1].focus(); }, 50);
 }
-
-function deleteModalItem(si, ii) {
-  draftSections[si].items.splice(ii, 1);
-  renderModalSections();
-}
-
-function modalItemKeydown(e, si, ii) {
-  if (e.key === 'Enter') { e.preventDefault(); addModalItem(si); }
-}
+function deleteModalItem(si,ii) { draftSections[si].items.splice(ii,1); renderModalSections(); }
+function modalItemKeydown(e,si,ii) { if(e.key==='Enter'){e.preventDefault();addModalItem(si);} }
 
 function saveTask() {
   const name = document.getElementById('mTaskName').value.trim();
   if (!name) { document.getElementById('mTaskName').focus(); return; }
   const notes = document.getElementById('mTaskNotes').value.trim();
 
-  document.querySelectorAll('.modal-section-name').forEach((inp, si) => {
-    if (draftSections[si]) draftSections[si].name = inp.value.trim();
-  });
+  document.querySelectorAll('.modal-section-name').forEach((inp,si) => { if(draftSections[si]) draftSections[si].name=inp.value.trim(); });
   document.querySelectorAll('.modal-item-input').forEach(inp => {
     const si = parseInt(inp.closest('[id^="msec-items-"]').id.replace('msec-items-',''));
     const ii = Array.from(inp.parentElement.parentElement.querySelectorAll('.modal-item-input')).indexOf(inp);
-    if (draftSections[si] && draftSections[si].items[ii] !== undefined) {
-      draftSections[si].items[ii].text = inp.value.trim();
-    }
+    if(draftSections[si]&&draftSections[si].items[ii]!==undefined) draftSections[si].items[ii].text=inp.value.trim();
   });
 
-  const cleanSections = draftSections
-    .filter(s => s.name.trim())
-    .map(s => ({ name: s.name.trim(), items: s.items.filter(i => i.text.trim()) }));
+  const cleanSections = draftSections.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),items:s.items.filter(i=>i.text.trim())}));
 
   if (editingId) {
     const t = tasks.find(x=>x.id===editingId);
-    t.title = name; t.notes = notes; t.priority = selectedPri;
-    t.sections = cleanSections;
+    t.title=name; t.notes=notes; t.priority=selectedPri; t.sections=cleanSections;
   } else {
-    tasks.push({id: nextId++, title: name, priority: selectedPri, done: false, notes, sections: cleanSections});
+    tasks.push({id:nextId++,title:name,priority:selectedPri,done:false,notes,sections:cleanSections});
   }
-
   closeModal(); saveTasks(); renderTasks();
   notify(editingId ? 'Task updated.' : 'Task added!');
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-  if (e.key === ' ' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && !document.getElementById('modalOverlay').classList.contains('open')) {
-    e.preventDefault();
-    toggleTimer();
-  }
-});
-
-const notify = msg => {
-  const n = document.getElementById('notif');
-  n.textContent = msg; n.classList.add('show');
-  setTimeout(() => n.classList.remove('show'), 2800);
-};
-
-// Init
-updateStats();
-buildDots();
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 renderTasks();
 </script>
 </body>
