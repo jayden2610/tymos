@@ -1095,7 +1095,13 @@ function saveTask() {
   notify(editingId ? 'Task updated.' : 'Task added!');
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === ' ' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && !document.getElementById('modalOverlay').classList.contains('open')) {
+    e.preventDefault();
+    toggleTimer();
+  }
+});
 
 const notify = msg => {
   const n = document.getElementById('notif');
