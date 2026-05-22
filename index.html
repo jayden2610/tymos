@@ -613,6 +613,12 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
   padding: 2px 6px; border-radius: 4px; transition: all 0.12s;
 }
+.sp-open-btn {
+  display: none; font-size: 10px; font-weight: 700; color: #1DB954; background: none;
+  border: 1px solid #1DB954; cursor: pointer; font-family: 'Nunito', sans-serif;
+  padding: 2px 8px; border-radius: 4px; transition: all 0.12s; text-decoration: none;
+}
+.sp-open-btn:hover { background: #1DB954; color: #fff; }
 .sp-disconnect:hover { background: rgba(184,79,58,0.1); color: var(--red); }
 
 /* ── MOBILE ── */
@@ -710,6 +716,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         </div>
         <div class="spotify-footer">
           <span class="sp-device">🔊 Tymos</span>
+          <a class="sp-open-btn" id="spOpenBtn" href="https://open.spotify.com" target="_blank" rel="noopener">Open Spotify</a>
           <button class="sp-disconnect" onclick="spDisconnect()">Disconnect</button>
         </div>
       </div>
@@ -1476,9 +1483,9 @@ function spInitFree(token) {
   connectBtn.style.display = 'none';
   document.getElementById('spotifyPlayer').classList.add('active');
 
-  // Show prompt — free users must start playback on another device
-  document.getElementById('spTitle').textContent = 'Open Spotify on your phone or desktop';
-  document.getElementById('spArtist').textContent = 'then control it here';
+  document.getElementById('spTitle').textContent = 'Start playing on Spotify';
+  document.getElementById('spArtist').textContent = 'then it will appear here';
+  document.getElementById('spOpenBtn').style.display = 'inline-block';
   document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
 
   spFetchState(token);
@@ -1519,6 +1526,8 @@ function spFetchState(token) {
     else if (art && artEl) artEl.src = art;
     const deviceName = data.device?.name || 'Spotify';
     document.querySelector('.sp-device').textContent = `🔊 ${deviceName}`;
+    const openBtn = document.getElementById('spOpenBtn');
+    if (openBtn) openBtn.style.display = 'none';
   }).catch(() => {});
 }
 
@@ -1557,6 +1566,8 @@ function spDisconnect() {
   connectBtn.querySelector('.spotify-connect-label').textContent = 'Connect Spotify';
   const artEl = document.getElementById('spArt');
   if (artEl && artEl.tagName === 'IMG') artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
+  const openBtn = document.getElementById('spOpenBtn');
+  if (openBtn) openBtn.style.display = 'none';
 }
 
 // Init on load
