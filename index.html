@@ -1616,20 +1616,22 @@ function spDisconnect() {
 // ── DIAGNOSTIC: run spDiag() in console to test API ──
 async function spDiag() {
   const token = spGetToken();
-  if (!token) { console.error('❌ No token found. Connect first.'); return; }
-  console.log('🔬 Running Spotify API diagnostic...');
+  if (!token) { console.error('No token found. Connect first.'); return; }
+  console.log('Running Spotify API diagnostic...');
   // Test /v1/me
   const meResp = await fetch('https://api.spotify.com/v1/me', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  const meBody = await meResp.json().catch(() => meResp.text());
-  console.log(`🔬 /v1/me → ${meResp.status}`, meBody);
+  let meBody;
+  try { meBody = await meResp.json(); } catch { meBody = await meResp.text(); }
+  console.log(`/v1/me → ${meResp.status}`, meBody);
   // Test /v1/me/player
   const plResp = await fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  const plBody = await plResp.json().catch(() => plResp.text());
-  console.log(`🔬 /v1/me/player → ${plResp.status}`, plBody);
+  let plBody;
+  try { plBody = await plResp.json(); } catch { plBody = await plResp.text(); }
+  console.log(`/v1/me/player → ${plResp.status}`, plBody);
 }
 
 // Init on load
