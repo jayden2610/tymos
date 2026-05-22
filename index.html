@@ -1339,6 +1339,7 @@ const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-pla
 const SP_TOKEN_KEY  = 'tymos_sp_token';
 const SP_EXPIRY_KEY = 'tymos_sp_expiry';
 const SP_VERIFIER_KEY = 'tymos_sp_verifier';
+const SP_PRODUCT_KEY = 'tymos_sp_product';
 
 let spPollInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
@@ -1408,27 +1409,33 @@ function spGetToken() {
   return localStorage.getItem(SP_TOKEN_KEY);
 }
 
-function spInit(token) {
+async function spInit(token) {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
   const connectBtn = document.getElementById('spotifyConnectBtn');
   connectBtn.disabled = true;
   connectBtn.querySelector('.spotify-connect-label').textContent = 'Connecting…';
 
-  if (!window.Spotify) {
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    script.onerror = () => {
-      connectBtn.disabled = false;
-      connectBtn.querySelector('.spotify-connect-label').textContent = 'Connect Spotify';
-    };
-    document.head.appendChild(script);
+  // Detect plan — cache it so we don't re-fetch on every init
+  let product = localStorage.getItem(SP_PRODUCT_KEY);
+  if (!product) {
+    try {
+      const r = await fetch('https://api.spotify.com/v1/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const me = await r.json();
+      product = me.product || 'free';
+      localStorage.setItem(SP_PRODUCT_KEY, product);
+    } catch { product = 'free'; }
   }
 
-  window.onSpotifyWebPlaybackSDKReady = () => spInitPlayer(token);
-  if (window.Spotify) spInitPlayer(token);
+  if (product === 'premium') {
+    spInitPremium(token);
+  } else {
+    spInitFree(token);
+  }
 }
 
-function spInitPlayer(token) {
+function spInitPremium(token) {
   if (spPlayer) { spPlayer.disconnect(); spPlayer = null; }
 
   spPlayer = new Spotify.Player({
@@ -1462,6 +1469,20 @@ function spInitPlayer(token) {
   spPlayer.addListener('account_error', ({ message }) => { console.error('SP account', message); spDisconnect(); });
 
   spPlayer.connect();
+}
+
+function spInitFree(token) {
+  const connectBtn = document.getElementById('spotifyConnectBtn');
+  connectBtn.style.display = 'none';
+  document.getElementById('spotifyPlayer').classList.add('active');
+
+  // Show prompt — free users must start playback on another device
+  document.getElementById('spTitle').textContent = 'Open Spotify on your phone or desktop';
+  document.getElementById('spArtist').textContent = 'then control it here';
+  document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
+
+  spFetchState(token);
+  spPollInterval = setInterval(() => spFetchState(token), 3000);
 }
 
 function spFetchState(token) {
@@ -1529,7 +1550,7 @@ function spSeek(e) {
 function spDisconnect() {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
   if (spPlayer) { spPlayer.disconnect(); spPlayer = null; spDeviceId = null; }
-  ['tymos_sp_token','tymos_sp_expiry','tymos_sp_refresh',SP_VERIFIER_KEY].forEach(k => localStorage.removeItem(k));
+  [SP_TOKEN_KEY, SP_EXPIRY_KEY, 'tymos_sp_refresh', SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
   document.getElementById('spotifyPlayer').classList.remove('active');
   const connectBtn = document.getElementById('spotifyConnectBtn');
   connectBtn.style.display = 'flex';
