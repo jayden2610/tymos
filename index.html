@@ -1352,6 +1352,7 @@ let spPollInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
 let spPlayer = null, spDeviceId = null;
 let spFirstPoll = false; // protects welcome message from being overwritten on first poll
+let spPollCount = 0;     // debug counter for polling status
 
 // ── PKCE helpers ──
 function spRandBytes(n) {
@@ -1380,6 +1381,7 @@ async function spotifyLogin() {
   url.searchParams.set('scope', SP_SCOPES);
   url.searchParams.set('code_challenge_method', 'S256');
   url.searchParams.set('code_challenge', challenge);
+  url.searchParams.set('show_dialog', 'true');
   window.location = url.toString();
 }
 
@@ -1437,8 +1439,10 @@ async function spInit(token) {
   }
 
   if (product === 'premium') {
+    console.log('🔍 Product: premium → spInitPremium');
     spInitPremium(token);
   } else {
+    console.log('🔍 Product:', product, '→ spInitFree');
     spInitFree(token);
   }
 }
@@ -1522,14 +1526,18 @@ function spInitFree(token) {
   document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
 
   spFirstPoll = true; // protect welcome message from first poll overwrite
+  spPollCount = 0;
   spFetchState(token);
   spPollInterval = setInterval(() => spFetchState(token), 3000);
 }
 
 function spFetchState(token) {
+  spPollCount++;
+  console.log(`🔍 Poll #${spPollCount} — fetching /me/player...`);
   fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
   }).then(r => {
+    console.log(`🔍 Poll #${spPollCount} — status:`, r.status);
     if (r.status === 204) {
       // Skip overwriting welcome message on first poll — keep "Start playing on Spotify"
       if (spFirstPoll) { spFirstPoll = false; return null; }
@@ -1539,14 +1547,15 @@ function spFetchState(token) {
       document.getElementById('spElapsed').textContent = '0:00';
       document.getElementById('spDuration').textContent = '0:00';
       document.getElementById('spFill').style.width = '0%';
-      document.querySelector('.sp-device').textContent = '🔊 No active device';
+      document.querySelector('.sp-device').textContent = `🔊 No active device [poll #${spPollCount}]`;
       return null;
     }
-    if (r.status === 401) { spDisconnect(); return null; }
+    if (r.status === 401) { console.warn('🔍 Token expired, disconnecting.'); spDisconnect(); return null; }
     return r.status === 200 ? r.json() : null;
   }).then(data => {
     if (!data?.item) return;
     spFirstPoll = false; // got real data — stop protecting welcome message
+    console.log(`🔍 Poll #${spPollCount} — got track:`, data.item.name, 'by', data.item.artists[0].name);
     spDurMs  = data.item.duration_ms;
     spPosMs  = data.progress_ms;
     spPlaying = data.is_playing;
@@ -1561,11 +1570,12 @@ function spFetchState(token) {
     if (art && artEl && artEl.tagName !== 'IMG') artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
     else if (art && artEl) artEl.src = art;
     const deviceName = data.device?.name || 'Spotify';
-    document.querySelector('.sp-device').textContent = `🔊 ${deviceName}`;
+    document.querySelector('.sp-device').textContent = `🔊 ${deviceName} [poll #${spPollCount}]`;
     const openBtn = document.getElementById('spOpenBtn');
     if (openBtn) openBtn.style.display = 'none';
   }).catch(err => {
-    console.error('Spotify fetchState error:', err.message || err);
+    console.error(`🔍 Poll #${spPollCount} — NETWORK ERROR:`, err.message || err);
+    document.querySelector('.sp-device').textContent = `⚠️ Polling error [poll #${spPollCount}] — check console`;
   });
 }
 
