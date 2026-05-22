@@ -511,6 +511,102 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   outline-offset: 2px;
 }
 
+/* ── SPOTIFY PLAYER ── */
+.spotify-bar {
+  width: 100%; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 12px;
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;
+}
+.spotify-connect {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 0; cursor: pointer; border: none; background: transparent;
+  width: 100%; border-radius: 8px; transition: background 0.15s;
+}
+.spotify-connect:hover { background: var(--surface3); }
+.spotify-connect-label {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.spotify-logo {
+  width: 16px; height: 16px; opacity: 0.5;
+}
+
+.spotify-player { display: none; flex-direction: column; gap: 8px; }
+.spotify-player.active { display: flex; }
+
+.spotify-track {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+}
+.spotify-art {
+  width: 36px; height: 36px; border-radius: 6px;
+  background: var(--surface3); flex-shrink: 0; object-fit: cover;
+  border: 1px solid var(--border);
+}
+.spotify-art-placeholder {
+  width: 36px; height: 36px; border-radius: 6px;
+  background: var(--surface3); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; border: 1px solid var(--border);
+}
+.spotify-info { min-width: 0; flex: 1; }
+.spotify-title {
+  font-size: 12px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.spotify-artist {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px; letter-spacing: 0.03em;
+}
+
+.spotify-controls {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.sp-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; transition: all 0.15s; flex-shrink: 0;
+}
+.sp-btn:hover { background: var(--surface3); color: var(--text); }
+.sp-btn.play {
+  width: 36px; height: 36px; background: var(--accent); color: #f5ede0;
+  border-radius: 50%; font-size: 14px;
+  box-shadow: 0 2px 8px rgba(124,92,58,0.25);
+}
+.sp-btn.play:hover { background: var(--accent2); }
+
+.spotify-progress {
+  display: flex; align-items: center; gap: 8px;
+}
+.sp-time {
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
+  flex-shrink: 0; letter-spacing: 0.04em;
+}
+.sp-bar {
+  flex: 1; height: 3px; background: var(--surface3); border-radius: 100px;
+  cursor: pointer; position: relative; overflow: hidden;
+}
+.sp-bar-fill {
+  height: 100%; background: var(--accent2); border-radius: 100px;
+  transition: width 1s linear; pointer-events: none;
+}
+
+.spotify-footer {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sp-device {
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
+  letter-spacing: 0.04em; display: flex; align-items: center; gap: 4px;
+}
+.sp-disconnect {
+  font-size: 10px; font-weight: 700; color: var(--muted); background: none;
+  border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
+  padding: 2px 6px; border-radius: 4px; transition: all 0.12s;
+}
+.sp-disconnect:hover { background: rgba(184,79,58,0.1); color: var(--red); }
+
 /* ── MOBILE ── */
 @media (max-width: 680px) {
   body { overflow: auto; height: auto; }
@@ -567,6 +663,47 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <div class="stat-block" style="border-left:1px solid var(--border);padding-left:20px;">
         <div class="stat-val" id="statTasks">0</div>
         <div class="stat-lbl">Done</div>
+      </div>
+    </div>
+
+    <!-- Spotify Player -->
+    <div class="spotify-bar" id="spotifyBar">
+      <!-- Connect state -->
+      <button class="spotify-connect" id="spotifyConnectBtn" onclick="spotifyLogin()">
+        <svg class="spotify-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="12" fill="#1DB954"/>
+          <path d="M17.25 16.5c-.2 0-.4-.06-.57-.19-2.3-1.47-5.2-1.8-8.61-1c-.33.08-.66-.13-.74-.46-.08-.33.13-.66.46-.74 3.73-.86 6.93-.49 9.52 1.14.29.19.38.57.2.86-.13.2-.34.39-.26.39z" fill="white"/>
+          <path d="M18.36 13.7c-.25 0-.49-.08-.68-.24-2.65-1.68-6.69-2.17-9.82-1.19-.38.12-.79-.1-.91-.48-.12-.38.1-.79.48-.91 3.58-1.09 8.02-.56 11.05 1.37.34.22.45.67.23 1.01-.14.22-.37.44-.35.44z" fill="white"/>
+          <path d="M19.5 10.65c-.28 0-.56-.08-.8-.25-3.07-1.85-8.13-2.02-11.06-1.12-.43.13-.89-.11-1.02-.54-.13-.43.11-.89.54-1.02 3.37-1.02 8.97-.82 12.49 1.3.4.24.52.76.28 1.16-.16.27-.41.47-.43.47z" fill="white"/>
+        </svg>
+        <span class="spotify-connect-label">Connect Spotify</span>
+      </button>
+
+      <!-- Player state (hidden until connected) -->
+      <div class="spotify-player" id="spotifyPlayer">
+        <div class="spotify-track">
+          <div class="spotify-art-placeholder" id="spArt">♪</div>
+          <div class="spotify-info">
+            <div class="spotify-title" id="spTitle">Not playing</div>
+            <div class="spotify-artist" id="spArtist">—</div>
+          </div>
+          <div class="spotify-controls">
+            <button class="sp-btn" onclick="spPrev()" title="Previous">&#9664;&#9664;</button>
+            <button class="sp-btn play" id="spPlayBtn" onclick="spTogglePlay()">&#9654;</button>
+            <button class="sp-btn" onclick="spNext()" title="Next">&#9654;&#9654;</button>
+          </div>
+        </div>
+        <div class="spotify-progress">
+          <span class="sp-time" id="spElapsed">0:00</span>
+          <div class="sp-bar" id="spBar" onclick="spSeek(event)">
+            <div class="sp-bar-fill" id="spFill" style="width:0%"></div>
+          </div>
+          <span class="sp-time" id="spDuration">0:00</span>
+        </div>
+        <div class="spotify-footer">
+          <span class="sp-device">🔊 Tymos</span>
+          <button class="sp-disconnect" onclick="spDisconnect()">Disconnect</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1186,6 +1323,148 @@ function saveSettings() {
 
 // Init settings on load
 applySettings(loadSettings());
+
+// ── SPOTIFY ──
+const SP_CLIENT_ID   = '7504a53817024d88a6d68b36b27f8861';
+const SP_REDIRECT    = 'https://jayden2610.github.io/tymos/';
+const SP_SCOPES      = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+const SP_TOKEN_KEY   = 'tymos_sp_token';
+const SP_EXPIRY_KEY  = 'tymos_sp_expiry';
+
+let spPlayer = null, spDeviceId = null, spPlaying = false;
+let spDurMs = 0, spPosMs = 0, spPollInterval = null;
+
+function spotifyLogin() {
+  const state = Math.random().toString(36).slice(2);
+  const url = `https://accounts.spotify.com/authorize?client_id=${SP_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(SP_REDIRECT)}&scope=${encodeURIComponent(SP_SCOPES)}&state=${state}`;
+  window.location = url;
+}
+
+function spGetToken() {
+  const expiry = parseInt(localStorage.getItem(SP_EXPIRY_KEY) || '0');
+  if (Date.now() > expiry) { localStorage.removeItem(SP_TOKEN_KEY); return null; }
+  return localStorage.getItem(SP_TOKEN_KEY);
+}
+
+function spHandleCallback() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  const params = Object.fromEntries(new URLSearchParams(hash));
+  if (!params.access_token) return;
+  const expiry = Date.now() + parseInt(params.expires_in || 3600) * 1000;
+  localStorage.setItem(SP_TOKEN_KEY, params.access_token);
+  localStorage.setItem(SP_EXPIRY_KEY, expiry);
+  window.history.replaceState(null, '', window.location.pathname);
+  spInit(params.access_token);
+}
+
+function spInit(token) {
+  document.getElementById('spotifyConnectBtn').style.display = 'none';
+
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    spPlayer = new Spotify.Player({
+      name: 'Tymos',
+      getOAuthToken: cb => cb(token),
+      volume: 0.7
+    });
+
+    spPlayer.addListener('ready', ({ device_id }) => {
+      spDeviceId = device_id;
+      document.getElementById('spotifyPlayer').classList.add('active');
+      spTransferPlayback(device_id, token);
+      spPollInterval = setInterval(() => spFetchState(token), 1500);
+    });
+
+    spPlayer.addListener('player_state_changed', state => {
+      if (!state) return;
+      spUpdateUI(state);
+    });
+
+    spPlayer.connect();
+  };
+
+  if (window.Spotify) {
+    window.onSpotifyWebPlaybackSDKReady();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://sdk.scdn.co/spotify-player.js';
+    document.head.appendChild(s);
+  }
+}
+
+function spTransferPlayback(deviceId, token) {
+  fetch('https://api.spotify.com/v1/me/player', {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ device_ids: [deviceId], play: false })
+  });
+}
+
+function spFetchState(token) {
+  fetch('https://api.spotify.com/v1/me/player', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  }).then(r => r.ok ? r.json() : null).then(data => {
+    if (!data || !data.item) return;
+    spDurMs = data.item.duration_ms;
+    spPosMs = data.progress_ms + (data.is_playing ? 1500 : 0);
+    spPlaying = data.is_playing;
+    const art = data.item.album?.images?.[0]?.url;
+    document.getElementById('spTitle').textContent   = data.item.name;
+    document.getElementById('spArtist').textContent  = data.item.artists.map(a => a.name).join(', ');
+    document.getElementById('spPlayBtn').innerHTML   = spPlaying ? '&#9646;&#9646;' : '&#9654;';
+    document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
+    document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
+    document.getElementById('spFill').style.width   = spDurMs > 0 ? `${(spPosMs/spDurMs)*100}%` : '0%';
+    const artEl = document.getElementById('spArt');
+    if (art) {
+      artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="album art">`;
+    }
+  }).catch(() => {});
+}
+
+function spFmtMs(ms) {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+function spApiCall(endpoint, method = 'POST') {
+  const token = spGetToken(); if (!token) return;
+  fetch(`https://api.spotify.com/v1/me/player/${endpoint}?device_id=${spDeviceId}`, {
+    method, headers: { 'Authorization': `Bearer ${token}` }
+  });
+}
+
+function spTogglePlay() { spPlaying ? spApiCall('pause', 'PUT') : spApiCall('play', 'PUT'); }
+function spNext()       { spApiCall('next'); }
+function spPrev()       { spApiCall('previous'); }
+
+function spSeek(e) {
+  const token = spGetToken(); if (!token || !spDurMs) return;
+  const pct = e.offsetX / e.currentTarget.offsetWidth;
+  const posMs = Math.floor(pct * spDurMs);
+  fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${posMs}&device_id=${spDeviceId}`, {
+    method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
+  });
+}
+
+function spDisconnect() {
+  if (spPlayer) { spPlayer.disconnect(); spPlayer = null; }
+  if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
+  localStorage.removeItem(SP_TOKEN_KEY); localStorage.removeItem(SP_EXPIRY_KEY);
+  document.getElementById('spotifyPlayer').classList.remove('active');
+  document.getElementById('spotifyConnectBtn').style.display = 'flex';
+  const artEl = document.getElementById('spArt');
+  if (artEl && artEl.tagName === 'IMG') {
+    artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
+  }
+}
+
+// Init on load — resume if token exists
+(function() {
+  spHandleCallback();
+  const token = spGetToken();
+  if (token) spInit(token);
+})();
 
 document.addEventListener('keydown', e => {
   if(e.key==='Escape') closeModal();
