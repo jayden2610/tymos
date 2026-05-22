@@ -1421,11 +1421,26 @@ function spGetToken() {
 
 async function spInit(token) {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
-  const connectBtn = document.getElementById('spotifyConnectBtn');
-  connectBtn.disabled = true;
-  connectBtn.querySelector('.spotify-connect-label').textContent = 'Connecting…';
 
-  // Detect plan — cache it so we don't re-fetch on every init
+  // Reset state
+  spFirstPoll = true;
+  spPollCount = 0;
+
+  // Always show player UI immediately — don't wait for SDK or product check
+  const connectBtn = document.getElementById('spotifyConnectBtn');
+  connectBtn.style.display = 'none';
+  document.getElementById('spotifyPlayer').classList.add('active');
+  document.getElementById('spTitle').textContent = 'Start playing on Spotify';
+  document.getElementById('spArtist').textContent = 'then it will appear here';
+  document.getElementById('spOpenBtn').style.display = 'inline-block';
+  document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
+
+  // Start polling immediately — works for both free and premium
+  spFetchState(token);
+  spPollInterval = setInterval(() => spFetchState(token), 3000);
+  console.log('🔍 Polling started — will check every 3s');
+
+  // Detect if premium — load SDK in background (non-blocking, optional)
   let product = localStorage.getItem(SP_PRODUCT_KEY);
   if (!product) {
     try {
@@ -1437,23 +1452,30 @@ async function spInit(token) {
       localStorage.setItem(SP_PRODUCT_KEY, product);
     } catch { product = 'free'; }
   }
+  console.log('🔍 Product:', product);
 
   if (product === 'premium') {
-    console.log('🔍 Product: premium → spInitPremium');
-    spInitPremium(token);
-  } else {
-    console.log('🔍 Product:', product, '→ spInitFree');
-    spInitFree(token);
+    loadSpotifySDK(token); // non-blocking, loads in background
   }
 }
 
-function spInitPremium(token) {
-  if (spPlayer) { spPlayer.disconnect(); spPlayer = null; }
-  const connectBtn = document.getElementById('spotifyConnectBtn');
-  connectBtn.disabled = true;
-  connectBtn.querySelector('.spotify-connect-label').textContent = 'Connecting…';
+function loadSpotifySDK(token) {
+  if (window.Spotify) {
+    createSpotifyPlayer(token);
+    return;
+  }
+  window.onSpotifyWebPlaybackSDKReady = () => { createSpotifyPlayer(token); };
+  const s = document.createElement('script');
+  s.src = 'https://sdk.scdn.co/spotify-player.js';
+  s.onerror = () => {
+    console.warn('🔍 Spotify SDK failed to load — playback controls unavailable (ad blocker?)');
+  };
+  document.head.appendChild(s);
+}
 
-  function createPlayer() {
+function createSpotifyPlayer(token) {
+  try {
+    if (spPlayer) spPlayer.disconnect();
     spPlayer = new Spotify.Player({
       name: 'Tymos',
       getOAuthToken: cb => cb(token),
@@ -1462,73 +1484,23 @@ function spInitPremium(token) {
 
     spPlayer.addListener('ready', ({ device_id }) => {
       spDeviceId = device_id;
+      console.log('🔍 SDK ready — Tymos device active');
+      // Transfer playback to Tymos silently
       fetch('https://api.spotify.com/v1/me/player', {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_ids: [device_id], play: false })
-      }).then(() => {
-        connectBtn.style.display = 'none';
-        document.getElementById('spotifyPlayer').classList.add('active');
-        spFetchState(token);
-        spPollInterval = setInterval(() => spFetchState(token), 2000);
-      }).catch(err => console.error('Transfer playback error:', err.message || err));
+      }).catch(() => {});
     });
 
     spPlayer.addListener('not_ready', () => {
       spDeviceId = null;
-      document.querySelector('.sp-device').textContent = '🔈 Reconnecting…';
-    });
-
-    spPlayer.addListener('initialization_error', ({ message }) => {
-      console.error('Spotify init error:', message);
-      notify('Spotify init failed: ' + message);
-      spDisconnect();
-    });
-    spPlayer.addListener('authentication_error', ({ message }) => {
-      console.error('Spotify auth error:', message);
-      notify('Spotify auth failed. Please reconnect.');
-      spDisconnect();
-    });
-    spPlayer.addListener('account_error', ({ message }) => {
-      console.error('Spotify account error:', message);
-      notify('Spotify Premium required. Switched to read-only mode.');
-      spDisconnect();
-      // clear product cache so next auth rechecks
-      localStorage.removeItem(SP_PRODUCT_KEY);
     });
 
     spPlayer.connect();
+  } catch (e) {
+    console.warn('🔍 SDK player creation failed:', e.message);
   }
-
-  if (window.Spotify) {
-    createPlayer();
-  } else {
-    window.onSpotifyWebPlaybackSDKReady = () => { createPlayer(); };
-    const s = document.createElement('script');
-    s.src = 'https://sdk.scdn.co/spotify-player.js';
-    s.onerror = () => {
-      console.error('Failed to load Spotify Web Playback SDK');
-      notify('Failed to load Spotify SDK. Check ad blocker or network.');
-      spDisconnect();
-    };
-    document.head.appendChild(s);
-  }
-}
-
-function spInitFree(token) {
-  const connectBtn = document.getElementById('spotifyConnectBtn');
-  connectBtn.style.display = 'none';
-  document.getElementById('spotifyPlayer').classList.add('active');
-
-  document.getElementById('spTitle').textContent = 'Start playing on Spotify';
-  document.getElementById('spArtist').textContent = 'then it will appear here';
-  document.getElementById('spOpenBtn').style.display = 'inline-block';
-  document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
-
-  spFirstPoll = true; // protect welcome message from first poll overwrite
-  spPollCount = 0;
-  spFetchState(token);
-  spPollInterval = setInterval(() => spFetchState(token), 3000);
 }
 
 function spFetchState(token) {
