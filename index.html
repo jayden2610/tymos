@@ -62,12 +62,6 @@ body {
   letter-spacing: 0.02em;
 }
 
-.mode-tag {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-}
 
 .main {
   flex: 1;
@@ -467,10 +461,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Reports</a>
-    <span class="mode-tag" id="modeTag">Work Session</span>
-  </div>
+  <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Reports</a>
 </div>
 
 <div class="main">
@@ -638,7 +629,6 @@ function tick() {
 function enterBreak() {
   isBreak = true; totalSecs = 5*60; remaining = 5*60;
   document.getElementById('timerSub').textContent = 'Break';
-  document.getElementById('modeTag').textContent = 'Short Break';
   document.getElementById('startBtn').textContent = 'Start Break';
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.body.classList.add('break-mode'); updateRing();
@@ -647,7 +637,6 @@ function enterBreak() {
 function enterWork() {
   isBreak = false; totalSecs = workSecs; remaining = workSecs;
   document.getElementById('timerSub').textContent = 'Focus';
-  document.getElementById('modeTag').textContent = 'Work Session';
   document.getElementById('startBtn').textContent = 'Start';
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.body.classList.remove('break-mode'); updateRing();
@@ -658,7 +647,6 @@ function resetTimer() {
   remaining = workSecs; totalSecs = workSecs;
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.getElementById('timerSub').textContent = 'Focus';
-  document.getElementById('modeTag').textContent = 'Work Session';
   document.getElementById('startBtn').textContent = 'Start';
   document.body.classList.remove('break-mode'); updateRing();
 }
