@@ -1391,6 +1391,7 @@ async function spHandleCallback() {
   if (!code) return false;
   const verifier = localStorage.getItem(SP_VERIFIER_KEY);
   if (!verifier) return false;
+  // Strip code from URL IMMEDIATELY — before any network call that could log it
   window.history.replaceState(null, '', window.location.pathname);
   const resp = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
