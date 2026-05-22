@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tymos · Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #f0e9dc;
+  --surface:    #ece4d5;
+  --surface2:   #e4dac8;
+  --surface3:   #d9cdb8;
+  --border:     rgba(120,95,65,0.14);
+  --border2:    rgba(120,95,65,0.22);
+  --text:       #2e1f0d;
+  --text2:      #6b5340;
+  --muted:      #a08b75;
+  --accent:     #7c5c3a;
+  --accent2:    #a07850;
+  --accent3:    #c9a87a;
+  --accent-bg:  rgba(124,92,58,0.08);
+  --red:        #b84f3a;
+  --green:      #4a8c5c;
+  --blue:       #3a6b8c;
+  --yellow:     #b8903a;
+  --shadow:     0 2px 12px rgba(80,50,20,0.10);
+  --shadow2:    0 4px 24px rgba(80,50,20,0.14);
+  --c-sessions: #7c5c3a;
+  --c-focus:    #3a6b8c;
+  --c-dow:      #4a8c5c;
+  --c-today:    #b8903a;
+  --c-best:     #b8903a;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.back-btn:hover { background: var(--surface2); color: var(--text); }
+
+.logo {
+  font-family: 'Lora', serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.logo-sep { color: var(--border2); margin: 0 6px; font-weight: 300; }
+.logo-tag { font-family: 'DM Mono', monospace; font-weight: 400; opacity: 0.45; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.header-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-align: right;
+}
+
+/* ── MAIN ── */
+.main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── DEMO NOTICE ── */
+.demo-notice {
+  background: rgba(184,144,58,0.1);
+  border: 1px solid rgba(184,144,58,0.28);
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9a7228;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+
+/* ── KPI STRIP ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px 14px 13px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.kpi-card:hover { box-shadow: var(--shadow2); transform: translateY(-1px); }
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+.kpi-sessions::after { background: var(--c-sessions); }
+.kpi-focus::after    { background: var(--c-focus); }
+.kpi-tasks::after    { background: var(--c-dow); }
+.kpi-avg::after      { background: var(--yellow); }
+.kpi-best::after     { background: var(--red); }
+
+.kpi-icon {
+  font-size: 16px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+.kpi-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.kpi-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.kpi-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ── CHART CARD ── */
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 20px 14px;
+  box-shadow: var(--shadow);
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.chart-title {
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.chart-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chart-period {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.legend-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+}
+.legend-dot::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.legend-today::before { background: var(--c-today); }
+
+.chart-wrap { width: 100%; }
+.chart-wrap svg { display: block; width: 100%; }
+
+/* ── TWO-COL ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── HIGHLIGHTS CARD ── */
+.highlights-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.highlights-title {
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.hl-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hl-item:last-child { border-bottom: none; padding-bottom: 0; }
+.hl-item:first-of-type { padding-top: 0; }
+
+.hl-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.hi-gold  { background: rgba(184,144,58,0.13); }
+.hi-red   { background: rgba(184,79,58,0.10); }
+.hi-green { background: rgba(74,140,92,0.10); }
+.hi-blue  { background: rgba(58,107,140,0.10); }
+
+.hl-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hl-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  margin-top: 2px;
+  letter-spacing: -0.3px;
+}
+.hl-desc {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+  font-weight: 600;
+}
+
+/* ── SECTION LABEL ── */
+.section-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 4px 0 2px;
+}
+
+/* Animate in on load */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kpi-card     { animation: fadeUp 0.4s ease both; }
+.kpi-card:nth-child(1) { animation-delay: 0ms; }
+.kpi-card:nth-child(2) { animation-delay: 50ms; }
+.kpi-card:nth-child(3) { animation-delay: 100ms; }
+.kpi-card:nth-child(4) { animation-delay: 150ms; }
+.kpi-card:nth-child(5) { animation-delay: 200ms; }
+.chart-card   { animation: fadeUp 0.45s ease both; animation-delay: 180ms; }
+.two-col      { animation: fadeUp 0.45s ease both; animation-delay: 240ms; }
+
+/* ── MOBILE ── */
+@media (max-width: 740px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .two-col  { grid-template-columns: 1fr; }
+  .header   { padding: 12px 16px; }
+  .main     { padding: 16px 14px 48px; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-val  { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← Timer</a>
+  <span class="logo">Tymos<span class="logo-sep">·</span><span class="logo-tag">Reports</span></span>
+  <span class="header-date" id="headerDate">—</span>
+</div>
+
+<div class="main">
+
+  <div class="demo-notice" id="demoNotice">
+    ⚠&nbsp; Demo data — complete a Pomodoro session to see your real stats.
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-sessions">
+      <div class="kpi-icon">🍅</div>
+      <div class="kpi-label">Total Sessions</div>
+      <div class="kpi-val" id="kpiSessions">—</div>
+      <div class="kpi-sub">all time</div>
+    </div>
+    <div class="kpi-card kpi-focus">
+      <div class="kpi-icon">⏱</div>
+      <div class="kpi-label">Focus Time</div>
+      <div class="kpi-val" id="kpiFocus">—</div>
+      <div class="kpi-sub" id="kpiFocusSub">total</div>
+    </div>
+    <div class="kpi-card kpi-tasks">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">Tasks Done</div>
+      <div class="kpi-val" id="kpiTasks">—</div>
+      <div class="kpi-sub">completed</div>
+    </div>
+    <div class="kpi-card kpi-avg">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-label">Daily Avg</div>
+      <div class="kpi-val" id="kpiAvg">—</div>
+      <div class="kpi-sub">focus mins/day</div>
+    </div>
+    <div class="kpi-card kpi-best">
+      <div class="kpi-icon">🏆</div>
+      <div class="kpi-label">Best Day</div>
+      <div class="kpi-val" id="kpiBest">—</div>
+      <div class="kpi-sub" id="kpiBestDate">—</div>
+    </div>
+  </div>
+
+  <!-- Sessions Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">Sessions per Day</span>
+      <span class="chart-meta">
+        <span class="legend-dot legend-today">today</span>
+        <span class="chart-period">last 14 days</span>
+      </span>
+    </div>
+    <div class="chart-wrap"><svg id="sessionsChart" height="180"></svg></div>
+  </div>
+
+  <!-- Focus Time Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">Focus Time per Day</span>
+      <span class="chart-meta">
+        <span class="legend-dot legend-today">today</span>
+        <span class="chart-period">last 14 days · minutes</span>
+      </span>
+    </div>
+    <div class="chart-wrap"><svg id="focusChart" height="180"></svg></div>
+  </div>
+
+  <!-- Day of Week + Highlights -->
+  <div class="two-col">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">By Day of Week</span>
+        <span class="chart-period" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">avg focus mins</span>
+      </div>
+      <div class="chart-wrap"><svg id="dowChart" height="160"></svg></div>
+    </div>
+
+    <div class="highlights-card">
+      <div class="highlights-title">Highlights</div>
+      <div class="hl-item">
+        <div class="hl-icon hi-gold">🏆</div>
+        <div>
+          <div class="hl-label">Best Day Ever</div>
+          <div class="hl-val" id="hlBestVal">—</div>
+          <div class="hl-desc" id="hlBestDesc">—</div>
+        </div>
+      </div>
+      <div class="hl-item">
+        <div class="hl-icon hi-red">🔥</div>
+        <div>
+          <div class="hl-label">Current Streak</div>
+          <div class="hl-val" id="hlStreakVal">—</div>
+          <div class="hl-desc" id="hlStreakDesc">—</div>
+        </div>
+      </div>
+      <div class="hl-item">
+        <div class="hl-icon hi-green">📆</div>
+        <div>
+          <div class="hl-label">Most Productive Day</div>
+          <div class="hl-val" id="hlMostProdVal">—</div>
+          <div class="hl-desc" id="hlMostProdDesc">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── CONSTANTS ──
+const LS_DAILY = 'tymos_daily_log';
+const LS_STATS = 'tymos_stats';
+const DOW      = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DOW_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── UTILS ──
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(str) {
+  if (!str) return '—';
+  const [,m,d] = str.split('-').map(Number);
+  return `${MONTHS[m-1]} ${d}`;
+}
+function fmtMins(m) {
+  if (m === 0) return '0m';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m/60), rem = m%60;
+  return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
+}
+
+// ── DATA ──
+function loadLog() {
+  try { return JSON.parse(localStorage.getItem(LS_DAILY) || '[]'); } catch(e) { return []; }
+}
+function loadGlobalStats() {
+  try { return JSON.parse(localStorage.getItem(LS_STATS) || '{}'); } catch(e) { return {}; }
+}
+
+function seedDemoData() {
+  // Deterministic-ish seed for a nice-looking demo
+  const log = [];
+  const today = new Date();
+  const pattern = [4,6,3,5,7,2,0,5,6,4,3,6,5,4,2,7,5,3,0,6,5,4,6,3,5,4,6,5,3,4];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dow = d.getDay();
+    const sessions = pattern[29 - i] || 0;
+    if (sessions === 0) continue;
+    // Skip some weekends
+    if ((dow === 0 || dow === 6) && sessions < 3) continue;
+    log.push({
+      date: dateKey(d),
+      sessions,
+      focusMins: sessions * 25 + (i % 7) * 3,
+      tasksDone: Math.floor(sessions * 0.6)
+    });
+  }
+  return log;
+}
+
+// Fill last N days (gaps = zero)
+function getLastNDays(log, n) {
+  const today = new Date();
+  return Array.from({length: n}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (n - 1 - i));
+    const key = dateKey(d);
+    const entry = log.find(e => e.date === key) || {date: key, sessions: 0, focusMins: 0, tasksDone: 0};
+    return {
+      ...entry,
+      isToday:  i === n - 1,
+      dow:      d.getDay(),
+      label:    String(d.getDate()),
+      dowLabel: DOW[d.getDay()].slice(0, 2)
+    };
+  });
+}
+
+// Avg by day-of-week (0=Sun … 6=Sat)
+function getDowStats(log) {
+  const sums = Array(7).fill(0);
+  const cnts = Array(7).fill(0);
+  log.forEach(e => {
+    if (!e.sessions) return;
+    const dow = new Date(e.date + 'T00:00:00').getDay();
+    sums[dow] += e.focusMins;
+    cnts[dow]++;
+  });
+  return sums.map((s, i) => ({
+    dow: i,
+    label: DOW[i].slice(0, 2),
+    fullLabel: DOW_FULL[i],
+    avg: cnts[i] > 0 ? Math.round(s / cnts[i]) : 0,
+    count: cnts[i]
+  }));
+}
+
+function getStreak(log) {
+  const activeDates = new Set(log.filter(e => e.sessions > 0).map(e => e.date));
+  const today = new Date();
+  const todayStr = dateKey(today);
+  // If today has no data, start checking from yesterday
+  let start = activeDates.has(todayStr) ? 0 : 1;
+  let streak = 0;
+  for (let i = start; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    if (activeDates.has(dateKey(d))) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ── SVG HELPERS ──
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  const e = document.createElementNS(SVG_NS, tag);
+  if (attrs) Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// ── BAR CHART ──
+function drawBarChart(svgId, data, opts = {}) {
+  const {
+    valueKey    = 'sessions',
+    barColor    = '#7c5c3a',
+    todayColor  = '#b8903a',
+    height      = 180,
+    valueFmt    = v => v,
+    labelKey    = 'label'
+  } = opts;
+
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  svg.innerHTML = '';
+
+  const W  = svg.parentElement.clientWidth || 600;
+  const H  = height;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('height', H);
+
+  const P  = { t: 28, r: 14, b: 38, l: 14 };
+  const cW = W - P.l - P.r;
+  const cH = H - P.t - P.b;
+  const n  = data.length;
+  const slW = cW / n;
+  const bW = Math.max(4, Math.min(slW * 0.52, 28));
+
+  const vals = data.map(d => +(d[valueKey] || 0));
+  const maxV = Math.max(...vals, 1);
+
+  // Inline animation style
+  const sty = el('style', {});
+  sty.textContent = `
+    .ba { transform-box: fill-box; transform-origin: center bottom;
+          animation: barUp 0.55s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes barUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .blb { font-family:'DM Mono',monospace; font-size:9px; fill:rgba(160,139,117,.9); text-anchor:middle; }
+    .bvl { font-family:'DM Mono',monospace; font-size:9.5px; font-weight:500; fill:rgba(90,62,32,.85); text-anchor:middle; }
+  `;
+  svg.appendChild(sty);
+
+  // Grid lines
+  [0.25, 0.5, 0.75, 1.0].forEach(f => {
+    svg.appendChild(el('line', {
+      x1: P.l, x2: P.l + cW,
+      y1: P.t + cH * (1 - f), y2: P.t + cH * (1 - f),
+      stroke: 'rgba(120,95,65,0.08)', 'stroke-width': 1
+    }));
+  });
+
+  // Baseline
+  svg.appendChild(el('line', {
+    x1: P.l, x2: P.l + cW,
+    y1: P.t + cH, y2: P.t + cH,
+    stroke: 'rgba(120,95,65,0.22)', 'stroke-width': 1
+  }));
+
+  data.forEach((d, i) => {
+    const v   = +(d[valueKey] || 0);
+    const cx  = P.l + slW * i + slW / 2;
+    const bH  = v > 0 ? Math.max(3, (v / maxV) * cH) : 0;
+    const by  = P.t + cH - bH;
+    const rx  = Math.min(4, bW / 2.5);
+    const col = d.isToday ? todayColor : barColor;
+
+    if (v > 0) {
+      const rect = el('rect', {
+        x: cx - bW / 2, y: by,
+        width: bW, height: bH, rx,
+        fill: col,
+        opacity: d.isToday ? 1 : 0.72,
+        class: 'ba'
+      });
+      rect.style.animationDelay = `${i * 28}ms`;
+      svg.appendChild(rect);
+
+      // Value label above bar
+      if (bH > 16) {
+        svg.appendChild(el('text', { x: cx, y: by - 5, class: 'bvl' }, valueFmt(v)));
+      }
+    }
+
+    // X label
+    svg.appendChild(el('text', { x: cx, y: P.t + cH + 14, class: 'blb' }, d[labelKey]));
+
+    // Today indicator dot
+    if (d.isToday) {
+      svg.appendChild(el('circle', { cx, cy: P.t + cH + 24, r: 2.5, fill: todayColor, opacity: 0.9 }));
+    }
+  });
+}
+
+// ── DOW CHART (Mon→Sun, green, best = gold) ──
+function drawDowChart(svgId, dowStats, height = 160) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  svg.innerHTML = '';
+
+  const W = svg.parentElement.clientWidth || 300;
+  const H = height;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('height', H);
+
+  const P  = { t: 20, r: 14, b: 36, l: 14 };
+  const cW = W - P.l - P.r;
+  const cH = H - P.t - P.b;
+  // Mon-first order: 1,2,3,4,5,6,0
+  const ordered = [1,2,3,4,5,6,0].map(i => dowStats[i]);
+  const n  = 7;
+  const slW = cW / n;
+  const bW = Math.max(4, Math.min(slW * 0.52, 28));
+  const maxV = Math.max(...ordered.map(d => d.avg), 1);
+  const bestAvg = Math.max(...ordered.map(d => d.avg));
+
+  const sty = el('style', {});
+  sty.textContent = `
+    .ba2 { transform-box: fill-box; transform-origin: center bottom;
+           animation: barUp2 0.55s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes barUp2 { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .dl { font-family:'DM Mono',monospace; font-size:9px; fill:rgba(160,139,117,.9); text-anchor:middle; }
+    .dv { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; fill:rgba(90,62,32,.85); text-anchor:middle; }
+  `;
+  svg.appendChild(sty);
+
+  svg.appendChild(el('line', {
+    x1: P.l, x2: P.l + cW,
+    y1: P.t + cH, y2: P.t + cH,
+    stroke: 'rgba(120,95,65,0.22)', 'stroke-width': 1
+  }));
+
+  ordered.forEach((d, i) => {
+    const v  = d.avg;
+    const cx = P.l + slW * i + slW / 2;
+    const bH = v > 0 ? Math.max(3, (v / maxV) * cH) : 0;
+    const by = P.t + cH - bH;
+    const rx = Math.min(4, bW / 2.5);
+    const isBest = v > 0 && v === bestAvg;
+    const col = isBest ? '#b8903a' : '#4a8c5c';
+
+    if (v > 0) {
+      const rect = el('rect', {
+        x: cx - bW / 2, y: by,
+        width: bW, height: bH, rx,
+        fill: col, opacity: isBest ? 1 : 0.70,
+        class: 'ba2'
+      });
+      rect.style.animationDelay = `${i * 35}ms`;
+      svg.appendChild(rect);
+
+      if (bH > 14) {
+        svg.appendChild(el('text', { x: cx, y: by - 4, class: 'dv' }, v + 'm'));
+      }
+    }
+
+    svg.appendChild(el('text', { x: cx, y: P.t + cH + 14, class: 'dl' }, d.label));
+  });
+}
+
+// ── MAIN RENDER ──
+function render() {
+  // Header date
+  const now = new Date();
+  document.getElementById('headerDate').textContent =
+    `${DOW[now.getDay()]} · ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  let log = loadLog();
+  const gs = loadGlobalStats();
+  let isDemo = false;
+
+  if (log.length === 0) {
+    log = seedDemoData();
+    isDemo = true;
+    document.getElementById('demoNotice').style.display = 'flex';
+  }
+
+  const last14  = getLastNDays(log, 14);
+  const dowStats = getDowStats(log);
+
+  // ── COMPUTE KPIS ──
+  const totalSessions = log.reduce((s, e) => s + (e.sessions || 0), 0);
+  const totalFocusMins = log.reduce((s, e) => s + (e.focusMins || 0), 0);
+  const totalTasks = gs.tasksDone || log.reduce((s, e) => s + (e.tasksDone || 0), 0);
+  const activeDays = log.filter(e => (e.sessions || 0) > 0).length;
+  const dailyAvg = activeDays > 0 ? Math.round(totalFocusMins / activeDays) : 0;
+  const bestEntry = log.reduce((best, e) =>
+    (e.focusMins || 0) > ((best && best.focusMins) || 0) ? e : best, null);
+  const streak = getStreak(log);
+  // Most productive day of week
+  const maxDow = dowStats.reduce((best, d) => d.avg > best.avg ? d : best, {avg: 0, fullLabel: '—', label: '—'});
+
+  // ── FILL KPIS ──
+  document.getElementById('kpiSessions').textContent = totalSessions;
+  document.getElementById('kpiFocus').textContent    = fmtMins(totalFocusMins);
+  document.getElementById('kpiTasks').textContent    = totalTasks;
+  document.getElementById('kpiAvg').textContent      = dailyAvg + 'm';
+  document.getElementById('kpiBest').textContent     = bestEntry ? bestEntry.focusMins + 'm' : '—';
+  document.getElementById('kpiBestDate').textContent = bestEntry ? fmtDate(bestEntry.date) : 'no data yet';
+
+  // ── FILL HIGHLIGHTS ──
+  if (bestEntry) {
+    document.getElementById('hlBestVal').textContent  = `${bestEntry.focusMins}m · ${bestEntry.sessions} session${bestEntry.sessions !== 1 ? 's' : ''}`;
+    document.getElementById('hlBestDesc').textContent = fmtDate(bestEntry.date);
+  } else {
+    document.getElementById('hlBestVal').textContent  = 'No data yet';
+    document.getElementById('hlBestDesc').textContent = '—';
+  }
+
+  document.getElementById('hlStreakVal').textContent  = streak > 0 ? `${streak} day${streak !== 1 ? 's' : ''}` : 'None';
+  document.getElementById('hlStreakDesc').textContent = streak > 2 ? 'Great momentum!' : streak > 0 ? 'Keep it going!' : 'Start a session to begin';
+
+  document.getElementById('hlMostProdVal').textContent  = maxDow.avg > 0 ? maxDow.fullLabel : 'No data yet';
+  document.getElementById('hlMostProdDesc').textContent = maxDow.avg > 0 ? `${maxDow.avg}m avg focus time` : '—';
+
+  // ── DRAW CHARTS ──
+  drawBarChart('sessionsChart', last14, {
+    valueKey:   'sessions',
+    barColor:   '#7c5c3a',
+    todayColor: '#b8903a',
+    height:     180,
+    valueFmt:   v => v
+  });
+
+  drawBarChart('focusChart', last14, {
+    valueKey:   'focusMins',
+    barColor:   '#3a6b8c',
+    todayColor: '#5a9cc0',
+    height:     180,
+    valueFmt:   v => v + 'm'
+  });
+
+  drawDowChart('dowChart', dowStats, 160);
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  render();
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 120);
+  });
+});
+</script>
+</body>
+</html>
