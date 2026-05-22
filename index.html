@@ -1622,15 +1622,17 @@ async function spDiag() {
   const meResp = await fetch('https://api.spotify.com/v1/me', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  const meText = await meResp.text();
   let meBody;
-  try { meBody = await meResp.json(); } catch { meBody = await meResp.text(); }
+  try { meBody = JSON.parse(meText); } catch { meBody = meText; }
   console.log(`/v1/me → ${meResp.status}`, meBody);
   // Test /v1/me/player
   const plResp = await fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
+  const plText = await plResp.text();
   let plBody;
-  try { plBody = await plResp.json(); } catch { plBody = await plResp.text(); }
+  try { plBody = JSON.parse(plText); } catch { plBody = plText; }
   console.log(`/v1/me/player → ${plResp.status}`, plBody);
 }
 
