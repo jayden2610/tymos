@@ -2,7 +2,9 @@
 
 A minimal, distraction-free focus timer with task management.
 
-**Live:** https://tymos.netlify.app/
+**Live:** https://jayden2610.github.io/tymos/
+
+![Tymos screenshot](screenshot.png)
 
 ## Features
 
@@ -12,6 +14,7 @@ A minimal, distraction-free focus timer with task management.
 - Sections and sub-items per task
 - Notes per task
 - Tasks and stats persist across sessions (localStorage)
+- Space bar to start / pause
 - Mobile responsive
 
 ## Run locally
@@ -23,4 +26,4 @@ python -m http.server 8080
 
 ## Deploy
 
-Push to `master` → Netlify auto-deploys in ~30 seconds.
+Push to `master` → GitHub Pages auto-deploys in ~30 seconds.
