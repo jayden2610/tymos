@@ -1335,13 +1335,14 @@ applySettings(loadSettings());
 // ── SPOTIFY (PKCE) ──
 const SP_CLIENT_ID  = '7504a53817024d88a6d68b36b27f8861';
 const SP_REDIRECT   = 'https://jayden2610.github.io/tymos/';
-const SP_SCOPES     = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
 const SP_TOKEN_KEY  = 'tymos_sp_token';
 const SP_EXPIRY_KEY = 'tymos_sp_expiry';
 const SP_VERIFIER_KEY = 'tymos_sp_verifier';
 
 let spPollInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
+let spPlayer = null, spDeviceId = null;
 
 // ── PKCE helpers ──
 function spRandBytes(n) {
@@ -1410,10 +1411,57 @@ function spGetToken() {
 function spInit(token) {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
   const connectBtn = document.getElementById('spotifyConnectBtn');
-  connectBtn.style.display = 'none';
-  document.getElementById('spotifyPlayer').classList.add('active');
-  spFetchState(token);
-  spPollInterval = setInterval(() => spFetchState(token), 2000);
+  connectBtn.disabled = true;
+  connectBtn.querySelector('.spotify-connect-label').textContent = 'Connecting…';
+
+  if (!window.Spotify) {
+    const script = document.createElement('script');
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    script.onerror = () => {
+      connectBtn.disabled = false;
+      connectBtn.querySelector('.spotify-connect-label').textContent = 'Connect Spotify';
+    };
+    document.head.appendChild(script);
+  }
+
+  window.onSpotifyWebPlaybackSDKReady = () => spInitPlayer(token);
+  if (window.Spotify) spInitPlayer(token);
+}
+
+function spInitPlayer(token) {
+  if (spPlayer) { spPlayer.disconnect(); spPlayer = null; }
+
+  spPlayer = new Spotify.Player({
+    name: 'Tymos',
+    getOAuthToken: cb => cb(token),
+    volume: 0.5
+  });
+
+  spPlayer.addListener('ready', ({ device_id }) => {
+    spDeviceId = device_id;
+    fetch('https://api.spotify.com/v1/me/player', {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_ids: [device_id], play: false })
+    }).then(() => {
+      const connectBtn = document.getElementById('spotifyConnectBtn');
+      connectBtn.style.display = 'none';
+      document.getElementById('spotifyPlayer').classList.add('active');
+      spFetchState(token);
+      spPollInterval = setInterval(() => spFetchState(token), 2000);
+    });
+  });
+
+  spPlayer.addListener('not_ready', () => {
+    spDeviceId = null;
+    document.querySelector('.sp-device').textContent = '🔈 Reconnecting…';
+  });
+
+  spPlayer.addListener('initialization_error', ({ message }) => { console.error('SP init', message); spDisconnect(); });
+  spPlayer.addListener('authentication_error', ({ message }) => { console.error('SP auth', message); spDisconnect(); });
+  spPlayer.addListener('account_error', ({ message }) => { console.error('SP account', message); spDisconnect(); });
+
+  spPlayer.connect();
 }
 
 function spFetchState(token) {
@@ -1480,6 +1528,7 @@ function spSeek(e) {
 
 function spDisconnect() {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
+  if (spPlayer) { spPlayer.disconnect(); spPlayer = null; spDeviceId = null; }
   ['tymos_sp_token','tymos_sp_expiry','tymos_sp_refresh',SP_VERIFIER_KEY].forEach(k => localStorage.removeItem(k));
   document.getElementById('spotifyPlayer').classList.remove('active');
   const connectBtn = document.getElementById('spotifyConnectBtn');
