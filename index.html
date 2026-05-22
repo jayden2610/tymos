@@ -467,7 +467,10 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
-  <span class="mode-tag" id="modeTag">Work Session</span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="dashboard.html" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.08em;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">Reports →</a>
+    <span class="mode-tag" id="modeTag">Work Session</span>
+  </div>
 </div>
 
 <div class="main">
@@ -622,7 +625,7 @@ function tick() {
       notify('Break over — back to work.');
       enterWork();
     }
-    saveStats(); updateStats();
+    saveStats(); saveDailyLog(); updateStats();
     return;
   }
   remaining--;
@@ -666,6 +669,21 @@ function skipPhase() { clearInterval(interval); running = false; isBreak ? enter
 const LS_TASKS   = 'tymos_tasks';
 const LS_NEXT_ID = 'tymos_next_id';
 const LS_STATS   = 'tymos_stats';
+const LS_DAILY   = 'tymos_daily_log';
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function saveDailyLog() {
+  try {
+    const today = dateKey(new Date());
+    let log = JSON.parse(localStorage.getItem(LS_DAILY) || '[]');
+    const idx = log.findIndex(e => e.date === today);
+    const entry = { date: today, sessions: sessionsComplete, focusMins: Math.floor(totalFocusSecs / 60), tasksDone };
+    if (idx >= 0) log[idx] = entry; else log.push(entry);
+    localStorage.setItem(LS_DAILY, JSON.stringify(log));
+  } catch(e) {}
+}
 
 function saveTasks() {
   localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
@@ -842,7 +860,7 @@ function deleteSectionClick(tid, si) {
 function toggleDone(id) {
   const t = tasks.find(x=>x.id===id); t.done = !t.done;
   tasksDone += t.done ? 1 : -1; tasksDone = Math.max(0, tasksDone);
-  updateStats(); saveTasks(); saveStats(); renderTasks();
+  updateStats(); saveTasks(); saveStats(); saveDailyLog(); renderTasks();
 }
 
 function toggleItem(tid, si, ii) {
