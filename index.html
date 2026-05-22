@@ -62,15 +62,6 @@ body {
   letter-spacing: 0.02em;
 }
 
-.session-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--surface3);
-  transition: background 0.3s;
-}
-.session-dot.filled { background: var(--accent2); }
-.session-dot.active { background: var(--accent); box-shadow: 0 0 5px var(--accent3); }
-
 .mode-tag {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
@@ -476,7 +467,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
-  <div style="display:flex;gap:6px;" id="sessionDots"></div>
   <span class="mode-tag" id="modeTag">Work Session</span>
 </div>
 
@@ -632,7 +622,7 @@ function tick() {
       notify('Break over — back to work.');
       enterWork();
     }
-    saveStats(); updateStats(); buildDots();
+    saveStats(); updateStats();
     return;
   }
   remaining--;
@@ -709,19 +699,7 @@ function updateStats() {
   document.getElementById('statTasks').textContent = tasksDone;
 }
 
-function buildDots() {
-  const wrap = document.getElementById('sessionDots');
-  wrap.innerHTML = '';
-  for (let i = 0; i < 4; i++) {
-    const d = document.createElement('span');
-    d.className = 'session-dot' +
-      (i < sessionsComplete % 4 ? ' filled' : '') +
-      (i === sessionsComplete % 4 && !isBreak ? ' active' : '');
-    wrap.appendChild(d);
-  }
-}
-
-updateStats(); buildDots();
+updateStats();
 
 const notify = msg => {
   const n = document.getElementById('notif');
