@@ -1447,8 +1447,13 @@ async function spInit(token) {
       const r = await fetch('https://api.spotify.com/v1/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const me = await r.json();
-      product = me.product || 'free';
+      if (r.status === 403) {
+        console.error('🔍 403 on /v1/me — account not authorized in Spotify Dev Dashboard');
+        product = 'free'; // fallback
+      } else {
+        const me = await r.json();
+        product = me.product || 'free';
+      }
       localStorage.setItem(SP_PRODUCT_KEY, product);
     } catch { product = 'free'; }
   }
@@ -1523,6 +1528,12 @@ function spFetchState(token) {
       return null;
     }
     if (r.status === 401) { console.warn('🔍 Token expired, disconnecting.'); spDisconnect(); return null; }
+    if (r.status === 403) {
+      console.error('🔍 403 Forbidden — your Spotify account is not authorized for this app.');
+      console.error('🔍 Go to https://developer.spotify.com/dashboard → Users and Access → add your email');
+      document.querySelector('.sp-device').textContent = `⚠️ 403 Forbidden — Add your account in Spotify Dev Dashboard [poll #${spPollCount}]`;
+      return null;
+    }
     return r.status === 200 ? r.json() : null;
   }).then(data => {
     if (!data?.item) return;
