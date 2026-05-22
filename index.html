@@ -413,6 +413,73 @@ body {
 }
 .btn-save:hover { background: var(--accent2); }
 
+/* ── SETTINGS MODAL ── */
+.settings-section {
+  margin-bottom: 20px;
+}
+.settings-section-label {
+  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 7px; margin-bottom: 14px;
+}
+.settings-section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.settings-divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; gap: 16px;
+}
+.settings-row-label {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.settings-row-sub {
+  font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500;
+}
+
+.time-inputs { display: flex; gap: 10px; margin-bottom: 6px; }
+.time-input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.time-input-label {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.time-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 18px; font-weight: 300; padding: 10px 12px; outline: none;
+  transition: border-color 0.15s; text-align: center; letter-spacing: -0.5px;
+}
+.time-input:focus { border-color: var(--accent2); }
+
+/* Toggle switch */
+.toggle {
+  position: relative; width: 42px; height: 24px; flex-shrink: 0; cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0; background: var(--surface3);
+  border-radius: 100px; transition: background 0.2s;
+  border: 1px solid var(--border2);
+}
+.toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+.settings-number-input {
+  width: 64px; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 14px; padding: 7px 10px; outline: none;
+  transition: border-color 0.15s; text-align: center;
+}
+.settings-number-input:focus { border-color: var(--accent2); }
+
 /* Notify */
 .notif {
   position: fixed; top: 20px; left: 50%;
@@ -461,7 +528,10 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
-  <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
+    <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
+  </div>
 </div>
 
 <div class="main">
@@ -479,8 +549,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     </div>
     <div class="presets">
       <button class="preset-btn active" onclick="setPreset(25,this)">25m</button>
-      <button class="preset-btn" onclick="setPreset(50,this)">50m</button>
-      <button class="preset-btn" onclick="setPreset(90,this)">90m</button>
     </div>
     <div class="controls">
       <button class="btn" onclick="resetTimer()">Reset</button>
@@ -546,6 +614,101 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 </div>
 
 <div class="notif" id="notif"></div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)">
+  <div class="modal" style="width:440px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+      <div class="modal-title" style="margin-bottom:0;">Settings</div>
+      <button onclick="closeSettings()" style="width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">✕</button>
+    </div>
+
+    <!-- Timer Section -->
+    <div class="settings-section">
+      <div class="settings-section-label">⏱ Timer</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Time (minutes)</div>
+        <div class="time-inputs">
+          <div class="time-input-group">
+            <span class="time-input-label">Pomodoro</span>
+            <input class="time-input" id="sPomoDur" type="number" min="1" max="120" value="25">
+          </div>
+          <div class="time-input-group">
+            <span class="time-input-label">Short Break</span>
+            <input class="time-input" id="sShortBreak" type="number" min="1" max="60" value="5">
+          </div>
+          <div class="time-input-group">
+            <span class="time-input-label">Long Break</span>
+            <input class="time-input" id="sLongBreak" type="number" min="1" max="60" value="15">
+          </div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Auto Start Breaks</div>
+          <div class="settings-row-sub">Automatically begin break when session ends</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="sAutoBreak">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Auto Start Pomodoros</div>
+          <div class="settings-row-sub">Automatically begin next session after break</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="sAutoPomodoro">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Long Break Interval</div>
+          <div class="settings-row-sub">Sessions before a long break</div>
+        </div>
+        <input class="settings-number-input" id="sLongBreakInterval" type="number" min="1" max="10" value="4">
+      </div>
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <!-- Task Section -->
+    <div class="settings-section">
+      <div class="settings-section-label">✓ Task</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Auto Check Tasks</div>
+          <div class="settings-row-sub">Mark active task done when session completes</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="sAutoCheck">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Move Done to Bottom</div>
+          <div class="settings-row-sub">Completed tasks sink below active ones</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="sMoveBottom" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── HTML ESCAPE (XSS prevention) ──
@@ -727,9 +890,10 @@ function renderTasks() {
     list.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0;">No tasks yet — add one above.</div>`;
     return;
   }
+  const s = loadSettings();
   const sorted = [...tasks].sort((a,b) => {
     const p = {high:0,medium:1,low:2};
-    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (s.moveBottom && a.done !== b.done) return a.done ? 1 : -1;
     return p[a.priority] - p[b.priority];
   });
   list.innerHTML = sorted.map(t => taskCardHTML(t)).join('');
@@ -961,6 +1125,67 @@ function saveTask() {
   closeModal(); saveTasks(); renderTasks();
   notify(editingId ? 'Task updated.' : 'Task added!');
 }
+
+// ── SETTINGS ──
+const LS_SETTINGS = 'tymos_settings';
+
+const defaultSettings = {
+  pomoDur: 25, shortBreak: 5, longBreak: 15,
+  autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
+  autoCheck: false, moveBottom: true
+};
+
+function loadSettings() {
+  try { return { ...defaultSettings, ...JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}') }; }
+  catch(e) { return { ...defaultSettings }; }
+}
+
+function applySettings(s) {
+  workSecs = s.pomoDur * 60;
+  if (!running) { totalSecs = workSecs; remaining = workSecs; }
+  document.getElementById('timerDisplay').textContent = fmt(remaining);
+  updateRing();
+}
+
+function openSettings() {
+  const s = loadSettings();
+  document.getElementById('sPomoDur').value         = s.pomoDur;
+  document.getElementById('sShortBreak').value      = s.shortBreak;
+  document.getElementById('sLongBreak').value       = s.longBreak;
+  document.getElementById('sAutoBreak').checked     = s.autoBreak;
+  document.getElementById('sAutoPomodoro').checked  = s.autoPomodoro;
+  document.getElementById('sLongBreakInterval').value = s.longBreakInterval;
+  document.getElementById('sAutoCheck').checked     = s.autoCheck;
+  document.getElementById('sMoveBottom').checked    = s.moveBottom;
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+function saveSettings() {
+  const s = {
+    pomoDur:           Math.max(1, parseInt(document.getElementById('sPomoDur').value) || 25),
+    shortBreak:        Math.max(1, parseInt(document.getElementById('sShortBreak').value) || 5),
+    longBreak:         Math.max(1, parseInt(document.getElementById('sLongBreak').value) || 15),
+    autoBreak:         document.getElementById('sAutoBreak').checked,
+    autoPomodoro:      document.getElementById('sAutoPomodoro').checked,
+    longBreakInterval: Math.max(1, parseInt(document.getElementById('sLongBreakInterval').value) || 4),
+    autoCheck:         document.getElementById('sAutoCheck').checked,
+    moveBottom:        document.getElementById('sMoveBottom').checked,
+  };
+  localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
+  applySettings(s);
+  closeSettings();
+  notify('Settings saved.');
+}
+
+// Init settings on load
+applySettings(loadSettings());
 
 document.addEventListener('keydown', e => {
   if(e.key==='Escape') closeModal();
