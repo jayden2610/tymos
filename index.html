@@ -1408,7 +1408,9 @@ function spGetToken() {
 }
 
 function spInit(token) {
-  document.getElementById('spotifyConnectBtn').style.display = 'none';
+  const connectBtn = document.getElementById('spotifyConnectBtn');
+  connectBtn.disabled = true;
+  connectBtn.querySelector('.spotify-connect-label').textContent = 'Connecting…';
   window.onSpotifyWebPlaybackSDKReady = () => {
     spPlayer = new Spotify.Player({
       name: 'Tymos',
@@ -1417,6 +1419,7 @@ function spInit(token) {
     });
     spPlayer.addListener('ready', ({ device_id }) => {
       spDeviceId = device_id;
+      connectBtn.style.display = 'none';
       document.getElementById('spotifyPlayer').classList.add('active');
       spTransferPlayback(device_id, token);
       spPollInterval = setInterval(() => spFetchState(token), 1500);
