@@ -1332,20 +1332,73 @@ function saveSettings() {
 // Init settings on load
 applySettings(loadSettings());
 
-// ── SPOTIFY ──
-const SP_CLIENT_ID   = '7504a53817024d88a6d68b36b27f8861';
-const SP_REDIRECT    = 'https://jayden2610.github.io/tymos/';
-const SP_SCOPES      = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
-const SP_TOKEN_KEY   = 'tymos_sp_token';
-const SP_EXPIRY_KEY  = 'tymos_sp_expiry';
+// ── SPOTIFY (PKCE) ──
+const SP_CLIENT_ID  = '7504a53817024d88a6d68b36b27f8861';
+const SP_REDIRECT   = 'https://jayden2610.github.io/tymos/';
+const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+const SP_TOKEN_KEY  = 'tymos_sp_token';
+const SP_EXPIRY_KEY = 'tymos_sp_expiry';
+const SP_VERIFIER_KEY = 'tymos_sp_verifier';
 
 let spPlayer = null, spDeviceId = null, spPlaying = false;
 let spDurMs = 0, spPosMs = 0, spPollInterval = null;
 
-function spotifyLogin() {
-  const state = Math.random().toString(36).slice(2);
-  const url = `https://accounts.spotify.com/authorize?client_id=${SP_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(SP_REDIRECT)}&scope=${encodeURIComponent(SP_SCOPES)}&state=${state}`;
-  window.location = url;
+// ── PKCE helpers ──
+function spRandBytes(n) {
+  return crypto.getRandomValues(new Uint8Array(n));
+}
+function spBase64url(buf) {
+  return btoa(String.fromCharCode(...buf)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function spGenerateVerifier() {
+  return spBase64url(spRandBytes(32));
+}
+async function spGenerateChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return spBase64url(new Uint8Array(hash));
+}
+
+async function spotifyLogin() {
+  const verifier = await spGenerateVerifier();
+  const challenge = await spGenerateChallenge(verifier);
+  localStorage.setItem(SP_VERIFIER_KEY, verifier);
+  const url = new URL('https://accounts.spotify.com/authorize');
+  url.searchParams.set('client_id', SP_CLIENT_ID);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('redirect_uri', SP_REDIRECT);
+  url.searchParams.set('scope', SP_SCOPES);
+  url.searchParams.set('code_challenge_method', 'S256');
+  url.searchParams.set('code_challenge', challenge);
+  window.location = url.toString();
+}
+
+async function spHandleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (!code) return;
+  const verifier = localStorage.getItem(SP_VERIFIER_KEY);
+  if (!verifier) return;
+  window.history.replaceState(null, '', window.location.pathname);
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: SP_CLIENT_ID,
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: SP_REDIRECT,
+      code_verifier: verifier
+    })
+  });
+  const data = await resp.json();
+  if (!data.access_token) { console.error('Spotify token error', data); return; }
+  localStorage.removeItem(SP_VERIFIER_KEY);
+  const expiry = Date.now() + (data.expires_in || 3600) * 1000;
+  localStorage.setItem(SP_TOKEN_KEY, data.access_token);
+  localStorage.setItem(SP_EXPIRY_KEY, expiry);
+  if (data.refresh_token) localStorage.setItem('tymos_sp_refresh', data.refresh_token);
+  spInit(data.access_token);
 }
 
 function spGetToken() {
@@ -1354,50 +1407,46 @@ function spGetToken() {
   return localStorage.getItem(SP_TOKEN_KEY);
 }
 
-function spHandleCallback() {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return;
-  const params = Object.fromEntries(new URLSearchParams(hash));
-  if (!params.access_token) return;
-  const expiry = Date.now() + parseInt(params.expires_in || 3600) * 1000;
-  localStorage.setItem(SP_TOKEN_KEY, params.access_token);
-  localStorage.setItem(SP_EXPIRY_KEY, expiry);
-  window.history.replaceState(null, '', window.location.pathname);
-  spInit(params.access_token);
-}
-
 function spInit(token) {
   document.getElementById('spotifyConnectBtn').style.display = 'none';
-
   window.onSpotifyWebPlaybackSDKReady = () => {
     spPlayer = new Spotify.Player({
       name: 'Tymos',
       getOAuthToken: cb => cb(token),
       volume: 0.7
     });
-
     spPlayer.addListener('ready', ({ device_id }) => {
       spDeviceId = device_id;
       document.getElementById('spotifyPlayer').classList.add('active');
       spTransferPlayback(device_id, token);
       spPollInterval = setInterval(() => spFetchState(token), 1500);
     });
-
-    spPlayer.addListener('player_state_changed', state => {
-      if (!state) return;
-      spUpdateUI(state);
-    });
-
+    spPlayer.addListener('player_state_changed', state => { if (state) spUpdateUIFromSDK(state); });
     spPlayer.connect();
   };
-
-  if (window.Spotify) {
-    window.onSpotifyWebPlaybackSDKReady();
-  } else {
+  if (window.Spotify) { window.onSpotifyWebPlaybackSDKReady(); }
+  else {
     const s = document.createElement('script');
     s.src = 'https://sdk.scdn.co/spotify-player.js';
     document.head.appendChild(s);
   }
+}
+
+function spUpdateUIFromSDK(state) {
+  spPlaying = !state.paused;
+  spDurMs   = state.duration;
+  spPosMs   = state.position;
+  const track = state.track_window?.current_track;
+  if (!track) return;
+  document.getElementById('spTitle').textContent  = track.name;
+  document.getElementById('spArtist').textContent = track.artists.map(a => a.name).join(', ');
+  document.getElementById('spPlayBtn').innerHTML  = spPlaying ? '&#9646;&#9646;' : '&#9654;';
+  document.getElementById('spElapsed').textContent  = spFmtMs(spPosMs);
+  document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
+  document.getElementById('spFill').style.width = spDurMs > 0 ? `${(spPosMs/spDurMs)*100}%` : '0%';
+  const art = track.album?.images?.[0]?.url;
+  const artEl = document.getElementById('spArt');
+  if (art && artEl) artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
 }
 
 function spTransferPlayback(deviceId, token) {
@@ -1411,22 +1460,20 @@ function spTransferPlayback(deviceId, token) {
 function spFetchState(token) {
   fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
-  }).then(r => r.ok ? r.json() : null).then(data => {
-    if (!data || !data.item) return;
-    spDurMs = data.item.duration_ms;
-    spPosMs = data.progress_ms + (data.is_playing ? 1500 : 0);
+  }).then(r => r.status === 200 ? r.json() : null).then(data => {
+    if (!data?.item) return;
+    spDurMs  = data.item.duration_ms;
+    spPosMs  = data.progress_ms;
     spPlaying = data.is_playing;
-    const art = data.item.album?.images?.[0]?.url;
     document.getElementById('spTitle').textContent   = data.item.name;
     document.getElementById('spArtist').textContent  = data.item.artists.map(a => a.name).join(', ');
     document.getElementById('spPlayBtn').innerHTML   = spPlaying ? '&#9646;&#9646;' : '&#9654;';
-    document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
+    document.getElementById('spElapsed').textContent  = spFmtMs(spPosMs);
     document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
-    document.getElementById('spFill').style.width   = spDurMs > 0 ? `${(spPosMs/spDurMs)*100}%` : '0%';
+    document.getElementById('spFill').style.width    = spDurMs > 0 ? `${(spPosMs/spDurMs)*100}%` : '0%';
+    const art = data.item.album?.images?.[0]?.url;
     const artEl = document.getElementById('spArt');
-    if (art) {
-      artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="album art">`;
-    }
+    if (art && artEl) artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
   }).catch(() => {});
 }
 
@@ -1448,7 +1495,7 @@ function spPrev()       { spApiCall('previous'); }
 
 function spSeek(e) {
   const token = spGetToken(); if (!token || !spDurMs) return;
-  const pct = e.offsetX / e.currentTarget.offsetWidth;
+  const pct   = e.offsetX / e.currentTarget.offsetWidth;
   const posMs = Math.floor(pct * spDurMs);
   fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${posMs}&device_id=${spDeviceId}`, {
     method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
@@ -1458,18 +1505,16 @@ function spSeek(e) {
 function spDisconnect() {
   if (spPlayer) { spPlayer.disconnect(); spPlayer = null; }
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
-  localStorage.removeItem(SP_TOKEN_KEY); localStorage.removeItem(SP_EXPIRY_KEY);
+  ['tymos_sp_token','tymos_sp_expiry','tymos_sp_refresh',SP_VERIFIER_KEY].forEach(k => localStorage.removeItem(k));
   document.getElementById('spotifyPlayer').classList.remove('active');
   document.getElementById('spotifyConnectBtn').style.display = 'flex';
   const artEl = document.getElementById('spArt');
-  if (artEl && artEl.tagName === 'IMG') {
-    artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
-  }
+  if (artEl && artEl.tagName === 'IMG') artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
 }
 
-// Init on load — resume if token exists
-(function() {
-  spHandleCallback();
+// Init on load
+(async function() {
+  await spHandleCallback();
   const token = spGetToken();
   if (token) spInit(token);
 })();
