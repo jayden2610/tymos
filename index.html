@@ -144,10 +144,15 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 }
 .btn-primary:hover { background: var(--accent2); }
 
-.stats-row { display: flex; gap: 20px; width: 100%; justify-content: center; }
-.stat-block { text-align: center; }
-.stat-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 400; color: var(--text); }
-.stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+.stats-row { display: flex; gap: 6px; width: 100%; justify-content: center; flex-wrap: wrap; }
+.stat-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 13px; border-radius: 100px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.stat-pill-icon { font-size: 12px; line-height: 1; opacity: 0.75; }
+.stat-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; color: var(--text); }
+.stat-lbl { font-size: 11px; font-weight: 600; color: var(--muted); }
 
 /* ── TASK PANEL ── */
 .task-panel { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
@@ -829,20 +834,20 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="btn" onclick="skipPhase()">Skip</button>
     </div>
     <div class="stats-row">
-      <div class="stat-block" style="padding-right:20px;border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);opacity:0.6;">Today</span>
+      <div class="stat-pill">
+        <span class="stat-pill-icon">🍅</span>
+        <span class="stat-val" id="statSessions">0</span>
+        <span class="stat-lbl">sessions</span>
       </div>
-      <div class="stat-block">
-        <div class="stat-val" id="statSessions">0</div>
-        <div class="stat-lbl">Sessions</div>
+      <div class="stat-pill">
+        <span class="stat-pill-icon">⏱</span>
+        <span class="stat-val" id="statTime">0m</span>
+        <span class="stat-lbl">focus</span>
       </div>
-      <div class="stat-block" style="border-left:1px solid var(--border);padding-left:20px;">
-        <div class="stat-val" id="statTime">0m</div>
-        <div class="stat-lbl">Focus Time</div>
-      </div>
-      <div class="stat-block" style="border-left:1px solid var(--border);padding-left:20px;">
-        <div class="stat-val" id="statTasks">0</div>
-        <div class="stat-lbl">Done</div>
+      <div class="stat-pill">
+        <span class="stat-pill-icon">✓</span>
+        <span class="stat-val" id="statTasks">0</span>
+        <span class="stat-lbl">done</span>
       </div>
     </div>
     <div class="active-task-strip" id="activeTaskStrip">
