@@ -691,6 +691,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
           <path d="M19.5 10.65c-.28 0-.56-.08-.8-.25-3.07-1.85-8.13-2.02-11.06-1.12-.43.13-.89-.11-1.02-.54-.13-.43.11-.89.54-1.02 3.37-1.02 8.97-.82 12.49 1.3.4.24.52.76.28 1.16-.16.27-.41.47-.43.47z" fill="white"/>
         </svg>
         <span class="spotify-connect-label">Connect Spotify</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#1DB954;background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.3);border-radius:100px;padding:2px 7px;flex-shrink:0;">Premium</span>
       </button>
 
       <!-- Player state (hidden until connected) -->
@@ -1433,11 +1434,28 @@ function spGetToken() {
 async function spInit(token) {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
 
+  // Gate: Premium only
+  let product = localStorage.getItem(SP_PRODUCT_KEY);
+  if (!product) {
+    try {
+      const r = await fetch('https://api.spotify.com/v1/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const me = await r.json();
+      product = me.product || 'free';
+      localStorage.setItem(SP_PRODUCT_KEY, product);
+    } catch { product = 'free'; }
+  }
+  if (product !== 'premium') {
+    [SP_TOKEN_KEY, SP_EXPIRY_KEY, 'tymos_sp_refresh', SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
+    notify('Spotify Premium required to use this feature.');
+    return;
+  }
+
   // Reset state
   spFirstPoll = true;
   spPollCount = 0;
 
-  // Always show player UI immediately — don't wait for SDK or product check
   const connectBtn = document.getElementById('spotifyConnectBtn');
   connectBtn.style.display = 'none';
   document.getElementById('spotifyPlayer').classList.add('active');
@@ -1446,33 +1464,10 @@ async function spInit(token) {
   document.getElementById('spOpenBtn').style.display = 'inline-block';
   document.querySelector('.sp-device').textContent = '🔈 Waiting for device…';
 
-  // Start polling immediately — works for both free and premium
   spFetchState(token);
   spPollInterval = setInterval(() => spFetchState(token), 3000);
-  console.log('🔍 Polling started — will check every 3s');
 
-  // Detect if premium — load SDK in background (non-blocking, optional)
-  let product = localStorage.getItem(SP_PRODUCT_KEY);
-  if (!product) {
-    try {
-      const r = await fetch('https://api.spotify.com/v1/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (r.status === 403) {
-        console.error('🔍 403 on /v1/me — account not authorized in Spotify Dev Dashboard');
-        product = 'free'; // fallback
-      } else {
-        const me = await r.json();
-        product = me.product || 'free';
-      }
-      localStorage.setItem(SP_PRODUCT_KEY, product);
-    } catch { product = 'free'; }
-  }
-  console.log('🔍 Product:', product);
-
-  if (product === 'premium') {
-    loadSpotifySDK(token); // non-blocking, loads in background
-  }
+  loadSpotifySDK(token);
 }
 
 function loadSpotifySDK(token) {
