@@ -1969,7 +1969,9 @@ async function submitAuthModal() {
     if (error) { errEl.textContent = error.message; return; }
     closeAuthModal();
   } else {
-    ({ error } = await sb.auth.signUp({ email, password }));
+    const signUpResult = await sb.auth.signUp({ email, password });
+    console.log('signUp result:', JSON.stringify(signUpResult));
+    const error = signUpResult.error;
     btn.disabled = false; btn.textContent = 'Sign up';
     if (error) { errEl.textContent = error.message; return; }
     // Hide form, show verification message
