@@ -782,8 +782,10 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
       <button class="btn" onclick="skipPhase()">Skip</button>
     </div>
-    <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);opacity:0.6;text-align:center;width:100%;">Today</div>
     <div class="stats-row">
+      <div class="stat-block" style="padding-right:20px;border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);opacity:0.6;">Today</span>
+      </div>
       <div class="stat-block">
         <div class="stat-val" id="statSessions">0</div>
         <div class="stat-lbl">Sessions</div>
