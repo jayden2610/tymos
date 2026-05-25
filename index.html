@@ -308,9 +308,10 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(30,18,8,0.4);
   display: flex; align-items: center; justify-content: center;
-  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  z-index: 100; opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
 }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-overlay.open { opacity: 1; pointer-events: all; visibility: visible; }
 
 .modal {
   background: var(--surface); border: 1px solid var(--border2);
@@ -1559,7 +1560,7 @@ function createSpotifyPlayer(token) {
       else if (art && artEl) artEl.src = art;
       const openBtn = document.getElementById('spOpenBtn');
       if (openBtn) openBtn.style.display = 'none';
-      document.querySelector('.sp-device').textContent = '🔊 Tymos';
+      // device label is owned by the REST poll — don't overwrite here
     });
 
     spPlayer.connect();
@@ -1640,7 +1641,9 @@ function spTogglePlay() {
 function spNext() {
   if (spCmdPending) return;
   spCmdPending = true;
-  spApiCall('next').finally(() => {
+  const token = spGetToken();
+  spApiCall('next').then(() => {
+    if (token) setTimeout(() => spFetchState(token), 400);
     setTimeout(() => { spCmdPending = false; }, 800);
   });
 }
@@ -1648,7 +1651,9 @@ function spNext() {
 function spPrev() {
   if (spCmdPending) return;
   spCmdPending = true;
-  spApiCall('previous').finally(() => {
+  const token = spGetToken();
+  spApiCall('previous').then(() => {
+    if (token) setTimeout(() => spFetchState(token), 400);
     setTimeout(() => { spCmdPending = false; }, 800);
   });
 }
