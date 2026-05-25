@@ -6,6 +6,7 @@
 <title>Tymos · Reports</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -331,6 +332,31 @@ body {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .kpi-val  { font-size: 20px; }
 }
+
+/* ── AUTH BUTTON ── */
+.auth-btn {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--text2); background: transparent;
+  border: 1px solid var(--border2); border-radius: 6px;
+  padding: 5px 12px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+  text-decoration: none; white-space: nowrap;
+}
+.auth-btn:hover { background: var(--surface2); color: var(--text); }
+.auth-btn.signed-in { color: var(--accent); border-color: rgba(124,92,58,0.25); background: var(--accent-bg); }
+.auth-btn.signed-in:hover { background: rgba(124,92,58,0.15); }
+.auth-avatar {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent3); display: inline-flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.sync-badge {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.06em;
+  padding: 2px 7px; border-radius: 100px; font-weight: 500;
+}
+.sync-badge.synced { background: rgba(74,140,92,0.12); color: var(--green); }
+.sync-badge.local  { background: rgba(184,144,58,0.12); color: var(--yellow); }
 </style>
 </head>
 <body>
@@ -338,7 +364,10 @@ body {
 <div class="header">
   <a href="index.html" class="back-btn">← Timer</a>
   <span class="logo">Tymos<span class="logo-sep">·</span><span class="logo-tag">Reports</span></span>
-  <span class="header-date" id="headerDate">—</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="header-date" id="headerDate">—</span>
+    <button class="auth-btn" id="authBtn" onclick="authSignIn()">Sign in</button>
+  </div>
 </div>
 
 <div class="main">
@@ -796,15 +825,175 @@ function render() {
   drawDowChart('dowChart', dowStats, 160);
 }
 
+// ── SUPABASE AUTH + SYNC ──
+const SB_URL  = '__SUPABASE_URL__';
+const SB_ANON = '__SUPABASE_ANON_KEY__';
+
+let sb = null;
+let sbUser = null;
+
+try {
+  sb = supabase.createClient(SB_URL, SB_ANON);
+} catch(e) {
+  console.warn('Supabase init failed — running in local-only mode.', e.message);
+}
+
+function updateAuthUI(user) {
+  const btn = document.getElementById('authBtn');
+  if (user) {
+    const initial = (user.email || 'U')[0].toUpperCase();
+    btn.className = 'auth-btn signed-in';
+    btn.innerHTML = `<span class="auth-avatar">${initial}</span>${user.email.split('@')[0]}`;
+    btn.onclick = authSignOut;
+  } else {
+    btn.className = 'auth-btn';
+    btn.innerHTML = 'Sign in';
+    btn.onclick = authSignIn;
+  }
+}
+
+async function authSignIn() {
+  if (!sb) return;
+  await sb.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: 'https://jayden2610.github.io/tymos/dashboard.html' }
+  });
+}
+
+async function authSignOut() {
+  if (!sb) return;
+  await sb.auth.signOut();
+  sbUser = null;
+  updateAuthUI(null);
+  render(); // re-render with localStorage fallback
+}
+
+async function loadLogFromSupabase() {
+  if (!sb || !sbUser) return null;
+  try {
+    const { data, error } = await sb.from('daily_log')
+      .select('date, sessions, focus_mins, tasks_done')
+      .eq('user_id', sbUser.id)
+      .order('date', { ascending: true });
+    if (error) throw error;
+    return data.map(r => ({
+      date:       r.date,
+      sessions:   r.sessions   || 0,
+      focusMins:  r.focus_mins || 0,
+      tasksDone:  r.tasks_done || 0,
+    }));
+  } catch(e) {
+    console.warn('loadLogFromSupabase error:', e.message);
+    return null;
+  }
+}
+
+async function loadGlobalStatsFromSupabase() {
+  if (!sb || !sbUser) return {};
+  try {
+    const { data } = await sb.from('user_stats')
+      .select('tasks_done').eq('user_id', sbUser.id).maybeSingle();
+    return data ? { tasksDone: data.tasks_done } : {};
+  } catch { return {}; }
+}
+
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', () => {
-  render();
+document.addEventListener('DOMContentLoaded', async () => {
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(render, 120);
   });
+
+  if (!sb) { render(); return; }
+
+  // Check existing session first, render immediately with localStorage
+  render();
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    sbUser = session.user;
+    updateAuthUI(sbUser);
+    // Re-render with real Supabase data
+    const sbLog = await loadLogFromSupabase();
+    const sbGs  = await loadGlobalStatsFromSupabase();
+    if (sbLog !== null) renderWithData(sbLog, sbGs, false);
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      sbUser = session.user;
+      updateAuthUI(sbUser);
+      const sbLog = await loadLogFromSupabase();
+      const sbGs  = await loadGlobalStatsFromSupabase();
+      if (sbLog !== null) renderWithData(sbLog, sbGs, false);
+    } else if (event === 'SIGNED_OUT') {
+      sbUser = null;
+      updateAuthUI(null);
+      render();
+    }
+  });
 });
+
+// Separate render entry-point that accepts pre-loaded data
+function renderWithData(log, gs, isDemo) {
+  const now = new Date();
+  const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('headerDate').textContent =
+    `${DOW_NAMES[now.getDay()]} · ${MONTHS_NAMES[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  const notice = document.getElementById('demoNotice');
+  if (isDemo) notice.style.display = 'flex'; else notice.style.display = 'none';
+
+  // Add a "synced" badge to header when using Supabase
+  const btn = document.getElementById('authBtn');
+  if (btn && sbUser) {
+    const existing = document.getElementById('syncBadge');
+    if (!existing) {
+      const badge = document.createElement('span');
+      badge.id = 'syncBadge';
+      badge.className = 'sync-badge synced';
+      badge.textContent = 'synced';
+      btn.parentNode.insertBefore(badge, btn.nextSibling);
+    }
+  }
+
+  const last14   = getLastNDays(log, 14);
+  const dowStats = getDowStats(log);
+
+  const totalSessions  = log.reduce((s,e) => s + (e.sessions  || 0), 0);
+  const totalFocusMins = log.reduce((s,e) => s + (e.focusMins || 0), 0);
+  const totalTasks     = gs.tasksDone || log.reduce((s,e) => s + (e.tasksDone || 0), 0);
+  const activeDays     = log.filter(e => (e.sessions || 0) > 0).length;
+  const dailyAvg       = activeDays > 0 ? Math.round(totalFocusMins / activeDays) : 0;
+  const bestEntry      = log.reduce((best,e) => (e.focusMins||0) > ((best&&best.focusMins)||0) ? e : best, null);
+  const streak         = getStreak(log);
+  const maxDow         = dowStats.reduce((best,d) => d.avg > best.avg ? d : best, {avg:0,fullLabel:'—',label:'—'});
+
+  document.getElementById('kpiSessions').textContent = totalSessions;
+  document.getElementById('kpiFocus').textContent    = fmtMins(totalFocusMins);
+  document.getElementById('kpiTasks').textContent    = totalTasks;
+  document.getElementById('kpiAvg').textContent      = dailyAvg + 'm';
+  document.getElementById('kpiBest').textContent     = bestEntry ? bestEntry.focusMins + 'm' : '—';
+  document.getElementById('kpiBestDate').textContent = bestEntry ? fmtDate(bestEntry.date) : 'no data yet';
+
+  if (bestEntry) {
+    document.getElementById('hlBestVal').textContent  = `${bestEntry.focusMins}m · ${bestEntry.sessions} session${bestEntry.sessions!==1?'s':''}`;
+    document.getElementById('hlBestDesc').textContent = fmtDate(bestEntry.date);
+  } else {
+    document.getElementById('hlBestVal').textContent  = 'No data yet';
+    document.getElementById('hlBestDesc').textContent = '—';
+  }
+  document.getElementById('hlStreakVal').textContent   = streak > 0 ? `${streak} day${streak!==1?'s':''}` : 'None';
+  document.getElementById('hlStreakDesc').textContent  = streak > 2 ? 'Great momentum!' : streak > 0 ? 'Keep it going!' : 'Start a session to begin';
+  document.getElementById('hlMostProdVal').textContent  = maxDow.avg > 0 ? maxDow.fullLabel : 'No data yet';
+  document.getElementById('hlMostProdDesc').textContent = maxDow.avg > 0 ? `${maxDow.avg}m avg focus time` : '—';
+
+  drawBarChart('sessionsChart', last14, { valueKey:'sessions', barColor:'#7c5c3a', todayColor:'#b8903a', height:180, valueFmt:v=>v });
+  drawBarChart('focusChart',    last14, { valueKey:'focusMins', barColor:'#3a6b8c', todayColor:'#5a9cc0', height:180, valueFmt:v=>v+'m' });
+  drawDowChart('dowChart', dowStats, 160);
+}
 </script>
 </body>
 </html>
