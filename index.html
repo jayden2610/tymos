@@ -2018,7 +2018,7 @@ function setSyncStatus(msg, synced = true) {
 // Each function tries Supabase first, falls back to localStorage silently.
 
 async function sbSaveDailyLog() {
-  if (!sb || !sbUser) { saveDailyLog(); return; }
+  if (!sb || !sbUser) { _saveDailyLog(); return; }
   try {
     const today = dateKey(new Date());
     const entry = {
@@ -2040,7 +2040,7 @@ async function sbSaveDailyLog() {
 }
 
 async function sbSaveStats() {
-  if (!sb || !sbUser) { saveStats(); return; }
+  if (!sb || !sbUser) { _saveStats(); return; }
   try {
     const { error } = await sb.from('user_stats').upsert({
       user_id:         sbUser.id,
@@ -2057,7 +2057,7 @@ async function sbSaveStats() {
 }
 
 async function sbSaveTasks() {
-  if (!sb || !sbUser) { saveTasks(); return; }
+  if (!sb || !sbUser) { _saveTasks(); return; }
   try {
     const { error } = await sb.from('user_tasks').upsert({
       user_id:  sbUser.id,
@@ -2111,6 +2111,9 @@ const _origSaveStats    = saveStats;
 const _origSaveTasks    = saveTasks;
 
 // Replace with async-aware wrappers (fire-and-forget)
+const _saveDailyLog = saveDailyLog;
+const _saveStats    = saveStats;
+const _saveTasks    = saveTasks;
 saveDailyLog = function() { sbSaveDailyLog(); };
 saveStats    = function() { sbSaveStats(); };
 saveTasks    = function() { sbSaveTasks(); };
