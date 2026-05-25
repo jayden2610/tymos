@@ -946,6 +946,8 @@ async function authSignOut() {
   await sb.auth.signOut();
   sbUser = null;
   updateAuthUI(null);
+  const badge = document.getElementById('syncBadge');
+  if (badge) badge.remove();
   render(); // re-render with localStorage fallback
 }
 
@@ -988,26 +990,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!sb) { render(); return; }
 
-  // Check existing session first, render immediately with localStorage
-  render();
-
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     sbUser = session.user;
     updateAuthUI(sbUser);
-    // Re-render with real Supabase data
     const sbLog = await loadLogFromSupabase();
     const sbGs  = await loadGlobalStatsFromSupabase();
-    if (sbLog !== null) renderWithData(sbLog, sbGs, false);
+    // If signed in with no data yet, show empty state (not demo)
+    renderWithData(sbLog ?? [], sbGs, false);
+  } else {
+    // Not signed in — render with localStorage (may show demo)
+    render();
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+      if (sbUser?.id === session.user.id) return; // already loaded
       sbUser = session.user;
       updateAuthUI(sbUser);
       const sbLog = await loadLogFromSupabase();
       const sbGs  = await loadGlobalStatsFromSupabase();
-      if (sbLog !== null) renderWithData(sbLog, sbGs, false);
+      renderWithData(sbLog ?? [], sbGs, false);
     } else if (event === 'SIGNED_OUT') {
       sbUser = null;
       updateAuthUI(null);
