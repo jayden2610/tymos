@@ -1970,21 +1970,25 @@ async function submitAuthModal() {
     closeAuthModal();
   } else {
     const signUpResult = await sb.auth.signUp({ email, password });
-    console.log('signUp result:', JSON.stringify(signUpResult));
     const error = signUpResult.error;
     btn.disabled = false; btn.textContent = 'Sign up';
     if (error) { errEl.textContent = error.message; return; }
-    // Hide form, show verification message
-    document.getElementById('authModalEmail').style.display = 'none';
-    document.getElementById('authModalPassword').style.display = 'none';
-    document.getElementById('authModalConfirmWrap').style.display = 'none';
-    btn.style.display = 'none';
-    document.querySelector('.auth-modal-divider').style.display = 'none';
-    document.querySelector('.auth-modal-btn.secondary').style.display = 'none';
-    document.querySelector('.auth-modal-toggle').style.display = 'none';
-    document.getElementById('authModalTitle').textContent = 'Check your email';
-    errEl.style.color = 'var(--text2)';
-    errEl.innerHTML = 'A verification link has been sent to <strong>' + email + '</strong>. Click it to activate your account, then sign in.';
+    if (signUpResult.data.session) {
+      // Email confirm is OFF — user is live immediately
+      closeAuthModal();
+    } else {
+      // Email confirm is ON — show verification message
+      document.getElementById('authModalEmail').style.display = 'none';
+      document.getElementById('authModalPassword').style.display = 'none';
+      document.getElementById('authModalConfirmWrap').style.display = 'none';
+      btn.style.display = 'none';
+      document.querySelector('.auth-modal-divider').style.display = 'none';
+      document.querySelector('.auth-modal-btn.secondary').style.display = 'none';
+      document.querySelector('.auth-modal-toggle').style.display = 'none';
+      document.getElementById('authModalTitle').textContent = 'Check your email';
+      errEl.style.color = 'var(--text2)';
+      errEl.innerHTML = 'A verification link has been sent to <strong>' + email + '</strong>. Click it to activate your account, then sign in.';
+    }
   }
 }
 
