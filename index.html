@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -308,10 +309,9 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(30,18,8,0.4);
   display: flex; align-items: center; justify-content: center;
-  z-index: 100; opacity: 0; pointer-events: none; visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
-.modal-overlay.open { opacity: 1; pointer-events: all; visibility: visible; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
 
 .modal {
   background: var(--surface); border: 1px solid var(--border2);
@@ -645,6 +645,30 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   .task-panel { min-height: 50vh; }
   .timer-time { font-size: 38px; }
 }
+
+/* ── AUTH BUTTON ── */
+.auth-btn {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--text2); background: transparent;
+  border: 1px solid var(--border2); border-radius: 6px;
+  padding: 5px 12px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+  text-decoration: none; white-space: nowrap;
+}
+.auth-btn:hover { background: var(--surface2); color: var(--text); }
+.auth-btn.signed-in { color: var(--accent); border-color: rgba(124,92,58,0.25); background: var(--accent-bg); }
+.auth-btn.signed-in:hover { background: rgba(124,92,58,0.15); }
+.auth-avatar {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent3); display: inline-flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  flex-shrink: 0; display: none;
+}
+.sync-dot.active { display: block; }
 </style>
 </head>
 <body>
@@ -654,6 +678,22 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
     <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
+    <button class="auth-btn" id="authBtn" onclick="authAction()">Sign in</button>
+  </div>
+</div>
+
+<!-- Auth dropdown -->
+<div id="authDropdown" style="display:none;position:fixed;top:58px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;box-shadow:var(--shadow2);z-index:50;min-width:200px;padding:8px 0;">
+  <div style="padding:10px 14px 8px;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);">Signed in as</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:3px;word-break:break-all;" id="authEmail">—</div>
+  </div>
+  <div style="padding:4px 0;">
+    <div style="padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <div class="sync-dot active" id="syncDot"></div>
+      <span style="font-size:11px;font-weight:600;color:var(--muted);" id="syncStatus">Synced</span>
+    </div>
+    <button onclick="authSignOut()" style="width:100%;text-align:left;padding:8px 14px;background:none;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--red);cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background='rgba(184,79,58,0.07)'" onmouseout="this.style.background='none'">Sign out</button>
   </div>
 </div>
 
@@ -1560,7 +1600,7 @@ function createSpotifyPlayer(token) {
       else if (art && artEl) artEl.src = art;
       const openBtn = document.getElementById('spOpenBtn');
       if (openBtn) openBtn.style.display = 'none';
-      // device label is owned by the REST poll — don't overwrite here
+      document.querySelector('.sp-device').textContent = '🔊 Tymos';
     });
 
     spPlayer.connect();
@@ -1641,9 +1681,7 @@ function spTogglePlay() {
 function spNext() {
   if (spCmdPending) return;
   spCmdPending = true;
-  const token = spGetToken();
-  spApiCall('next').then(() => {
-    if (token) setTimeout(() => spFetchState(token), 400);
+  spApiCall('next').finally(() => {
     setTimeout(() => { spCmdPending = false; }, 800);
   });
 }
@@ -1651,9 +1689,7 @@ function spNext() {
 function spPrev() {
   if (spCmdPending) return;
   spCmdPending = true;
-  const token = spGetToken();
-  spApiCall('previous').then(() => {
-    if (token) setTimeout(() => spFetchState(token), 400);
+  spApiCall('previous').finally(() => {
     setTimeout(() => { spCmdPending = false; }, 800);
   });
 }
@@ -1691,12 +1727,211 @@ function spDisconnect() {
 })();
 
 document.addEventListener('keydown', e => {
-  if(e.key==='Escape') closeModal();
+  if(e.key==='Escape') { closeModal(); closeAuthDropdown(); }
   if(e.key===' ' && !['INPUT','TEXTAREA','BUTTON'].includes(e.target.tagName) && !e.target.isContentEditable) {
     e.preventDefault(); toggleTimer();
   }
 });
 renderTasks();
+
+// ── SUPABASE AUTH + SYNC ──
+const SB_URL  = '__SUPABASE_URL__';
+const SB_ANON = '__SUPABASE_ANON_KEY__';
+
+let sb = null;
+let sbUser = null;
+
+try {
+  sb = supabase.createClient(SB_URL, SB_ANON);
+} catch(e) {
+  console.warn('Supabase init failed — running in local-only mode.', e.message);
+}
+
+// ── Auth UI helpers ──
+function updateAuthUI(user) {
+  const btn = document.getElementById('authBtn');
+  if (user) {
+    const initial = (user.email || 'U')[0].toUpperCase();
+    btn.className = 'auth-btn signed-in';
+    btn.innerHTML = `<span class="auth-avatar">${initial}</span>${user.email.split('@')[0]}`;
+    document.getElementById('authEmail').textContent = user.email;
+  } else {
+    btn.className = 'auth-btn';
+    btn.innerHTML = 'Sign in';
+    document.getElementById('authDropdown').style.display = 'none';
+  }
+}
+
+function authAction() {
+  if (sbUser) {
+    const dd = document.getElementById('authDropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  } else {
+    authSignIn();
+  }
+}
+
+function closeAuthDropdown() {
+  document.getElementById('authDropdown').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  const btn = document.getElementById('authBtn');
+  const dd  = document.getElementById('authDropdown');
+  if (!btn.contains(e.target) && !dd.contains(e.target)) dd.style.display = 'none';
+});
+
+async function authSignIn() {
+  if (!sb) { notify('Auth unavailable — configure Supabase keys.'); return; }
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: 'https://jayden2610.github.io/tymos/' }
+  });
+  if (error) notify('Sign-in failed: ' + error.message);
+}
+
+async function authSignOut() {
+  if (!sb) return;
+  await sb.auth.signOut();
+  sbUser = null;
+  updateAuthUI(null);
+  closeAuthDropdown();
+  notify('Signed out.');
+}
+
+// ── Sync helpers ──
+function setSyncStatus(msg, synced = true) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncStatus');
+  if (!dot || !lbl) return;
+  dot.style.background = synced ? 'var(--green)' : 'var(--yellow)';
+  lbl.textContent = msg;
+}
+
+// ── Supabase data layer ──
+// Each function tries Supabase first, falls back to localStorage silently.
+
+async function sbSaveDailyLog() {
+  if (!sb || !sbUser) { saveDailyLog(); return; }
+  try {
+    const today = dateKey(new Date());
+    const entry = {
+      user_id:    sbUser.id,
+      date:       today,
+      sessions:   sessionsComplete,
+      focus_mins: Math.floor(totalFocusSecs / 60),
+      tasks_done: tasksDone,
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await sb.from('daily_log').upsert(entry, { onConflict: 'user_id,date' });
+    if (error) throw error;
+    setSyncStatus('Synced');
+  } catch(e) {
+    console.warn('sbSaveDailyLog error:', e.message);
+    setSyncStatus('Sync error', false);
+    saveDailyLog(); // fallback
+  }
+}
+
+async function sbSaveStats() {
+  if (!sb || !sbUser) { saveStats(); return; }
+  try {
+    const { error } = await sb.from('user_stats').upsert({
+      user_id:         sbUser.id,
+      sessions_complete: sessionsComplete,
+      total_focus_secs:  totalFocusSecs,
+      tasks_done:        tasksDone,
+      updated_at:        new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+  } catch(e) {
+    console.warn('sbSaveStats error:', e.message);
+    saveStats(); // fallback
+  }
+}
+
+async function sbSaveTasks() {
+  if (!sb || !sbUser) { saveTasks(); return; }
+  try {
+    const { error } = await sb.from('user_tasks').upsert({
+      user_id:  sbUser.id,
+      tasks:    JSON.stringify(tasks),
+      next_id:  nextId,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
+    setSyncStatus('Synced');
+  } catch(e) {
+    console.warn('sbSaveTasks error:', e.message);
+    setSyncStatus('Sync error', false);
+    saveTasks(); // fallback
+  }
+}
+
+async function sbLoadAll() {
+  if (!sb || !sbUser) return;
+  setSyncStatus('Syncing…', false);
+  try {
+    // Load stats
+    const { data: statsRow } = await sb.from('user_stats')
+      .select('*').eq('user_id', sbUser.id).maybeSingle();
+    if (statsRow) {
+      sessionsComplete = statsRow.sessions_complete || 0;
+      totalFocusSecs  = statsRow.total_focus_secs  || 0;
+      tasksDone       = statsRow.tasks_done         || 0;
+      updateStats();
+    }
+
+    // Load tasks
+    const { data: tasksRow } = await sb.from('user_tasks')
+      .select('*').eq('user_id', sbUser.id).maybeSingle();
+    if (tasksRow) {
+      try { tasks = JSON.parse(tasksRow.tasks || '[]'); } catch { tasks = []; }
+      nextId = tasksRow.next_id || 1;
+      renderTasks();
+    }
+
+    setSyncStatus('Synced');
+  } catch(e) {
+    console.warn('sbLoadAll error:', e.message);
+    setSyncStatus('Sync error', false);
+  }
+}
+
+// ── Patch existing save functions to use Supabase when signed in ──
+// Override the calls from tick(), toggleDone(), saveTask(), etc.
+const _origSaveDailyLog = saveDailyLog;
+const _origSaveStats    = saveStats;
+const _origSaveTasks    = saveTasks;
+
+// Replace with async-aware wrappers (fire-and-forget)
+saveDailyLog = function() { sbSaveDailyLog(); };
+saveStats    = function() { sbSaveStats(); };
+saveTasks    = function() { sbSaveTasks(); };
+
+// ── Session listener ──
+(async function initAuth() {
+  if (!sb) return;
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    sbUser = session.user;
+    updateAuthUI(sbUser);
+    await sbLoadAll();
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      sbUser = session.user;
+      updateAuthUI(sbUser);
+      notify('Signed in — syncing your data...');
+      await sbLoadAll();
+    } else if (event === 'SIGNED_OUT') {
+      sbUser = null;
+      updateAuthUI(null);
+    }
+  });
+})();
 </script>
 </body>
 </html>
