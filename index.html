@@ -1945,10 +1945,11 @@ function toggleAuthMode() {
 }
 
 async function submitAuthModal() {
-  const email = document.getElementById('authModalEmail').value.trim();
-  const password = document.getElementById('authModalPassword').value;
   const errEl = document.getElementById('authModalError');
   errEl.style.color = 'var(--red)';
+  if (!sb) { errEl.textContent = 'Connection error — please refresh and try again.'; return; }
+  const email = document.getElementById('authModalEmail').value.trim();
+  const password = document.getElementById('authModalPassword').value;
   if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
   if (authMode === 'signup') {
     const confirm = document.getElementById('authModalConfirm').value;
