@@ -78,7 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 40px 36px;
   gap: 28px;
   background: var(--surface);
@@ -782,6 +782,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
       <button class="btn" onclick="skipPhase()">Skip</button>
     </div>
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);opacity:0.6;text-align:center;width:100%;">Today</div>
     <div class="stats-row">
       <div class="stat-block">
         <div class="stat-val" id="statSessions">0</div>
@@ -1066,6 +1067,7 @@ function tick() {
     playChime();
     if (!isBreak) {
       sessionsComplete++; totalFocusSecs += workSecs;
+      todaySessions++; todayFocusSecs += workSecs;
       if (activeTaskId !== null) {
         const at = tasks.find(t => t.id === activeTaskId);
         if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
@@ -1076,14 +1078,14 @@ function tick() {
       notify('Break over — back to work.');
       enterWork();
     }
-    saveStats(); saveDailyLog(); updateStats();
+    saveStats(); saveTodayStats(); saveDailyLog(); updateStats();
     return;
   }
   remaining--;
-  if (!isBreak) totalFocusSecs++;
+  if (!isBreak) { totalFocusSecs++; todayFocusSecs++; }
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   updateRing();
-  if (remaining % 60 === 0) { updateStats(); saveStats(); }
+  if (remaining % 60 === 0) { updateStats(); saveStats(); saveTodayStats(); }
 }
 
 function enterBreak() {
@@ -1136,14 +1138,18 @@ function saveDailyLog() {
 function saveTasks() {
   localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
   localStorage.setItem(LS_NEXT_ID, nextId);
+  localStorage.setItem('tymos_active_task', activeTaskId !== null ? String(activeTaskId) : '');
 }
 function loadTasks() {
   try {
     const t = localStorage.getItem(LS_TASKS);
     const id = localStorage.getItem(LS_NEXT_ID);
+    const at = localStorage.getItem('tymos_active_task');
     if (t) tasks = JSON.parse(t);
     if (id) nextId = parseInt(id);
+    activeTaskId = (at !== null && at !== '') ? parseInt(at) : null;
   } catch(e) { tasks = []; }
+  updateActiveTaskStrip();
 }
 function saveStats() {
   localStorage.setItem(LS_STATS, JSON.stringify({sessionsComplete, totalFocusSecs, tasksDone}));
@@ -1158,12 +1164,37 @@ function loadStats() {
 // ── STATS ──
 let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
 let activeTaskId = null;
+
+// Today-only counters (reset each new day)
+const LS_TODAY = 'tymos_today';
+let todaySessions = 0, todayFocusSecs = 0, todayDone = 0;
+
+function loadTodayStats() {
+  try {
+    const raw = localStorage.getItem(LS_TODAY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      const today = dateKey(new Date());
+      if (d.date === today) {
+        todaySessions = d.sessions || 0;
+        todayFocusSecs = d.focusSecs || 0;
+        todayDone = d.done || 0;
+      }
+    }
+  } catch(e) {}
+}
+function saveTodayStats() {
+  const today = dateKey(new Date());
+  localStorage.setItem(LS_TODAY, JSON.stringify({ date: today, sessions: todaySessions, focusSecs: todayFocusSecs, done: todayDone }));
+}
+
 loadStats();
+loadTodayStats();
 
 function updateStats() {
-  document.getElementById('statSessions').textContent = sessionsComplete;
-  document.getElementById('statTime').textContent = Math.floor(totalFocusSecs/60) + 'm';
-  document.getElementById('statTasks').textContent = tasksDone;
+  document.getElementById('statSessions').textContent = todaySessions;
+  document.getElementById('statTime').textContent = Math.floor(todayFocusSecs/60) + 'm';
+  document.getElementById('statTasks').textContent = todayDone;
 }
 
 updateStats();
@@ -1339,7 +1370,8 @@ function updateActiveTaskStrip() {
 function toggleDone(id) {
   const t = tasks.find(x=>x.id===id); t.done = !t.done;
   tasksDone += t.done ? 1 : -1; tasksDone = Math.max(0, tasksDone);
-  updateStats(); saveTasks(); saveStats(); saveDailyLog(); renderTasks();
+  todayDone += t.done ? 1 : -1; todayDone = Math.max(0, todayDone);
+  updateStats(); saveTasks(); saveStats(); saveTodayStats(); saveDailyLog(); renderTasks();
 }
 
 function toggleItem(tid, si, ii) {
@@ -2102,6 +2134,7 @@ async function sbLoadAll() {
       sessionsComplete = statsRow.sessions_complete || 0;
       totalFocusSecs  = statsRow.total_focus_secs  || 0;
       tasksDone       = statsRow.tasks_done         || 0;
+      loadTodayStats();
       updateStats();
     }
 
@@ -2112,6 +2145,7 @@ async function sbLoadAll() {
       try { tasks = JSON.parse(tasksRow.tasks || '[]'); } catch { tasks = []; }
       nextId = tasksRow.next_id || 1;
       renderTasks();
+      updateActiveTaskStrip();
     }
 
     setSyncStatus('Synced');
