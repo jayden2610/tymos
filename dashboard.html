@@ -1121,9 +1121,9 @@ function renderWithData(log, gs, isDemo) {
     <h3 id="authModalTitle">Sign in</h3>
     <div class="auth-modal-error" id="authModalError"></div>
     <input type="email" id="authModalEmail" placeholder="Email" autocomplete="email"/>
-    <input type="password" id="authModalPassword" placeholder="Password" autocomplete="new-password" onkeydown="if(event.key==='Enter'&&authMode==='signin')submitAuthModal()"/>
-    <div id="authModalConfirmWrap" style="display:none;">
-      <input type="password" id="authModalConfirm" placeholder="Retype password" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuthModal()"/>
+    <input type="password" id="authModalPassword" placeholder="Password" autocomplete="new-password" onkeydown="if(event.key==='Enter'&&authMode==='signin')submitAuthModal()" style="margin-bottom:0;"/>
+    <div id="authModalConfirmWrap" style="display:none;margin:0;padding:0;">
+      <input type="password" id="authModalConfirm" placeholder="Retype password" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuthModal()" style="margin-top:10px;"/>
     </div>
     <button class="auth-modal-btn primary" onclick="submitAuthModal()" id="authModalSubmit">Sign in</button>
     <div class="auth-modal-divider">OR</div>
