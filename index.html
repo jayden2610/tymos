@@ -1380,17 +1380,17 @@ applySettings(loadSettings());
 // ── SPOTIFY (PKCE) ──
 const SP_CLIENT_ID  = '7504a53817024d88a6d68b36b27f8861';
 const SP_REDIRECT   = 'https://jayden2610.github.io/tymos/';
-const SP_SCOPES     = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
 const SP_TOKEN_KEY  = 'tymos_sp_token';
 const SP_EXPIRY_KEY = 'tymos_sp_expiry';
 const SP_VERIFIER_KEY = 'tymos_sp_verifier';
 const SP_PRODUCT_KEY = 'tymos_sp_product';
 
-let spPollInterval = null;
+let spPollInterval = null, spTickInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
 let spPlayer = null, spDeviceId = null;
-let spFirstPoll = false; // protects welcome message from being overwritten on first poll
-let spPollCount = 0;     // debug counter for polling status
+let spFirstPoll = false;
+let spCmdPending = false; // debounce flag for play/pause/next/prev
 
 // ── PKCE helpers ──
 function spRandBytes(n) {
@@ -1431,7 +1431,6 @@ async function spHandleCallback() {
   if (!verifier) return false;
   // Strip code from URL IMMEDIATELY — before any network call that could log it
   window.history.replaceState(null, '', window.location.pathname);
-  console.log('🔍 Exchanging code for token...');
   const resp = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1444,21 +1443,13 @@ async function spHandleCallback() {
     })
   });
   const data = await resp.json();
-  console.log('🔍 Token exchange status:', resp.status, data.error || 'OK');
-  if (!data.access_token) {
-    console.error('🔍 Token exchange FAILED:', data);
-    localStorage.removeItem(SP_VERIFIER_KEY);
-    return false;
-  }
+  if (!data.access_token) { localStorage.removeItem(SP_VERIFIER_KEY); return false; }
   localStorage.removeItem(SP_VERIFIER_KEY);
   const expiry = Date.now() + (data.expires_in || 3600) * 1000;
   localStorage.setItem(SP_TOKEN_KEY, data.access_token);
   localStorage.setItem(SP_EXPIRY_KEY, expiry);
   if (data.refresh_token) localStorage.setItem('tymos_sp_refresh', data.refresh_token);
-  // Also detect product from the token response if available
-  // Clear old product cache since we have a fresh token
   localStorage.removeItem(SP_PRODUCT_KEY);
-  console.log('🔍 Token stored. Scopes granted:', data.scope || 'unknown');
   return true;
 }
 
@@ -1491,7 +1482,7 @@ async function spInit(token) {
 
   // Reset state
   spFirstPoll = true;
-  spPollCount = 0;
+  spDurMs = 0; spPosMs = 0; spPlaying = false;
 
   const connectBtn = document.getElementById('spotifyConnectBtn');
   connectBtn.style.display = 'none';
@@ -1503,6 +1494,15 @@ async function spInit(token) {
 
   spFetchState(token);
   spPollInterval = setInterval(() => spFetchState(token), 3000);
+
+  // Local 1s ticker for smooth progress bar between polls
+  if (spTickInterval) clearInterval(spTickInterval);
+  spTickInterval = setInterval(() => {
+    if (!spPlaying || spDurMs === 0) return;
+    spPosMs = Math.min(spPosMs + 1000, spDurMs);
+    document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
+    document.getElementById('spFill').style.width = `${(spPosMs / spDurMs) * 100}%`;
+  }, 1000);
 
   loadSpotifySDK(token);
 }
@@ -1532,17 +1532,34 @@ function createSpotifyPlayer(token) {
 
     spPlayer.addListener('ready', ({ device_id }) => {
       spDeviceId = device_id;
-      console.log('🔍 SDK ready — Tymos device active');
-      // Transfer playback to Tymos silently
-      fetch('https://api.spotify.com/v1/me/player', {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_ids: [device_id], play: false })
-      }).catch(() => {});
     });
 
     spPlayer.addListener('not_ready', () => {
       spDeviceId = null;
+    });
+
+    // Mirror SDK state changes into UI immediately (no poll delay)
+    spPlayer.addListener('player_state_changed', state => {
+      if (!state) return;
+      spPlaying = !state.paused;
+      spDurMs = state.duration;
+      spPosMs = state.position;
+      const track = state.track_window?.current_track;
+      if (!track) return;
+      spFirstPoll = false;
+      document.getElementById('spTitle').textContent = track.name;
+      document.getElementById('spArtist').textContent = track.artists.map(a => a.name).join(', ');
+      document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
+      document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
+      document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
+      document.getElementById('spFill').style.width = spDurMs > 0 ? `${(spPosMs / spDurMs) * 100}%` : '0%';
+      const art = track.album?.images?.[0]?.url;
+      const artEl = document.getElementById('spArt');
+      if (art && artEl && artEl.tagName !== 'IMG') artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
+      else if (art && artEl) artEl.src = art;
+      const openBtn = document.getElementById('spOpenBtn');
+      if (openBtn) openBtn.style.display = 'none';
+      document.querySelector('.sp-device').textContent = '🔊 Tymos';
     });
 
     spPlayer.connect();
@@ -1552,57 +1569,48 @@ function createSpotifyPlayer(token) {
 }
 
 function spFetchState(token) {
-  spPollCount++;
-  console.log(`🔍 Poll #${spPollCount} — fetching /me/player...`);
   fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
   }).then(r => {
-    console.log(`🔍 Poll #${spPollCount} — status:`, r.status);
     if (r.status === 204) {
-      // Skip overwriting welcome message on first poll — keep "Start playing on Spotify"
       if (spFirstPoll) { spFirstPoll = false; return null; }
+      spPlaying = false;
       document.getElementById('spTitle').textContent = 'Not playing';
       document.getElementById('spArtist').textContent = '—';
       document.getElementById('spPlayBtn').innerHTML = '&#9654;';
       document.getElementById('spElapsed').textContent = '0:00';
       document.getElementById('spDuration').textContent = '0:00';
       document.getElementById('spFill').style.width = '0%';
-      document.querySelector('.sp-device').textContent = `🔊 No active device [poll #${spPollCount}]`;
+      document.querySelector('.sp-device').textContent = '🔊 No active device';
       return null;
     }
-    if (r.status === 401) { console.warn('🔍 Token expired, disconnecting.'); spDisconnect(); return null; }
+    if (r.status === 401) { spDisconnect(); return null; }
     if (r.status === 403) {
-      console.error('🔍 403 Forbidden — your Spotify account is not authorized for this app.');
-      console.error('🔍 Go to https://developer.spotify.com/dashboard → Users and Access → add your email');
-      document.querySelector('.sp-device').textContent = `⚠️ 403 Forbidden — Add your account in Spotify Dev Dashboard [poll #${spPollCount}]`;
+      document.querySelector('.sp-device').textContent = '⚠️ Not authorized — add your account in Spotify Dev Dashboard';
       return null;
     }
     return r.status === 200 ? r.json() : null;
   }).then(data => {
     if (!data?.item) return;
-    spFirstPoll = false; // got real data — stop protecting welcome message
-    console.log(`🔍 Poll #${spPollCount} — got track:`, data.item.name, 'by', data.item.artists[0].name);
-    spDurMs  = data.item.duration_ms;
-    spPosMs  = data.progress_ms;
+    spFirstPoll = false;
+    spDurMs   = data.item.duration_ms;
+    spPosMs   = data.progress_ms;
     spPlaying = data.is_playing;
     document.getElementById('spTitle').textContent   = data.item.name;
     document.getElementById('spArtist').textContent  = data.item.artists.map(a => a.name).join(', ');
     document.getElementById('spPlayBtn').innerHTML   = spPlaying ? '&#9646;&#9646;' : '&#9654;';
     document.getElementById('spElapsed').textContent  = spFmtMs(spPosMs);
     document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
-    document.getElementById('spFill').style.width    = spDurMs > 0 ? `${(spPosMs/spDurMs)*100}%` : '0%';
+    document.getElementById('spFill').style.width    = spDurMs > 0 ? `${(spPosMs / spDurMs) * 100}%` : '0%';
     const art = data.item.album?.images?.[0]?.url;
     const artEl = document.getElementById('spArt');
     if (art && artEl && artEl.tagName !== 'IMG') artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
     else if (art && artEl) artEl.src = art;
     const deviceName = data.device?.name || 'Spotify';
-    document.querySelector('.sp-device').textContent = `🔊 ${deviceName} [poll #${spPollCount}]`;
+    document.querySelector('.sp-device').textContent = `🔊 ${deviceName}`;
     const openBtn = document.getElementById('spOpenBtn');
     if (openBtn) openBtn.style.display = 'none';
-  }).catch(err => {
-    console.error(`🔍 Poll #${spPollCount} — NETWORK ERROR:`, err.message || err);
-    document.querySelector('.sp-device').textContent = `⚠️ Polling error [poll #${spPollCount}] — check console`;
-  });
+  }).catch(() => {});
 }
 
 function spFmtMs(ms) {
@@ -1611,15 +1619,39 @@ function spFmtMs(ms) {
 }
 
 function spApiCall(endpoint, method = 'POST') {
-  const token = spGetToken(); if (!token) return;
-  fetch(`https://api.spotify.com/v1/me/player/${endpoint}`, {
+  const token = spGetToken(); if (!token) return Promise.resolve();
+  const deviceParam = spDeviceId ? `?device_id=${spDeviceId}` : '';
+  return fetch(`https://api.spotify.com/v1/me/player/${endpoint}${deviceParam}`, {
     method, headers: { 'Authorization': `Bearer ${token}` }
-  }).catch(err => console.error('Spotify apiCall error:', err.message || err));
+  }).catch(() => {});
 }
 
-function spTogglePlay() { spPlaying ? spApiCall('pause', 'PUT') : spApiCall('play', 'PUT'); }
-function spNext()       { spApiCall('next'); }
-function spPrev()       { spApiCall('previous'); }
+function spTogglePlay() {
+  if (spCmdPending) return;
+  spCmdPending = true;
+  // Optimistic UI update
+  spPlaying = !spPlaying;
+  document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
+  spApiCall(spPlaying ? 'play' : 'pause', 'PUT').finally(() => {
+    setTimeout(() => { spCmdPending = false; }, 500);
+  });
+}
+
+function spNext() {
+  if (spCmdPending) return;
+  spCmdPending = true;
+  spApiCall('next').finally(() => {
+    setTimeout(() => { spCmdPending = false; }, 800);
+  });
+}
+
+function spPrev() {
+  if (spCmdPending) return;
+  spCmdPending = true;
+  spApiCall('previous').finally(() => {
+    setTimeout(() => { spCmdPending = false; }, 800);
+  });
+}
 
 function spSeek(e) {
   const token = spGetToken(); if (!token || !spDurMs) return;
@@ -1632,6 +1664,7 @@ function spSeek(e) {
 
 function spDisconnect() {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
+  if (spTickInterval) { clearInterval(spTickInterval); spTickInterval = null; }
   if (spPlayer) { spPlayer.disconnect(); spPlayer = null; spDeviceId = null; }
   [SP_TOKEN_KEY, SP_EXPIRY_KEY, 'tymos_sp_refresh', SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
   document.getElementById('spotifyPlayer').classList.remove('active');
@@ -1643,29 +1676,6 @@ function spDisconnect() {
   if (artEl && artEl.tagName === 'IMG') artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
   const openBtn = document.getElementById('spOpenBtn');
   if (openBtn) openBtn.style.display = 'none';
-}
-
-// ── DIAGNOSTIC: run spDiag() in console to test API ──
-async function spDiag() {
-  const token = spGetToken();
-  if (!token) { console.error('No token found. Connect first.'); return; }
-  console.log('Running Spotify API diagnostic...');
-  // Test /v1/me
-  const meResp = await fetch('https://api.spotify.com/v1/me', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const meText = await meResp.text();
-  let meBody;
-  try { meBody = JSON.parse(meText); } catch { meBody = meText; }
-  console.log(`/v1/me → ${meResp.status}`, meBody);
-  // Test /v1/me/player
-  const plResp = await fetch('https://api.spotify.com/v1/me/player', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const plText = await plResp.text();
-  let plBody;
-  try { plBody = JSON.parse(plText); } catch { plBody = plText; }
-  console.log(`/v1/me/player → ${plResp.status}`, plBody);
 }
 
 // Init on load
