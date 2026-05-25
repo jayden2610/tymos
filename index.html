@@ -1431,7 +1431,9 @@ let spPollInterval = null, spTickInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
 let spPlayer = null, spDeviceId = null;
 let spFirstPoll = false;
-let spCmdPending = false; // debounce flag for play/pause/next/prev
+let spPlayPending = false;  // debounce for play/pause only
+let spSkipPending = false;  // debounce for next/prev only
+let spSeeking = false;      // true while seek in-flight — pauses ticker
 
 // ── PKCE helpers ──
 function spRandBytes(n) {
@@ -1539,7 +1541,7 @@ async function spInit(token) {
   // Local 1s ticker for smooth progress bar between polls
   if (spTickInterval) clearInterval(spTickInterval);
   spTickInterval = setInterval(() => {
-    if (!spPlaying || spDurMs === 0) return;
+    if (!spPlaying || spDurMs === 0 || spSeeking) return;
     spPosMs = Math.min(spPosMs + 1000, spDurMs);
     document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
     document.getElementById('spFill').style.width = `${(spPosMs / spDurMs) * 100}%`;
@@ -1660,37 +1662,50 @@ function spFmtMs(ms) {
 }
 
 function spApiCall(endpoint, method = 'POST') {
-  const token = spGetToken(); if (!token) return Promise.resolve();
+  const token = spGetToken(); if (!token) return Promise.resolve(null);
   const deviceParam = spDeviceId ? `?device_id=${spDeviceId}` : '';
   return fetch(`https://api.spotify.com/v1/me/player/${endpoint}${deviceParam}`, {
     method, headers: { 'Authorization': `Bearer ${token}` }
-  }).catch(() => {});
+  }).catch(() => null);
 }
 
 function spTogglePlay() {
-  if (spCmdPending) return;
-  spCmdPending = true;
-  // Optimistic UI update
+  if (spPlayPending) return;
+  spPlayPending = true;
+  const wasPlaying = spPlaying;
+  // Optimistic UI flip
   spPlaying = !spPlaying;
   document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
-  spApiCall(spPlaying ? 'play' : 'pause', 'PUT').finally(() => {
-    setTimeout(() => { spCmdPending = false; }, 500);
+  spApiCall(spPlaying ? 'play' : 'pause', 'PUT').then(r => {
+    // If Spotify rejected the command, revert the optimistic flip
+    if (r && !r.ok && r.status !== 204) {
+      spPlaying = wasPlaying;
+      document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
+    }
+  }).finally(() => {
+    setTimeout(() => { spPlayPending = false; }, 300);
   });
 }
 
 function spNext() {
-  if (spCmdPending) return;
-  spCmdPending = true;
-  spApiCall('next').finally(() => {
-    setTimeout(() => { spCmdPending = false; }, 800);
+  if (spSkipPending) return;
+  spSkipPending = true;
+  const token = spGetToken();
+  spApiCall('next').then(() => {
+    if (token) setTimeout(() => spFetchState(token), 400);
+  }).finally(() => {
+    setTimeout(() => { spSkipPending = false; }, 800);
   });
 }
 
 function spPrev() {
-  if (spCmdPending) return;
-  spCmdPending = true;
-  spApiCall('previous').finally(() => {
-    setTimeout(() => { spCmdPending = false; }, 800);
+  if (spSkipPending) return;
+  spSkipPending = true;
+  const token = spGetToken();
+  spApiCall('previous').then(() => {
+    if (token) setTimeout(() => spFetchState(token), 400);
+  }).finally(() => {
+    setTimeout(() => { spSkipPending = false; }, 800);
   });
 }
 
@@ -1698,9 +1713,17 @@ function spSeek(e) {
   const token = spGetToken(); if (!token || !spDurMs) return;
   const pct   = e.offsetX / e.currentTarget.offsetWidth;
   const posMs = Math.floor(pct * spDurMs);
-  fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${posMs}`, {
+  // Optimistic seek — update bar and elapsed immediately
+  spPosMs = posMs;
+  spSeeking = true;
+  document.getElementById('spElapsed').textContent = spFmtMs(posMs);
+  document.getElementById('spFill').style.width = `${(posMs / spDurMs) * 100}%`;
+  fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${posMs}${spDeviceId ? `&device_id=${spDeviceId}` : ''}`, {
     method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
-  }).catch(err => console.error('Spotify seek error:', err.message || err));
+  }).finally(() => {
+    // Resume ticker after Spotify has processed the seek
+    setTimeout(() => { spSeeking = false; }, 600);
+  });
 }
 
 function spDisconnect() {
