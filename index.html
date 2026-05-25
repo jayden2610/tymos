@@ -203,6 +203,14 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .badge-medium { background: rgba(184,144,58,0.12); color: var(--yellow); }
 .badge-low    { background: rgba(74,140,92,0.12); color: var(--green); }
 .task-progress-mini { font-size: 11px; color: var(--muted); }
+.task-focus-badge { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 100px; background: rgba(124,92,58,0.12); color: var(--accent); letter-spacing: 0.04em; }
+.task-card.is-active-task { border-color: rgba(124,92,58,0.35); box-shadow: 0 0 0 2px rgba(124,92,58,0.12); }
+.focus-btn { font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--muted); cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; transition: background 0.12s, color 0.12s; flex-shrink: 0; }
+.focus-btn:hover { background: var(--accent-bg); color: var(--accent); border-color: rgba(124,92,58,0.3); }
+.focus-btn.active { background: var(--accent-bg); color: var(--accent); border-color: rgba(124,92,58,0.35); }
+.active-task-strip { display: none; align-items: center; gap: 8px; padding: 7px 14px; margin: 8px 0 0; border-radius: 8px; background: var(--accent-bg); border: 1px solid rgba(124,92,58,0.2); font-size: 12px; color: var(--accent); font-weight: 600; }
+.active-task-strip.visible { display: flex; }
+.active-task-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .task-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
 .icon-btn {
@@ -787,6 +795,11 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         <div class="stat-lbl">Done</div>
       </div>
     </div>
+    <div class="active-task-strip" id="activeTaskStrip">
+      <span style="font-size:10px;opacity:0.7;flex-shrink:0;">focusing on</span>
+      <span class="active-task-name" id="activeTaskName"></span>
+      <button onclick="clearActiveTask()" style="background:none;border:none;color:var(--accent);opacity:0.6;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;" title="Clear active task">✕</button>
+    </div>
 
     <!-- Spotify Player -->
     <div class="spotify-bar" id="spotifyBar">
@@ -1052,6 +1065,10 @@ function tick() {
     playChime();
     if (!isBreak) {
       sessionsComplete++; totalFocusSecs += workSecs;
+      if (activeTaskId !== null) {
+        const at = tasks.find(t => t.id === activeTaskId);
+        if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
+      }
       notify('Session complete — take a break!');
       enterBreak();
     } else {
@@ -1139,6 +1156,7 @@ function loadStats() {
 
 // ── STATS ──
 let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
+let activeTaskId = null;
 loadStats();
 
 function updateStats() {
@@ -1211,7 +1229,7 @@ function taskCardHTML(t) {
   const showInline = isOpen && pendingInlineAdd === t.id;
 
   return `
-  <div class="task-card${t.done?' done':''}${isOpen?' active':''}" id="task-${t.id}">
+  <div class="task-card${t.done?' done':''}${isOpen?' active':''}${activeTaskId===t.id?' is-active-task':''}" id="task-${t.id}">
     <div class="task-card-header" onclick="toggleExpand(${t.id})">
       <div class="task-priority-bar pri-${t.priority}"></div>
       <div class="task-card-body">
@@ -1219,9 +1237,11 @@ function taskCardHTML(t) {
         <div class="task-card-meta">
           <span class="task-badge badge-${t.priority}">${t.priority}</span>
           ${total > 0 ? `<span class="task-progress-mini">${done}/${total} done</span>` : ''}
+          ${(t.focusSessions||0) > 0 ? `<span class="task-focus-badge">${t.focusSessions}🍅 · ${t.focusSessions*25}m</span>` : ''}
         </div>
       </div>
       <div class="task-card-actions" onclick="event.stopPropagation()">
+        <button class="focus-btn${activeTaskId===t.id?' active':''}" onclick="setActiveTask(${t.id})" title="Focus on this task">${activeTaskId===t.id?'● focusing':'Focus'}</button>
         <button class="icon-btn" onclick="openModal(${t.id})">✏️</button>
         <button class="icon-btn" onclick="toggleDone(${t.id})">${t.done?'↩':'✓'}</button>
         <button class="icon-btn${isConfirmDel?' confirm-delete':''}"
@@ -1286,6 +1306,33 @@ function deleteSectionClick(tid, si) {
     pendingDeleteSection = {tid,si}; renderTasks();
     setTimeout(() => { if(pendingDeleteSection&&pendingDeleteSection.tid===tid&&pendingDeleteSection.si===si){pendingDeleteSection=null;renderTasks();} }, 3000);
   }
+}
+
+function setActiveTask(id) {
+  activeTaskId = activeTaskId === id ? null : id;
+  updateActiveTaskStrip();
+  renderTasks();
+}
+
+function clearActiveTask() {
+  activeTaskId = null;
+  updateActiveTaskStrip();
+  renderTasks();
+}
+
+function updateActiveTaskStrip() {
+  const strip = document.getElementById('activeTaskStrip');
+  const nameEl = document.getElementById('activeTaskName');
+  if (!strip || !nameEl) return;
+  if (activeTaskId !== null) {
+    const t = tasks.find(x => x.id === activeTaskId);
+    if (t) {
+      nameEl.textContent = t.title;
+      strip.classList.add('visible');
+      return;
+    }
+  }
+  strip.classList.remove('visible');
 }
 
 function toggleDone(id) {
