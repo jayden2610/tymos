@@ -747,6 +747,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     <button class="auth-modal-btn primary" onclick="submitAuthModal()" id="authModalSubmit">Sign in</button>
     <div class="auth-modal-divider">OR</div>
     <button class="auth-modal-btn secondary" onclick="authSignInGitHub()">Continue with GitHub</button>
+    <button class="auth-modal-btn secondary" onclick="authSignInGoogle()" style="margin-top:8px;">Continue with Google</button>
     <div class="auth-modal-toggle">
       <span id="authModalToggleText">Don't have an account?</span>
       <a onclick="toggleAuthMode()"> <span id="authModalToggleLink">Sign up</span></a>
@@ -1997,6 +1998,16 @@ async function authSignInGitHub() {
   if (!sb) { notify('Auth unavailable — configure Supabase keys.'); return; }
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'github',
+    options: { redirectTo: 'https://jayden2610.github.io/tymos/' }
+  });
+  if (error) notify('Sign-in failed: ' + error.message);
+}
+
+async function authSignInGoogle() {
+  closeAuthModal();
+  if (!sb) { notify('Auth unavailable — configure Supabase keys.'); return; }
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
     options: { redirectTo: 'https://jayden2610.github.io/tymos/' }
   });
   if (error) notify('Sign-in failed: ' + error.message);
