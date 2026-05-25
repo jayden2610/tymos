@@ -1135,14 +1135,18 @@ function saveDailyLog() {
 function saveTasks() {
   localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
   localStorage.setItem(LS_NEXT_ID, nextId);
+  localStorage.setItem('tymos_active_task', activeTaskId !== null ? String(activeTaskId) : '');
 }
 function loadTasks() {
   try {
     const t = localStorage.getItem(LS_TASKS);
     const id = localStorage.getItem(LS_NEXT_ID);
+    const at = localStorage.getItem('tymos_active_task');
     if (t) tasks = JSON.parse(t);
     if (id) nextId = parseInt(id);
+    activeTaskId = (at !== null && at !== '') ? parseInt(at) : null;
   } catch(e) { tasks = []; }
+  updateActiveTaskStrip();
 }
 function saveStats() {
   localStorage.setItem(LS_STATS, JSON.stringify({sessionsComplete, totalFocusSecs, tasksDone}));
@@ -2101,6 +2105,7 @@ async function sbLoadAll() {
       try { tasks = JSON.parse(tasksRow.tasks || '[]'); } catch { tasks = []; }
       nextId = tasksRow.next_id || 1;
       renderTasks();
+      updateActiveTaskStrip();
     }
 
     setSyncStatus('Synced');
