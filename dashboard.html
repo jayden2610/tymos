@@ -345,6 +345,35 @@ body {
 .auth-btn:hover { background: var(--surface2); color: var(--text); }
 .auth-btn.signed-in { color: var(--accent); border-color: rgba(124,92,58,0.25); background: var(--accent-bg); }
 .auth-btn.signed-in:hover { background: rgba(124,92,58,0.15); }
+/* ── AUTH MODAL ── */
+#authModal { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center; }
+#authModal.open { display:flex; }
+.auth-modal-box {
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  box-shadow:var(--shadow2);padding:28px 28px 22px;width:320px;max-width:90vw;
+  font-family:'Nunito',sans-serif;
+}
+.auth-modal-box h3 { margin:0 0 18px;font-size:16px;font-weight:800;color:var(--text);letter-spacing:0.01em; }
+.auth-modal-box input {
+  width:100%;box-sizing:border-box;padding:9px 12px;border-radius:7px;
+  border:1px solid var(--border2);background:var(--bg);color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;margin-bottom:10px;outline:none;
+  transition:border 0.15s;
+}
+.auth-modal-box input:focus { border-color:var(--accent3); }
+.auth-modal-box input::placeholder { color:var(--muted); }
+.auth-modal-btn {
+  width:100%;padding:9px;border-radius:7px;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;transition:all 0.15s;
+}
+.auth-modal-btn.primary { background:var(--accent3);color:#fff;margin-bottom:8px; }
+.auth-modal-btn.primary:hover { opacity:0.88; }
+.auth-modal-btn.secondary { background:var(--surface2);color:var(--text2);border:1px solid var(--border2);margin-bottom:8px; }
+.auth-modal-btn.secondary:hover { background:var(--border2); }
+.auth-modal-divider { text-align:center;font-size:11px;color:var(--muted);font-weight:700;margin:4px 0 8px;letter-spacing:0.05em; }
+.auth-modal-toggle { text-align:center;font-size:12px;color:var(--muted);margin-top:10px; }
+.auth-modal-toggle a { color:var(--accent3);cursor:pointer;font-weight:700;text-decoration:none; }
+.auth-modal-error { font-size:12px;color:var(--red);font-weight:600;margin-bottom:8px;min-height:16px; }
 .auth-avatar {
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--accent3); display: inline-flex; align-items: center;
@@ -848,11 +877,63 @@ function updateAuthUI(user) {
   } else {
     btn.className = 'auth-btn';
     btn.innerHTML = 'Sign in';
-    btn.onclick = authSignIn;
+    btn.onclick = openAuthModal;
   }
 }
 
-async function authSignIn() {
+// ── Auth modal ──
+let authMode = 'signin';
+
+function openAuthModal() {
+  authMode = 'signin';
+  document.getElementById('authModalTitle').textContent = 'Sign in';
+  document.getElementById('authModalSubmit').textContent = 'Sign in';
+  document.getElementById('authModalToggleText').textContent = "Don't have an account?";
+  document.getElementById('authModalToggleLink').textContent = 'Sign up';
+  document.getElementById('authModalError').textContent = '';
+  document.getElementById('authModalEmail').value = '';
+  document.getElementById('authModalPassword').value = '';
+  document.getElementById('authModal').classList.add('open');
+  setTimeout(() => document.getElementById('authModalEmail').focus(), 50);
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('open');
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const isSignIn = authMode === 'signin';
+  document.getElementById('authModalTitle').textContent = isSignIn ? 'Sign in' : 'Sign up';
+  document.getElementById('authModalSubmit').textContent = isSignIn ? 'Sign in' : 'Sign up';
+  document.getElementById('authModalToggleText').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
+  document.getElementById('authModalToggleLink').textContent = isSignIn ? 'Sign up' : 'Sign in';
+  document.getElementById('authModalError').textContent = '';
+}
+
+async function submitAuthModal() {
+  const email = document.getElementById('authModalEmail').value.trim();
+  const password = document.getElementById('authModalPassword').value;
+  const errEl = document.getElementById('authModalError');
+  if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
+  errEl.textContent = '';
+  const btn = document.getElementById('authModalSubmit');
+  btn.disabled = true; btn.textContent = '...';
+  let error;
+  if (authMode === 'signin') {
+    ({ error } = await sb.auth.signInWithPassword({ email, password }));
+  } else {
+    ({ error } = await sb.auth.signUp({ email, password }));
+  }
+  btn.disabled = false;
+  btn.textContent = authMode === 'signin' ? 'Sign in' : 'Sign up';
+  if (error) { errEl.textContent = error.message; return; }
+  if (authMode === 'signup') { errEl.style.color = 'var(--green)'; errEl.textContent = 'Account created! Signing you in…'; }
+  closeAuthModal();
+}
+
+async function authSignInGitHub() {
+  closeAuthModal();
   if (!sb) return;
   await sb.auth.signInWithOAuth({
     provider: 'github',
@@ -995,5 +1076,22 @@ function renderWithData(log, gs, isDemo) {
   drawDowChart('dowChart', dowStats, 160);
 }
 </script>
+
+<!-- Auth modal -->
+<div id="authModal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal-box">
+    <h3 id="authModalTitle">Sign in</h3>
+    <div class="auth-modal-error" id="authModalError"></div>
+    <input type="email" id="authModalEmail" placeholder="Email" autocomplete="email"/>
+    <input type="password" id="authModalPassword" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuthModal()"/>
+    <button class="auth-modal-btn primary" onclick="submitAuthModal()" id="authModalSubmit">Sign in</button>
+    <div class="auth-modal-divider">OR</div>
+    <button class="auth-modal-btn secondary" onclick="authSignInGitHub()">Continue with GitHub</button>
+    <div class="auth-modal-toggle">
+      <span id="authModalToggleText">Don't have an account?</span>
+      <a onclick="toggleAuthMode()"> <span id="authModalToggleLink">Sign up</span></a>
+    </div>
+  </div>
+</div>
 </body>
 </html>
