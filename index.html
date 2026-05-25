@@ -2041,7 +2041,8 @@ saveTasks    = function() { sbSaveTasks(); };
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+      if (sbUser?.id === session.user.id) return; // already loaded
       sbUser = session.user;
       updateAuthUI(sbUser);
       notify('Signed in — syncing your data...');
