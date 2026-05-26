@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tymos — About</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f0e9dc;
+  --surface:   #ece4d5;
+  --surface2:  #e4dac8;
+  --surface3:  #d9cdb8;
+  --border:    rgba(120,95,65,0.14);
+  --border2:   rgba(120,95,65,0.22);
+  --text:      #2e1f0d;
+  --text2:     #6b5340;
+  --muted:     #a08b75;
+  --accent:    #7c5c3a;
+  --accent2:   #a07850;
+  --accent3:   #c9a87a;
+  --accent-bg: rgba(124,92,58,0.08);
+  --shadow:    0 2px 12px rgba(80,50,20,0.10);
+  --shadow2:   0 4px 24px rgba(80,50,20,0.14);
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'Lora', serif;
+  font-size: 17px; font-weight: 500;
+  color: var(--accent); letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.header-nav { display: flex; align-items: center; gap: 8px; }
+.nav-link {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 700; color: var(--text2);
+  background: transparent; border: 1px solid var(--border2);
+  border-radius: 6px; padding: 5px 12px;
+  text-decoration: none; transition: all 0.15s;
+}
+.nav-link:hover { background: var(--surface2); }
+.nav-link.active { color: var(--accent); background: var(--accent-bg); border-color: rgba(124,92,58,0.2); }
+
+/* ── PAGE ── */
+.page {
+  flex: 1;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 56px 32px 80px;
+}
+
+/* ── HERO ── */
+.hero { text-align: center; margin-bottom: 56px; }
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 14px;
+}
+.hero-title {
+  font-family: 'Lora', serif;
+  font-size: 38px; font-weight: 600;
+  color: var(--text); line-height: 1.2;
+  margin-bottom: 16px;
+}
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-sub {
+  font-size: 16px; font-weight: 500; color: var(--text2);
+  line-height: 1.65; max-width: 500px; margin: 0 auto;
+}
+
+/* ── CANDLE VISUAL ── */
+.candle-hero {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: 18px; margin: 40px 0 56px;
+}
+.candle-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.candle-col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ── SECTION DIVIDER ── */
+.section-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 48px 0 32px;
+}
+.section-divider-line { flex: 1; height: 1px; background: var(--border2); }
+.section-divider-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ── FLOW STEPS ── */
+.flow { display: flex; flex-direction: column; }
+.flow-step { display: grid; grid-template-columns: 40px 1fr; gap: 0 16px; }
+.flow-dot-col { display: flex; flex-direction: column; align-items: center; }
+.flow-dot {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface); border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0; box-shadow: var(--shadow);
+}
+.flow-line { flex: 1; width: 1px; background: var(--border2); min-height: 20px; }
+.flow-step:last-child .flow-line { display: none; }
+.flow-content { padding: 6px 0 24px; }
+.flow-title {
+  font-family: 'Lora', serif;
+  font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px;
+}
+.flow-body { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.6; }
+
+/* ── CANDLE EXPLAINER ── */
+.candle-explainer {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 28px;
+  box-shadow: var(--shadow);
+  display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: start;
+}
+.candle-explainer-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent3); margin-bottom: 8px;
+}
+.candle-explainer-title {
+  font-family: 'Lora', serif;
+  font-size: 19px; font-weight: 500; color: var(--text);
+  margin-bottom: 10px; line-height: 1.3;
+}
+.candle-explainer-body {
+  font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.7;
+}
+.candle-explainer-body p + p { margin-top: 10px; }
+
+/* ── PULL QUOTE ── */
+.pull-quote {
+  border-left: 3px solid var(--accent3);
+  padding: 16px 20px; margin: 32px 0;
+  background: var(--surface); border-radius: 0 12px 12px 0;
+}
+.pull-quote-text {
+  font-family: 'Lora', serif;
+  font-size: 16px; font-style: italic;
+  color: var(--text); line-height: 1.6;
+}
+.pull-quote-attr {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-top: 8px;
+}
+
+/* ── FEATURE CARDS ── */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 22px;
+  box-shadow: var(--shadow);
+}
+.card-icon { font-size: 22px; margin-bottom: 10px; }
+.card-title {
+  font-family: 'Lora', serif;
+  font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 7px;
+}
+.card-body { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.6; }
+
+/* ── CTA ── */
+.cta-strip {
+  text-align: center; margin-top: 56px; padding: 36px 24px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 18px; box-shadow: var(--shadow);
+}
+.cta-strip-title {
+  font-family: 'Lora', serif;
+  font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 8px;
+}
+.cta-strip-sub {
+  font-size: 14px; font-weight: 500; color: var(--text2); margin-bottom: 22px;
+}
+.btn-cta {
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600;
+  background: var(--accent); color: #f5ede0; border: none;
+  border-radius: 8px; padding: 10px 32px;
+  box-shadow: 0 2px 8px rgba(124,92,58,0.25);
+  cursor: pointer; text-decoration: none; display: inline-block;
+  transition: background 0.15s;
+}
+.btn-cta:hover { background: var(--accent2); }
+
+/* ── FLAME FLICKER ── */
+@keyframes cFlicker {
+  0%,100% { opacity: 1; }
+  28%      { opacity: 0.72; }
+  60%      { opacity: 0.85; }
+}
+.flicker { animation: cFlicker 1.9s ease-in-out infinite; }
+
+@media (max-width: 600px) {
+  .page { padding: 36px 20px 60px; }
+  .hero-title { font-size: 28px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .candle-explainer { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="logo" href="index.html">Tymos</a>
+  <nav class="header-nav">
+    <a class="nav-link" href="index.html">Timer</a>
+    <a class="nav-link" href="dashboard.html">📊 Report</a>
+    <a class="nav-link active" href="about.html">About</a>
+  </nav>
+</header>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">What is Tymos?</div>
+    <h1 class="hero-title">Focus that <em>burns</em><br>for a reason.</h1>
+    <p class="hero-sub">A Pomodoro timer that treats your attention like a finite resource — and makes you feel it.</p>
+  </section>
+
+  <!-- THREE CANDLES AT DIFFERENT BURN LEVELS -->
+  <div class="candle-hero" aria-hidden="true">
+    <div class="candle-col">
+      <svg width="32" height="90" viewBox="0 0 32 90">
+        <line x1="16" y1="18" x2="16" y2="24" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+        <g class="flicker">
+          <path d="M16 7 C13 12 11 17 16 20 C21 17 19 12 16 7Z" fill="#e8a840"/>
+          <path d="M16 11 C14.5 15 15 18 16 19.5 C17 18 17.5 15 16 11Z" fill="#f5d080"/>
+          <ellipse cx="16" cy="19.5" rx="3" ry="1.2" fill="rgba(255,220,100,0.4)"/>
+        </g>
+        <rect x="7" y="24" width="18" height="60" rx="4" fill="#ece4d5" stroke="rgba(120,95,65,0.25)" stroke-width="1"/>
+        <rect x="10" y="26" width="5" height="56" rx="2" fill="rgba(255,255,255,0.28)"/>
+      </svg>
+      <span class="candle-col-label">Day 1</span>
+    </div>
+    <div class="candle-col">
+      <svg width="32" height="90" viewBox="0 0 32 90">
+        <line x1="16" y1="38" x2="16" y2="44" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+        <g class="flicker" style="animation-delay:0.3s">
+          <path d="M16 27 C13 32 11 37 16 40 C21 37 19 32 16 27Z" fill="#e8a840"/>
+          <path d="M16 31 C14.5 35 15 38 16 39.5 C17 38 17.5 35 16 31Z" fill="#f5d080"/>
+          <ellipse cx="16" cy="39.5" rx="3" ry="1.2" fill="rgba(255,220,100,0.4)"/>
+        </g>
+        <rect x="7" y="44" width="18" height="40" rx="4" fill="#ece4d5" stroke="rgba(120,95,65,0.25)" stroke-width="1"/>
+        <rect x="10" y="46" width="5" height="36" rx="2" fill="rgba(255,255,255,0.28)"/>
+      </svg>
+      <span class="candle-col-label">Day 7</span>
+    </div>
+    <div class="candle-col">
+      <svg width="32" height="90" viewBox="0 0 32 90">
+        <line x1="16" y1="64" x2="16" y2="70" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+        <g class="flicker" style="animation-delay:0.6s">
+          <path d="M16 53 C13 58 11 63 16 66 C21 63 19 58 16 53Z" fill="#e8a840"/>
+          <path d="M16 57 C14.5 61 15 64 16 65.5 C17 64 17.5 61 16 57Z" fill="#f5d080"/>
+          <ellipse cx="16" cy="65.5" rx="3" ry="1.2" fill="rgba(255,220,100,0.4)"/>
+        </g>
+        <rect x="7" y="70" width="18" height="14" rx="4" fill="#ece4d5" stroke="rgba(120,95,65,0.25)" stroke-width="1"/>
+        <rect x="10" y="72" width="5" height="10" rx="2" fill="rgba(255,255,255,0.28)"/>
+      </svg>
+      <span class="candle-col-label">Day 21</span>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">How it works</div>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-dot-col"><div class="flow-dot">🍅</div><div class="flow-line"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Pick a task, set a timer</div>
+        <div class="flow-body">Choose what you're working on and pick your session length — 25, 45, or 60 minutes. The timer counts down. You focus.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot-col"><div class="flow-dot">☕</div><div class="flow-line"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Session ends → take the break</div>
+        <div class="flow-body">When the chime rings, step away. The 5-minute break isn't optional — it's the method. Your brain needs the reset to keep the depth going.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot-col"><div class="flow-dot">🕯️</div><div class="flow-line"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Watch the candle burn</div>
+        <div class="flow-body">Your candle shrinks a little with every session — across days and weeks. It's not a streak counter. It's a real cost. Time spent is wax gone.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-dot-col"><div class="flow-dot">📈</div><div class="flow-line"></div></div>
+      <div class="flow-content">
+        <div class="flow-title">Stats that mean something</div>
+        <div class="flow-body">Sessions, focus time, tasks done — tracked daily. No leaderboards, no social features. Just a quiet record of how you spent the day.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE CANDLE -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">The Candle</div>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <div class="candle-explainer">
+    <div>
+      <svg width="52" height="130" viewBox="0 0 52 130">
+        <line x1="26" y1="18" x2="26" y2="28" stroke="#2e1f0d" stroke-width="1.8" stroke-linecap="round"/>
+        <g class="flicker">
+          <path d="M26 5 C21 11 18 20 26 26 C34 20 31 11 26 5Z" fill="#e8a840"/>
+          <path d="M26 10 C23 16 24 22 26 25 C28 22 29 16 26 10Z" fill="#f5d080"/>
+          <ellipse cx="26" cy="25.5" rx="4.5" ry="1.8" fill="rgba(255,220,100,0.4)"/>
+        </g>
+        <rect x="10" y="28" width="32" height="96" rx="6" fill="#ece4d5" stroke="rgba(120,95,65,0.25)" stroke-width="1.2"/>
+        <rect x="16" y="31" width="8" height="90" rx="3" fill="rgba(255,255,255,0.28)"/>
+        <rect x="10" y="28" width="32" height="30" rx="6" fill="rgba(120,95,65,0.05)"/>
+        <line x1="10" y1="58" x2="42" y2="58" stroke="rgba(120,95,65,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      </svg>
+    </div>
+    <div>
+      <div class="candle-explainer-tag">Gamification, honestly done</div>
+      <h2 class="candle-explainer-title">Your candle is a clock you can't rewind.</h2>
+      <div class="candle-explainer-body">
+        <p>Most productivity apps reward you with points, streaks, and badges — things that feel good but don't cost anything. Tymos tries something different.</p>
+        <p>Every session you complete burns the candle a little shorter. The flame flickers blue during breaks. Over days, you can watch it shrink. There's no way to top it up — that's the point.</p>
+        <p>It's a quiet, honest signal: <em style="font-style:italic;color:var(--accent);">this is how much of your time has burned.</em> Not a reward. Not a punishment. Just a fact, rendered visible.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    <div class="pull-quote-text">"The Pomodoro Technique works because it makes time concrete. Tymos makes that concrete thing visible."</div>
+    <div class="pull-quote-attr">— the idea behind the candle</div>
+  </div>
+
+  <!-- WHAT'S INSIDE -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">What's inside</div>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">Task management</div>
+      <div class="card-body">Add tasks with sections, priorities, and pomodoro estimates. Link a session to a task and track focus time per task automatically.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏱</div>
+      <div class="card-title">Flexible sessions</div>
+      <div class="card-body">25, 45, or 60-minute presets. In a genuine flow state? The Extend +5m button gives you a single, one-time escape valve.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🕯️</div>
+      <div class="card-title">Living candle</div>
+      <div class="card-body">A candle that shortens across sessions, flickers during breaks, and goes blue at rest. A slow, honest record of real work done.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Daily report</div>
+      <div class="card-body">Sessions, focus time, and tasks completed — tracked per day. Synced to your account so the history follows you across devices.</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div class="cta-strip-title">Ready to light the candle?</div>
+    <div class="cta-strip-sub">No setup. Just open the timer and start.</div>
+    <a href="index.html" class="btn-cta">Open Tymos</a>
+  </div>
+
+</div>
+</body>
+</html>
