@@ -964,20 +964,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!sb) { showLockedState(); return; }
 
+  // Don't show locked state immediately — wait for onAuthStateChange to
+  // confirm no session. getSession() can return null on first load even when
+  // a valid token exists in localStorage (Supabase restores it async).
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     sbUser = session.user;
     updateAuthUI(sbUser);
     const sbLog = await loadLogFromSupabase();
     const sbGs  = await loadGlobalStatsFromSupabase();
-    // If signed in with no data yet, show empty state (not demo)
     renderWithData(sbLog ?? [], sbGs, false);
-  } else {
-    showLockedState();
   }
+  // else: wait for onAuthStateChange below before deciding to lock
+
+  // Fallback: if no auth event fires within 1.5s, show locked state
+  const lockTimer = setTimeout(() => { if (!sbUser) showLockedState(); }, 1500);
 
   sb.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+      clearTimeout(lockTimer);
       if (sbUser?.id === session.user.id) return;
       sbUser = session.user;
       updateAuthUI(sbUser);
@@ -986,6 +991,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const sbGs  = await loadGlobalStatsFromSupabase();
       renderWithData(sbLog ?? [], sbGs, false);
     } else if (event === 'SIGNED_OUT') {
+      clearTimeout(lockTimer);
       sbUser = null;
       updateAuthUI(null);
       showLockedState();
