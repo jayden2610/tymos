@@ -235,7 +235,7 @@ body {
   <a class="logo" href="index.html">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></a>
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="window.location.href='index.html'" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
-    <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
+    <button id="reportBtn" onclick="reportAction()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'" title="Sign in to view your report">🔒 Report</button>
     <span style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;">ℹ️ About</span>
   </div>
 </header>
@@ -406,5 +406,47 @@ body {
   </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(async function() {
+  const SB_URL  = 'https://ovojwsfocmwclfyiefve.supabase.co';
+  const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92b2p3c2ZvY213Y2xmeWllZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NjI2NjcsImV4cCI6MjA5NTIzODY2N30.6LgvLoCCYIwKMtk1hrSzXTGa4s2FWfCb5fIEbrtUmLk';
+  const sb = supabase.createClient(SB_URL, SB_ANON);
+  const { data: { session } } = await sb.auth.getSession();
+  updateReportBtn(session ? session.user : null);
+  sb.auth.onAuthStateChange((_, session) => updateReportBtn(session ? session.user : null));
+})();
+
+function updateReportBtn(user) {
+  const btn = document.getElementById('reportBtn');
+  if (!btn) return;
+  if (user) {
+    btn.innerHTML = '📊 Report';
+    btn.style.color = 'var(--accent2)';
+    btn.style.background = 'var(--accent-bg)';
+    btn.style.borderColor = 'rgba(124,92,58,0.2)';
+    btn.onmouseover = () => { btn.style.background = 'rgba(124,92,58,0.15)'; };
+    btn.onmouseout  = () => { btn.style.background = 'var(--accent-bg)'; };
+    btn.title = '';
+  } else {
+    btn.innerHTML = '🔒 Report';
+    btn.style.color = 'var(--muted)';
+    btn.style.background = 'transparent';
+    btn.style.borderColor = 'var(--border2)';
+    btn.onmouseover = () => { btn.style.background = 'var(--surface2)'; };
+    btn.onmouseout  = () => { btn.style.background = 'transparent'; };
+    btn.title = 'Sign in to view your report';
+  }
+}
+
+function reportAction() {
+  const btn = document.getElementById('reportBtn');
+  if (btn && btn.innerHTML.includes('📊')) {
+    window.location.href = 'dashboard.html';
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+</script>
 </body>
 </html>
