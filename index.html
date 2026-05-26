@@ -2111,10 +2111,11 @@ function setSyncStatus(msg, synced = true) {
 }
 
 // ── Supabase data layer ──
-// Each function tries Supabase first, falls back to localStorage silently.
+// Only saves/loads when user is signed in via OAuth (GitHub or Google).
+// No localStorage fallback — data is not persisted for unauthenticated users.
 
 async function sbSaveDailyLog() {
-  if (!sb || !sbUser) { _saveDailyLog(); return; }
+  if (!sb || !sbUser) return;
   try {
     const today = dateKey(new Date());
     const entry = {
@@ -2131,15 +2132,14 @@ async function sbSaveDailyLog() {
   } catch(e) {
     console.warn('sbSaveDailyLog error:', e.message);
     setSyncStatus('Sync error', false);
-    saveDailyLog(); // fallback
   }
 }
 
 async function sbSaveStats() {
-  if (!sb || !sbUser) { _saveStats(); return; }
+  if (!sb || !sbUser) return;
   try {
     const { error } = await sb.from('user_stats').upsert({
-      user_id:         sbUser.id,
+      user_id:           sbUser.id,
       sessions_complete: sessionsComplete,
       total_focus_secs:  totalFocusSecs,
       tasks_done:        tasksDone,
@@ -2148,17 +2148,16 @@ async function sbSaveStats() {
     if (error) throw error;
   } catch(e) {
     console.warn('sbSaveStats error:', e.message);
-    saveStats(); // fallback
   }
 }
 
 async function sbSaveTasks() {
-  if (!sb || !sbUser) { _saveTasks(); return; }
+  if (!sb || !sbUser) return;
   try {
     const { error } = await sb.from('user_tasks').upsert({
-      user_id:  sbUser.id,
-      tasks:    JSON.stringify(tasks),
-      next_id:  nextId,
+      user_id:    sbUser.id,
+      tasks:      JSON.stringify(tasks),
+      next_id:    nextId,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' });
     if (error) throw error;
@@ -2166,7 +2165,6 @@ async function sbSaveTasks() {
   } catch(e) {
     console.warn('sbSaveTasks error:', e.message);
     setSyncStatus('Sync error', false);
-    saveTasks(); // fallback
   }
 }
 
@@ -2174,7 +2172,6 @@ async function sbLoadAll() {
   if (!sb || !sbUser) return;
   setSyncStatus('Syncing…', false);
   try {
-    // Load stats
     const { data: statsRow } = await sb.from('user_stats')
       .select('*').eq('user_id', sbUser.id).maybeSingle();
     if (statsRow) {
@@ -2185,7 +2182,6 @@ async function sbLoadAll() {
       updateStats();
     }
 
-    // Load tasks
     const { data: tasksRow } = await sb.from('user_tasks')
       .select('*').eq('user_id', sbUser.id).maybeSingle();
     if (tasksRow) {
@@ -2202,16 +2198,7 @@ async function sbLoadAll() {
   }
 }
 
-// ── Patch existing save functions to use Supabase when signed in ──
-// Override the calls from tick(), toggleDone(), saveTask(), etc.
-const _origSaveDailyLog = saveDailyLog;
-const _origSaveStats    = saveStats;
-const _origSaveTasks    = saveTasks;
-
-// Replace with async-aware wrappers (fire-and-forget)
-const _saveDailyLog = saveDailyLog;
-const _saveStats    = saveStats;
-const _saveTasks    = saveTasks;
+// Route all save calls through Supabase (no-ops when not signed in)
 saveDailyLog = function() { sbSaveDailyLog(); };
 saveStats    = function() { sbSaveStats(); };
 saveTasks    = function() { sbSaveTasks(); };
