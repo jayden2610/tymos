@@ -2183,7 +2183,15 @@ async function sbLoadAll() {
     sessionsComplete = statsRow ? (statsRow.sessions_complete || 0) : 0;
     totalFocusSecs   = statsRow ? (statsRow.total_focus_secs  || 0) : 0;
     tasksDone        = statsRow ? (statsRow.tasks_done        || 0) : 0;
-    loadTodayStats();
+
+    // Load today's counters from daily_log (source of truth when signed in)
+    const today = dateKey(new Date());
+    const { data: todayRow } = await sb.from('daily_log')
+      .select('sessions, focus_mins, tasks_done')
+      .eq('user_id', sbUser.id).eq('date', today).maybeSingle();
+    todaySessions  = todayRow ? (todayRow.sessions   || 0) : 0;
+    todayFocusSecs = todayRow ? ((todayRow.focus_mins || 0) * 60) : 0;
+    todayDone      = todayRow ? (todayRow.tasks_done  || 0) : 0;
     updateStats();
 
     const { data: tasksRow } = await sb.from('user_tasks')
