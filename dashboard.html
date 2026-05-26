@@ -399,10 +399,15 @@ body {
   </div>
 </div>
 
+<div id="lockedOverlay" style="display:none;position:fixed;inset:0;background:rgba(240,233,220,0.92);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(4px);">
+  <div style="font-family:'Lora',serif;font-size:22px;font-weight:500;color:var(--accent);">Your report is waiting</div>
+  <div style="font-size:13px;color:var(--text2);font-weight:600;">Sign in with GitHub or Google to see your stats.</div>
+  <button onclick="openAuthModal()" style="margin-top:4px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;">Sign in</button>
+</div>
+
 <div class="main">
 
   <div class="demo-notice" id="demoNotice">
-    ⚠&nbsp; Demo data — complete a Pomodoro session to see your real stats.
   </div>
 
   <!-- KPI Strip -->
@@ -882,90 +887,14 @@ function updateAuthUI(user) {
 }
 
 // ── Auth modal ──
-let authMode = 'signin';
 
 function openAuthModal() {
-  authMode = 'signin';
-  document.getElementById('authModalTitle').textContent = 'Sign in';
-  document.getElementById('authModalSubmit').textContent = 'Sign in';
-  document.getElementById('authModalToggleText').textContent = "Don't have an account?";
-  document.getElementById('authModalToggleLink').textContent = 'Sign up';
   document.getElementById('authModalError').textContent = '';
-  document.getElementById('authModalEmail').value = '';
-  document.getElementById('authModalPassword').value = '';
-  document.getElementById('authModalConfirm').value = '';
-  document.getElementById('authModalConfirmWrap').style.display = 'none';
-  document.getElementById('authModalPassword').placeholder = 'Password';
   document.getElementById('authModal').classList.add('open');
-  setTimeout(() => document.getElementById('authModalEmail').focus(), 50);
 }
 
 function closeAuthModal() {
   document.getElementById('authModal').classList.remove('open');
-  ['authModalEmail','authModalPassword','authModalConfirm'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.display = ''; el.value = ''; }
-  });
-  const wrap = document.getElementById('authModalConfirmWrap');
-  if (wrap) wrap.style.display = 'none';
-  const btn = document.getElementById('authModalSubmit');
-  if (btn) btn.style.display = '';
-  document.querySelectorAll('.auth-modal-divider, .auth-modal-btn.secondary, .auth-modal-toggle').forEach(el => el.style.display = '');
-}
-
-function toggleAuthMode() {
-  authMode = authMode === 'signin' ? 'signup' : 'signin';
-  const isSignIn = authMode === 'signin';
-  document.getElementById('authModalTitle').textContent = isSignIn ? 'Sign in' : 'Sign up';
-  document.getElementById('authModalSubmit').textContent = isSignIn ? 'Sign in' : 'Sign up';
-  document.getElementById('authModalToggleText').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
-  document.getElementById('authModalToggleLink').textContent = isSignIn ? 'Sign up' : 'Sign in';
-  document.getElementById('authModalError').textContent = '';
-  document.getElementById('authModalConfirmWrap').style.display = isSignIn ? 'none' : 'block';
-  document.getElementById('authModalConfirm').value = '';
-  document.getElementById('authModalPassword').placeholder = isSignIn ? 'Password' : 'Password (min 6 chars, letters & digits)';
-}
-
-async function submitAuthModal() {
-  const errEl = document.getElementById('authModalError');
-  errEl.style.color = 'var(--red)';
-  if (!sb) { errEl.textContent = 'Connection error — please refresh and try again.'; return; }
-  const email = document.getElementById('authModalEmail').value.trim();
-  const password = document.getElementById('authModalPassword').value;
-  if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
-  if (authMode === 'signup') {
-    const confirm = document.getElementById('authModalConfirm').value;
-    if (password !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
-    if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
-    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      errEl.textContent = 'Password must contain both letters and digits.'; return;
-    }
-  }
-  errEl.textContent = '';
-  const btn = document.getElementById('authModalSubmit');
-  btn.disabled = true; btn.textContent = '...';
-  let error;
-  if (authMode === 'signin') {
-    ({ error } = await sb.auth.signInWithPassword({ email, password }));
-    btn.disabled = false; btn.textContent = 'Sign in';
-    if (error) { errEl.textContent = error.message; return; }
-    closeAuthModal();
-  } else {
-    ({ error } = await sb.auth.signUp({ email, password }));
-    btn.disabled = false; btn.textContent = 'Sign up';
-    if (error) { errEl.textContent = error.message; return; }
-    // Hide form, show verification message
-    document.getElementById('authModalEmail').style.display = 'none';
-    document.getElementById('authModalPassword').style.display = 'none';
-    document.getElementById('authModalConfirmWrap').style.display = 'none';
-    btn.style.display = 'none';
-    document.querySelector('.auth-modal-divider').style.display = 'none';
-    document.querySelector('.auth-modal-btn.secondary').style.display = 'none';
-    document.querySelector('.auth-modal-toggle').style.display = 'none';
-    document.getElementById('authModalTitle').textContent = 'Check your email';
-    errEl.style.color = 'var(--text2)';
-    errEl.innerHTML = 'A verification link has been sent to <strong>' + email + '</strong>. Click it to activate your account, then sign in.';
-  }
 }
 
 async function authSignInGitHub() {
@@ -973,6 +902,15 @@ async function authSignInGitHub() {
   if (!sb) return;
   await sb.auth.signInWithOAuth({
     provider: 'github',
+    options: { redirectTo: 'https://jayden2610.github.io/tymos/dashboard.html' }
+  });
+}
+
+async function authSignInGoogle() {
+  closeAuthModal();
+  if (!sb) return;
+  await sb.auth.signInWithOAuth({
+    provider: 'google',
     options: { redirectTo: 'https://jayden2610.github.io/tymos/dashboard.html' }
   });
 }
@@ -1024,7 +962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     resizeTimer = setTimeout(render, 120);
   });
 
-  if (!sb) { render(); return; }
+  if (!sb) { showLockedState(); return; }
 
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
@@ -1035,25 +973,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     // If signed in with no data yet, show empty state (not demo)
     renderWithData(sbLog ?? [], sbGs, false);
   } else {
-    // Not signed in — render with localStorage (may show demo)
-    render();
+    showLockedState();
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-      if (sbUser?.id === session.user.id) return; // already loaded
+      if (sbUser?.id === session.user.id) return;
       sbUser = session.user;
       updateAuthUI(sbUser);
+      hideLockedState();
       const sbLog = await loadLogFromSupabase();
       const sbGs  = await loadGlobalStatsFromSupabase();
       renderWithData(sbLog ?? [], sbGs, false);
     } else if (event === 'SIGNED_OUT') {
       sbUser = null;
       updateAuthUI(null);
-      render();
+      showLockedState();
     }
   });
 });
+
+function showLockedState() {
+  document.getElementById('lockedOverlay').style.display = 'flex';
+}
+
+function hideLockedState() {
+  document.getElementById('lockedOverlay').style.display = 'none';
+}
 
 // Separate render entry-point that accepts pre-loaded data
 function renderWithData(log, gs, isDemo) {
@@ -1119,20 +1065,16 @@ function renderWithData(log, gs, isDemo) {
 <!-- Auth modal -->
 <div id="authModal" onclick="if(event.target===this)closeAuthModal()">
   <div class="auth-modal-box">
-    <h3 id="authModalTitle">Sign in</h3>
+    <h3>Sign in to Tymos</h3>
     <div class="auth-modal-error" id="authModalError"></div>
-    <input type="email" id="authModalEmail" placeholder="Email" autocomplete="email"/>
-    <input type="password" id="authModalPassword" placeholder="Password" autocomplete="new-password" onkeydown="if(event.key==='Enter'&&authMode==='signin')submitAuthModal()" style="margin-bottom:0;"/>
-    <div id="authModalConfirmWrap" style="display:none;margin:0;padding:0;">
-      <input type="password" id="authModalConfirm" placeholder="Retype password" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuthModal()" style="margin-top:10px;"/>
-    </div>
-    <button class="auth-modal-btn primary" onclick="submitAuthModal()" id="authModalSubmit">Sign in</button>
-    <div class="auth-modal-divider">OR</div>
-    <button class="auth-modal-btn secondary" onclick="authSignInGitHub()">Continue with GitHub</button>
-    <div class="auth-modal-toggle">
-      <span id="authModalToggleText">Don't have an account?</span>
-      <a onclick="toggleAuthMode()"> <span id="authModalToggleLink">Sign up</span></a>
-    </div>
+    <button class="auth-modal-btn secondary" onclick="authSignInGitHub()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Continue with GitHub
+    </button>
+    <button class="auth-modal-btn secondary" onclick="authSignInGoogle()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
   </div>
 </div>
 </body>
