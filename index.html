@@ -2174,22 +2174,18 @@ async function sbLoadAll() {
   try {
     const { data: statsRow } = await sb.from('user_stats')
       .select('*').eq('user_id', sbUser.id).maybeSingle();
-    if (statsRow) {
-      sessionsComplete = statsRow.sessions_complete || 0;
-      totalFocusSecs  = statsRow.total_focus_secs  || 0;
-      tasksDone       = statsRow.tasks_done         || 0;
-      loadTodayStats();
-      updateStats();
-    }
+    sessionsComplete = statsRow ? (statsRow.sessions_complete || 0) : 0;
+    totalFocusSecs   = statsRow ? (statsRow.total_focus_secs  || 0) : 0;
+    tasksDone        = statsRow ? (statsRow.tasks_done        || 0) : 0;
+    loadTodayStats();
+    updateStats();
 
     const { data: tasksRow } = await sb.from('user_tasks')
       .select('*').eq('user_id', sbUser.id).maybeSingle();
-    if (tasksRow) {
-      try { tasks = JSON.parse(tasksRow.tasks || '[]'); } catch { tasks = []; }
-      nextId = tasksRow.next_id || 1;
-      renderTasks();
-      updateActiveTaskStrip();
-    }
+    tasks  = tasksRow ? (() => { try { return JSON.parse(tasksRow.tasks || '[]'); } catch { return []; } })() : [];
+    nextId = tasksRow ? (tasksRow.next_id || 1) : 1;
+    renderTasks();
+    updateActiveTaskStrip();
 
     setSyncStatus('Synced');
   } catch(e) {
