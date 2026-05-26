@@ -232,12 +232,12 @@ body {
 <body>
 
 <header class="header">
-  <a class="logo" href="index.html">Tymos</a>
-  <nav class="header-nav">
-    <a class="nav-link" href="index.html">Timer</a>
-    <a class="nav-link" href="dashboard.html">📊 Report</a>
-    <a class="nav-link active" href="about.html">About</a>
-  </nav>
+  <a class="logo" href="index.html">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></a>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="window.location.href='index.html'" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
+    <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
+    <span style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;">About</span>
+  </div>
 </header>
 
 <div class="page">
