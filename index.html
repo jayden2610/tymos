@@ -1032,6 +1032,27 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       </div>
     </div>
 
+    <div class="settings-divider"></div>
+
+    <!-- Candle Section -->
+    <div class="settings-section">
+      <div class="settings-section-label">🕯️ Candle</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Candle Lifespan</div>
+          <div class="settings-row-sub">Sessions to burn the candle fully down</div>
+        </div>
+        <input class="settings-number-input" id="sCandleLifespan" type="number" min="10" max="500" value="100">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Candles burned</div>
+          <div class="settings-row-sub" id="sCandlesCompletedSub">0 candles fully burned</div>
+        </div>
+        <button onclick="resetCandle()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;white-space:nowrap;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">Light new candle</button>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
       <button class="btn-save" onclick="saveSettings()">Save</button>
@@ -1069,6 +1090,30 @@ function playChime() {
 let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
 let running = false, isBreak = false, interval = null;
 
+// ── CANDLE STATE ──
+let candleBurnLevel = 0;  // 0.0 (full) → 1.0 (stub)
+let candlesComplete = 0;  // how many full lifespans burned naturally
+let candleLifespan  = 100; // sessions per lifespan, synced from settings
+
+function loadCandle() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LS_CANDLE) || '{}');
+    candleBurnLevel = c.burnLevel || 0;
+    candlesComplete = c.candlesComplete || 0;
+  } catch(e) {}
+}
+function saveCandle() {
+  localStorage.setItem(LS_CANDLE, JSON.stringify({ burnLevel: candleBurnLevel, candlesComplete }));
+}
+function resetCandle() {
+  candleBurnLevel = 0;
+  saveCandle();
+  updateRing();
+  const sub = document.getElementById('sCandlesCompletedSub');
+  if (sub) sub.textContent = candlesComplete + ' candle' + (candlesComplete !== 1 ? 's' : '') + ' fully burned';
+  notify('New candle lit.');
+}
+
 const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
 const _cBody = document.getElementById('candleBody');
@@ -1080,18 +1125,24 @@ const _cD2   = document.getElementById('cDrip2');
 const C_BASE=177, C_FH=122, C_MH=14;
 
 function updateRing() {
-  const p = (1 - remaining/totalSecs) * 100;
-  const h = C_FH - (p/100)*(C_FH - C_MH);
+  // in-session progress (0→1); breaks don't burn the candle
+  const sessionProg = (!isBreak && totalSecs > 0) ? (1 - remaining/totalSecs) : 0;
+  const increment   = 1 / Math.max(1, candleLifespan);
+  const effectiveBurn = Math.min(1, candleBurnLevel + sessionProg * increment);
+
+  const h  = Math.max(C_MH, C_FH - effectiveBurn * (C_FH - C_MH));
   const ty = C_BASE - h;
   _cBody.setAttribute('y', ty);  _cBody.setAttribute('height', h);
   _cWax.setAttribute('cy', ty);
   _cWick.setAttribute('y1', ty); _cWick.setAttribute('y2', ty - 17);
   _cFlame.setAttribute('transform', `translate(55,${ty - 17})`);
   _cD1.setAttribute('d', `M39,${ty+h*.35} Q36,${ty+h*.47} 37,${ty+h*.60}`);
+  const p = sessionProg * 100;
   _cD1.setAttribute('opacity', p > 28 ? Math.min(0.82, (p-28)/16) : 0);
   _cD2.setAttribute('d', `M70,${ty+h*.22} Q74,${ty+h*.36} 72,${ty+h*.50}`);
   _cD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
-  _cFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
+  // stub: no flame; otherwise fade at end of session
+  _cFlame.style.opacity = candleBurnLevel >= 1 ? 0 : (p > 90 ? Math.max(0, 1-(p-90)/10) : 1);
 }
 
 function setPreset(min, el) {
@@ -1125,7 +1176,10 @@ function tick() {
         const at = tasks.find(t => t.id === activeTaskId);
         if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
       }
-      notify('Session complete — take a break!');
+      // burn the candle
+      candleBurnLevel = Math.min(1, candleBurnLevel + 1/Math.max(1, candleLifespan));
+      if (candleBurnLevel >= 1) { candlesComplete++; saveCandle(); notify('Candle burned out. Light a new one in Settings.'); }
+      else { saveCandle(); notify('Session complete — take a break!'); }
       enterBreak();
     } else {
       notify('Break over — back to work.');
@@ -1173,6 +1227,7 @@ const LS_TASKS   = 'tymos_tasks';
 const LS_NEXT_ID = 'tymos_next_id';
 const LS_STATS   = 'tymos_stats';
 const LS_DAILY   = 'tymos_daily_log';
+const LS_CANDLE  = 'tymos_candle';
 
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1544,7 +1599,8 @@ const LS_SETTINGS = 'tymos_settings';
 const defaultSettings = {
   pomoDur: 25, shortBreak: 5, longBreak: 15,
   autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
-  autoCheck: false, moveBottom: true
+  autoCheck: false, moveBottom: true,
+  candleLifespan: 100
 };
 
 function loadSettings() {
@@ -1554,6 +1610,7 @@ function loadSettings() {
 
 function applySettings(s) {
   workSecs = s.pomoDur * 60;
+  candleLifespan = Math.max(10, s.candleLifespan || 100);
   if (!running) { totalSecs = workSecs; remaining = workSecs; }
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   updateRing();
@@ -1569,6 +1626,8 @@ function openSettings() {
   document.getElementById('sLongBreakInterval').value = s.longBreakInterval;
   document.getElementById('sAutoCheck').checked     = s.autoCheck;
   document.getElementById('sMoveBottom').checked    = s.moveBottom;
+  document.getElementById('sCandleLifespan').value  = s.candleLifespan;
+  document.getElementById('sCandlesCompletedSub').textContent = candlesComplete + ' candle' + (candlesComplete !== 1 ? 's' : '') + ' fully burned';
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -1589,6 +1648,7 @@ function saveSettings() {
     longBreakInterval: Math.max(1, parseInt(document.getElementById('sLongBreakInterval').value) || 4),
     autoCheck:         document.getElementById('sAutoCheck').checked,
     moveBottom:        document.getElementById('sMoveBottom').checked,
+    candleLifespan:    Math.max(10, parseInt(document.getElementById('sCandleLifespan').value) || 100),
   };
   localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
   applySettings(s);
@@ -1597,6 +1657,7 @@ function saveSettings() {
 }
 
 // Init settings on load
+loadCandle();
 applySettings(loadSettings());
 
 // ── SPOTIFY (PKCE) ──
