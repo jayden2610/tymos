@@ -750,7 +750,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
   <div style="display:flex;align-items:center;gap:8px;">
-    <a href="about.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;text-decoration:none;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">About</a>
     <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
     <a href="dashboard.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;text-decoration:none;letter-spacing:0.02em;transition:background 0.15s;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">📊 Report</a>
     <button class="auth-btn" id="authBtn" onclick="authAction()">Sign in</button>
@@ -1033,27 +1032,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       </div>
     </div>
 
-    <div class="settings-divider"></div>
-
-    <!-- Candle Section -->
-    <div class="settings-section">
-      <div class="settings-section-label">🕯️ Candle</div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-label">Candle Lifespan</div>
-          <div class="settings-row-sub">Sessions to burn the candle fully down</div>
-        </div>
-        <input class="settings-number-input" id="sCandleLifespan" type="number" min="10" max="500" value="100">
-      </div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-row-label">Candles burned</div>
-          <div class="settings-row-sub" id="sCandlesCompletedSub">0 candles fully burned</div>
-        </div>
-        <button onclick="resetCandle()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid rgba(124,92,58,0.2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;white-space:nowrap;" onmouseover="this.style.background='rgba(124,92,58,0.15)'" onmouseout="this.style.background='var(--accent-bg)'">Light new candle</button>
-      </div>
-    </div>
-
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
       <button class="btn-save" onclick="saveSettings()">Save</button>
@@ -1091,30 +1069,6 @@ function playChime() {
 let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
 let running = false, isBreak = false, interval = null;
 
-// ── CANDLE STATE ──
-let candleBurnLevel = 0;  // 0.0 (full) → 1.0 (stub)
-let candlesComplete = 0;  // how many full lifespans burned naturally
-let candleLifespan  = 100; // sessions per lifespan, synced from settings
-
-function loadCandle() {
-  try {
-    const c = JSON.parse(localStorage.getItem(LS_CANDLE) || '{}');
-    candleBurnLevel = c.burnLevel || 0;
-    candlesComplete = c.candlesComplete || 0;
-  } catch(e) {}
-}
-function saveCandle() {
-  localStorage.setItem(LS_CANDLE, JSON.stringify({ burnLevel: candleBurnLevel, candlesComplete }));
-}
-function resetCandle() {
-  candleBurnLevel = 0;
-  saveCandle();
-  updateRing();
-  const sub = document.getElementById('sCandlesCompletedSub');
-  if (sub) sub.textContent = candlesComplete + ' candle' + (candlesComplete !== 1 ? 's' : '') + ' fully burned';
-  notify('New candle lit.');
-}
-
 const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
 const _cBody = document.getElementById('candleBody');
@@ -1126,24 +1080,18 @@ const _cD2   = document.getElementById('cDrip2');
 const C_BASE=177, C_FH=122, C_MH=14;
 
 function updateRing() {
-  // in-session progress (0→1); breaks don't burn the candle
-  const sessionProg = (!isBreak && totalSecs > 0) ? (1 - remaining/totalSecs) : 0;
-  const increment   = 1 / Math.max(1, candleLifespan);
-  const effectiveBurn = Math.min(1, candleBurnLevel + sessionProg * increment);
-
-  const h  = Math.max(C_MH, C_FH - effectiveBurn * (C_FH - C_MH));
+  const p = (1 - remaining/totalSecs) * 100;
+  const h = C_FH - (p/100)*(C_FH - C_MH);
   const ty = C_BASE - h;
   _cBody.setAttribute('y', ty);  _cBody.setAttribute('height', h);
   _cWax.setAttribute('cy', ty);
   _cWick.setAttribute('y1', ty); _cWick.setAttribute('y2', ty - 17);
   _cFlame.setAttribute('transform', `translate(55,${ty - 17})`);
   _cD1.setAttribute('d', `M39,${ty+h*.35} Q36,${ty+h*.47} 37,${ty+h*.60}`);
-  const p = sessionProg * 100;
   _cD1.setAttribute('opacity', p > 28 ? Math.min(0.82, (p-28)/16) : 0);
   _cD2.setAttribute('d', `M70,${ty+h*.22} Q74,${ty+h*.36} 72,${ty+h*.50}`);
   _cD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
-  // stub: no flame; otherwise fade at end of session
-  _cFlame.style.opacity = candleBurnLevel >= 1 ? 0 : (p > 90 ? Math.max(0, 1-(p-90)/10) : 1);
+  _cFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
 }
 
 function setPreset(min, el) {
@@ -1177,10 +1125,7 @@ function tick() {
         const at = tasks.find(t => t.id === activeTaskId);
         if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
       }
-      // burn the candle
-      candleBurnLevel = Math.min(1, candleBurnLevel + 1/Math.max(1, candleLifespan));
-      if (candleBurnLevel >= 1) { candlesComplete++; saveCandle(); notify('Candle burned out. Light a new one in Settings.'); }
-      else { saveCandle(); notify('Session complete — take a break!'); }
+      notify('Session complete — take a break!');
       enterBreak();
     } else {
       notify('Break over — back to work.');
@@ -1197,7 +1142,9 @@ function tick() {
 }
 
 function enterBreak() {
-  isBreak = true; totalSecs = 5*60; remaining = 5*60;
+  isBreak = true;
+  const breakSecs = (loadSettings().shortBreak || 5) * 60;
+  totalSecs = breakSecs; remaining = breakSecs;
   document.getElementById('timerSub').textContent = 'Break';
   document.getElementById('startBtn').textContent = 'Start Break';
   document.getElementById('timerDisplay').textContent = fmt(remaining);
@@ -1228,7 +1175,6 @@ const LS_TASKS   = 'tymos_tasks';
 const LS_NEXT_ID = 'tymos_next_id';
 const LS_STATS   = 'tymos_stats';
 const LS_DAILY   = 'tymos_daily_log';
-const LS_CANDLE  = 'tymos_candle';
 
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1413,7 +1359,7 @@ function showInlineAddSection(tid) {
 }
 function inlineSectionKeydown(e, tid) {
   if (e.key === 'Enter') { e.preventDefault(); commitInlineSection(tid); }
-  if (e.key === 'Escape') { closeAuthModal(); pendingInlineAdd = null; renderTasks(); }
+  if (e.key === 'Escape') { pendingInlineAdd = null; renderTasks(); }
 }
 function commitInlineSection(tid) {
   const el = document.getElementById(`inlineSecInput-${tid}`);
@@ -1600,8 +1546,7 @@ const LS_SETTINGS = 'tymos_settings';
 const defaultSettings = {
   pomoDur: 25, shortBreak: 5, longBreak: 15,
   autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
-  autoCheck: false, moveBottom: true,
-  candleLifespan: 100
+  autoCheck: false, moveBottom: true
 };
 
 function loadSettings() {
@@ -1611,7 +1556,6 @@ function loadSettings() {
 
 function applySettings(s) {
   workSecs = s.pomoDur * 60;
-  candleLifespan = Math.max(10, s.candleLifespan || 100);
   if (!running) { totalSecs = workSecs; remaining = workSecs; }
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   updateRing();
@@ -1627,8 +1571,6 @@ function openSettings() {
   document.getElementById('sLongBreakInterval').value = s.longBreakInterval;
   document.getElementById('sAutoCheck').checked     = s.autoCheck;
   document.getElementById('sMoveBottom').checked    = s.moveBottom;
-  document.getElementById('sCandleLifespan').value  = s.candleLifespan;
-  document.getElementById('sCandlesCompletedSub').textContent = candlesComplete + ' candle' + (candlesComplete !== 1 ? 's' : '') + ' fully burned';
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -1649,7 +1591,6 @@ function saveSettings() {
     longBreakInterval: Math.max(1, parseInt(document.getElementById('sLongBreakInterval').value) || 4),
     autoCheck:         document.getElementById('sAutoCheck').checked,
     moveBottom:        document.getElementById('sMoveBottom').checked,
-    candleLifespan:    Math.max(10, parseInt(document.getElementById('sCandleLifespan').value) || 100),
   };
   localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
   applySettings(s);
@@ -1658,7 +1599,6 @@ function saveSettings() {
 }
 
 // Init settings on load
-loadCandle();
 applySettings(loadSettings());
 
 // ── SPOTIFY (PKCE) ──
@@ -1668,12 +1608,16 @@ const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-pla
 const SP_TOKEN_KEY  = 'tymos_sp_token';
 const SP_EXPIRY_KEY = 'tymos_sp_expiry';
 const SP_VERIFIER_KEY = 'tymos_sp_verifier';
-const SP_PRODUCT_KEY = 'tymos_sp_product';
+const SP_PRODUCT_KEY  = 'tymos_sp_product';
+const SP_REFRESH_KEY  = 'tymos_sp_refresh';
+const SP_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 let spPollInterval = null, spTickInterval = null;
 let spDurMs = 0, spPosMs = 0, spPlaying = false;
 let spPlayer = null, spDeviceId = null;
 let spFirstPoll = false;
+let spSdkActive = false;
+let spLastSdkUpdate = 0;
 let spPlayPending = false;  // debounce for play/pause only
 let spSkipPending = false;  // debounce for next/prev only
 let spSeeking = false;      // true while seek in-flight — pauses ticker
@@ -1734,7 +1678,7 @@ async function spHandleCallback() {
   const expiry = Date.now() + (data.expires_in || 3600) * 1000;
   localStorage.setItem(SP_TOKEN_KEY, data.access_token);
   localStorage.setItem(SP_EXPIRY_KEY, expiry);
-  if (data.refresh_token) localStorage.setItem('tymos_sp_refresh', data.refresh_token);
+  if (data.refresh_token) localStorage.setItem(SP_REFRESH_KEY, data.refresh_token);
   localStorage.removeItem(SP_PRODUCT_KEY);
   return true;
 }
@@ -1742,7 +1686,57 @@ async function spHandleCallback() {
 function spGetToken() {
   const expiry = parseInt(localStorage.getItem(SP_EXPIRY_KEY) || '0');
   if (Date.now() > expiry) { localStorage.removeItem(SP_TOKEN_KEY); return null; }
+  if (expiry - Date.now() < SP_REFRESH_BUFFER_MS) spRefreshToken();
   return localStorage.getItem(SP_TOKEN_KEY);
+}
+
+async function spRefreshToken() {
+  const refresh = localStorage.getItem(SP_REFRESH_KEY);
+  if (!refresh) { spDisconnect(); return; }
+  try {
+    const resp = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: SP_CLIENT_ID,
+        grant_type: 'refresh_token',
+        refresh_token: refresh
+      })
+    });
+    const data = await resp.json();
+    if (!data.access_token) { spDisconnect(); return; }
+    const expiry = Date.now() + (data.expires_in || 3600) * 1000;
+    localStorage.setItem(SP_TOKEN_KEY, data.access_token);
+    localStorage.setItem(SP_EXPIRY_KEY, String(expiry));
+    if (data.refresh_token) localStorage.setItem(SP_REFRESH_KEY, data.refresh_token);
+  } catch(e) { spDisconnect(); }
+}
+
+function spApplyState(source, opts) {
+  if (source === 'poll' && spSdkActive && Date.now() - spLastSdkUpdate < 4000) return;
+  const { title, artist, artUrl, playing, posMs, durMs, deviceName } = opts;
+  spPlaying = playing;
+  if (durMs !== undefined) spDurMs = durMs;
+  if (posMs !== undefined) spPosMs = posMs;
+  if (title  !== undefined) document.getElementById('spTitle').textContent  = title;
+  if (artist !== undefined) document.getElementById('spArtist').textContent = artist;
+  document.getElementById('spPlayBtn').innerHTML = playing ? '&#9646;&#9646;' : '&#9654;';
+  if (posMs !== undefined) document.getElementById('spElapsed').textContent  = spFmtMs(posMs);
+  if (durMs !== undefined) document.getElementById('spDuration').textContent = spFmtMs(durMs);
+  const pct = durMs > 0 ? ((posMs / durMs) * 100) + '%' : '0%';
+  document.getElementById('spFill').style.width = pct;
+  if (artUrl) {
+    const artEl = document.getElementById('spArt');
+    if (artEl && artEl.tagName !== 'IMG') {
+      const img = document.createElement('img');
+      img.className = 'spotify-art'; img.id = 'spArt'; img.alt = '';
+      img.src = artUrl;
+      artEl.replaceWith(img);
+    } else if (artEl) {
+      artEl.src = artUrl;
+    }
+  }
+  if (deviceName !== undefined) document.querySelector('.sp-device').textContent = '🔊 ' + deviceName;
 }
 
 async function spInit(token) {
@@ -1761,7 +1755,7 @@ async function spInit(token) {
     } catch { product = 'free'; }
   }
   if (product !== 'premium') {
-    [SP_TOKEN_KEY, SP_EXPIRY_KEY, 'tymos_sp_refresh', SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
+    [SP_TOKEN_KEY, SP_EXPIRY_KEY, SP_REFRESH_KEY, SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
     notify('Spotify Premium required to use this feature.');
     return;
   }
@@ -1798,13 +1792,24 @@ function loadSpotifySDK(token) {
     createSpotifyPlayer(token);
     return;
   }
-  window.onSpotifyWebPlaybackSDKReady = () => { createSpotifyPlayer(token); };
+  let sdkReady = false;
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    sdkReady = true;
+    createSpotifyPlayer(token);
+  };
   const s = document.createElement('script');
   s.src = 'https://sdk.scdn.co/spotify-player.js';
   s.onerror = () => {
-    console.warn('🔍 Spotify SDK failed to load — playback controls unavailable (ad blocker?)');
+    console.warn('Spotify SDK failed to load — poll-only mode (ad blocker?)');
+    document.querySelector('.sp-device').textContent = '⚠️ SDK blocked — controls limited';
   };
   document.head.appendChild(s);
+  setTimeout(() => {
+    if (!sdkReady) {
+      console.warn('Spotify SDK timed out after 10s — poll-only mode');
+      document.querySelector('.sp-device').textContent = '⚠️ SDK unavailable — poll-only mode';
+    }
+  }, 10000);
 }
 
 function createSpotifyPlayer(token) {
@@ -1822,30 +1827,28 @@ function createSpotifyPlayer(token) {
 
     spPlayer.addListener('not_ready', () => {
       spDeviceId = null;
+      spSdkActive = false;
     });
 
     // Mirror SDK state changes into UI immediately (no poll delay)
     spPlayer.addListener('player_state_changed', state => {
       if (!state) return;
-      spPlaying = !state.paused;
-      spDurMs = state.duration;
-      spPosMs = state.position;
+      spSdkActive = true;
+      spLastSdkUpdate = Date.now();
+      spFirstPoll = false;
       const track = state.track_window?.current_track;
       if (!track) return;
-      spFirstPoll = false;
-      document.getElementById('spTitle').textContent = track.name;
-      document.getElementById('spArtist').textContent = track.artists.map(a => a.name).join(', ');
-      document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
-      document.getElementById('spElapsed').textContent = spFmtMs(spPosMs);
-      document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
-      document.getElementById('spFill').style.width = spDurMs > 0 ? `${(spPosMs / spDurMs) * 100}%` : '0%';
-      const art = track.album?.images?.[0]?.url;
-      const artEl = document.getElementById('spArt');
-      if (art && artEl && artEl.tagName !== 'IMG') artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
-      else if (art && artEl) artEl.src = art;
+      spApplyState('sdk', {
+        title:      track.name,
+        artist:     track.artists.map(a => a.name).join(', '),
+        artUrl:     track.album?.images?.[0]?.url,
+        playing:    !state.paused,
+        posMs:      state.position,
+        durMs:      state.duration,
+        deviceName: 'Tymos'
+      });
       const openBtn = document.getElementById('spOpenBtn');
       if (openBtn) openBtn.style.display = 'none';
-      document.querySelector('.sp-device').textContent = '🔊 Tymos';
     });
 
     spPlayer.connect();
@@ -1855,19 +1858,13 @@ function createSpotifyPlayer(token) {
 }
 
 function spFetchState(token) {
+  if (spSdkActive && Date.now() - spLastSdkUpdate < 4000) return;
   fetch('https://api.spotify.com/v1/me/player', {
     headers: { 'Authorization': `Bearer ${token}` }
   }).then(r => {
     if (r.status === 204) {
       if (spFirstPoll) { spFirstPoll = false; return null; }
-      spPlaying = false;
-      document.getElementById('spTitle').textContent = 'Not playing';
-      document.getElementById('spArtist').textContent = '—';
-      document.getElementById('spPlayBtn').innerHTML = '&#9654;';
-      document.getElementById('spElapsed').textContent = '0:00';
-      document.getElementById('spDuration').textContent = '0:00';
-      document.getElementById('spFill').style.width = '0%';
-      document.querySelector('.sp-device').textContent = '🔊 No active device';
+      spApplyState('poll', { title: 'Not playing', artist: '—', playing: false, posMs: 0, durMs: 0, deviceName: 'No active device' });
       return null;
     }
     if (r.status === 401) { spDisconnect(); return null; }
@@ -1879,23 +1876,17 @@ function spFetchState(token) {
   }).then(data => {
     if (!data?.item) return;
     spFirstPoll = false;
-    spDurMs   = data.item.duration_ms;
-    spPosMs   = data.progress_ms;
-    spPlaying = data.is_playing;
-    document.getElementById('spTitle').textContent   = data.item.name;
-    document.getElementById('spArtist').textContent  = data.item.artists.map(a => a.name).join(', ');
-    document.getElementById('spPlayBtn').innerHTML   = spPlaying ? '&#9646;&#9646;' : '&#9654;';
-    document.getElementById('spElapsed').textContent  = spFmtMs(spPosMs);
-    document.getElementById('spDuration').textContent = spFmtMs(spDurMs);
-    document.getElementById('spFill').style.width    = spDurMs > 0 ? `${(spPosMs / spDurMs) * 100}%` : '0%';
-    const art = data.item.album?.images?.[0]?.url;
-    const artEl = document.getElementById('spArt');
-    if (art && artEl && artEl.tagName !== 'IMG') artEl.outerHTML = `<img class="spotify-art" id="spArt" src="${art}" alt="">`;
-    else if (art && artEl) artEl.src = art;
-    const deviceName = data.device?.name || 'Spotify';
-    document.querySelector('.sp-device').textContent = `🔊 ${deviceName}`;
     const openBtn = document.getElementById('spOpenBtn');
     if (openBtn) openBtn.style.display = 'none';
+    spApplyState('poll', {
+      title:      data.item.name,
+      artist:     data.item.artists.map(a => a.name).join(', '),
+      artUrl:     data.item.album?.images?.[0]?.url,
+      playing:    data.is_playing,
+      posMs:      data.progress_ms,
+      durMs:      data.item.duration_ms,
+      deviceName: data.device?.name || 'Spotify'
+    });
   }).catch(() => {});
 }
 
@@ -1973,14 +1964,18 @@ function spDisconnect() {
   if (spPollInterval) { clearInterval(spPollInterval); spPollInterval = null; }
   if (spTickInterval) { clearInterval(spTickInterval); spTickInterval = null; }
   if (spPlayer) { spPlayer.disconnect(); spPlayer = null; spDeviceId = null; }
-  [SP_TOKEN_KEY, SP_EXPIRY_KEY, 'tymos_sp_refresh', SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
+  [SP_TOKEN_KEY, SP_EXPIRY_KEY, SP_REFRESH_KEY, SP_VERIFIER_KEY, SP_PRODUCT_KEY].forEach(k => localStorage.removeItem(k));
   document.getElementById('spotifyPlayer').classList.remove('active');
   const connectBtn = document.getElementById('spotifyConnectBtn');
   connectBtn.style.display = 'flex';
   connectBtn.disabled = false;
   connectBtn.querySelector('.spotify-connect-label').textContent = 'Connect Spotify';
   const artEl = document.getElementById('spArt');
-  if (artEl && artEl.tagName === 'IMG') artEl.outerHTML = `<div class="spotify-art-placeholder" id="spArt">♪</div>`;
+  if (artEl && artEl.tagName === 'IMG') {
+    const ph = document.createElement('div');
+    ph.className = 'spotify-art-placeholder'; ph.id = 'spArt'; ph.textContent = '♪';
+    artEl.replaceWith(ph);
+  }
   const openBtn = document.getElementById('spOpenBtn');
   if (openBtn) openBtn.style.display = 'none';
 }
