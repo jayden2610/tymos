@@ -1221,8 +1221,13 @@ function saveTodayStats() {
   localStorage.setItem(LS_TODAY, JSON.stringify({ date: today, sessions: todaySessions, focusSecs: todayFocusSecs, done: todayDone }));
 }
 
-loadStats();
-loadTodayStats();
+// Stats are loaded from localStorage only when not signed in.
+// When signed in, Supabase is the source of truth (sbLoadAll sets the values).
+// This prevents stale localStorage data showing to unauthenticated visitors.
+function loadLocalStats() {
+  loadStats();
+  loadTodayStats();
+}
 
 function updateStats() {
   document.getElementById('statSessions').textContent = todaySessions;
@@ -2202,13 +2207,22 @@ saveTasks    = function() { sbSaveTasks(); };
 
 // ── Session listener ──
 (async function initAuth() {
-  if (!sb) return;
+  if (!sb) {
+    // No Supabase — fall back to localStorage
+    loadLocalStats();
+    updateStats();
+    return;
+  }
 
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     sbUser = session.user;
     updateAuthUI(sbUser);
     await sbLoadAll();
+  } else {
+    // Confirmed not signed in — safe to show localStorage stats
+    loadLocalStats();
+    updateStats();
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
@@ -2221,6 +2235,9 @@ saveTasks    = function() { sbSaveTasks(); };
     } else if (event === 'SIGNED_OUT') {
       sbUser = null;
       updateAuthUI(null);
+      // Reload localStorage stats now that the user is signed out
+      loadLocalStats();
+      updateStats();
     }
   });
 })();
