@@ -120,15 +120,6 @@ body.break-mode #candleFlame path:nth-child(1) { fill: #2a6080; }
 body.break-mode #candleFlame path:nth-child(2) { fill: #5a8ca0; }
 body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 
-.presets { display: flex; gap: 6px; }
-.preset-btn {
-  font-family: 'DM Mono', monospace; font-size: 11px;
-  padding: 5px 13px; border-radius: 100px;
-  border: 1px solid var(--border2); background: transparent;
-  color: var(--text2); cursor: pointer; transition: all 0.15s;
-}
-.preset-btn:hover { background: var(--surface2); }
-.preset-btn.active { background: var(--accent); border-color: var(--accent); color: #f5ede0; }
 
 .controls { display: flex; gap: 10px; align-items: center; }
 .btn {
@@ -427,6 +418,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px;
   border-top: 1px solid var(--border); padding-top: 16px;
+  pointer-events: auto;
 }
 .btn-ghost {
   font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600;
@@ -529,7 +521,6 @@ body.break-mode .btn-primary { background: var(--ring-break); box-shadow: 0 2px 
 button:active { transform: scale(0.95); opacity: 0.85; }
 .btn:active { transform: scale(0.95); }
 .btn-primary:active { transform: scale(0.95); }
-.preset-btn:active { transform: scale(0.92); }
 .icon-btn:active { transform: scale(0.88); }
 .add-task-btn:active { transform: scale(0.95); }
 
@@ -897,8 +888,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   </div>
 </div>
 
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
-  <div class="modal">
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Task editor">
     <div class="modal-title" id="modalTitle">New Task</div>
     <div class="form-field">
       <label class="form-label">Task Name</label>
@@ -922,8 +913,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="add-modal-section-btn" style="margin-top:8px;" onclick="addModalSection()">+ Add Section</button>
     </div>
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="saveTask()">Save Task</button>
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn-save" onclick="saveTask()">Save Task</button>
     </div>
   </div>
 </div>
@@ -931,8 +922,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 <div class="notif" id="notif"></div>
 
 <!-- Settings Modal -->
-<div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)">
-  <div class="modal" style="width:440px;">
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)" aria-hidden="true">
+  <div class="modal" style="width:440px;" role="dialog" aria-modal="true" aria-label="Settings">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
       <div class="modal-title" style="margin-bottom:0;">Settings</div>
       <button onclick="closeSettings()" style="width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">✕</button>
@@ -1019,8 +1010,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     </div>
 
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
-      <button class="btn-save" onclick="saveSettings()">Save</button>
+      <button type="button" class="btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button type="button" class="btn-save" onclick="saveSettings()">Save</button>
     </div>
   </div>
 </div>
@@ -1451,12 +1442,16 @@ function openModal(id = null) {
     if (c.dataset.pri === selectedPri) c.classList.add('sel-' + selectedPri);
   });
   renderModalSections();
-  document.getElementById('modalOverlay').classList.add('open');
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden', 'false');
   setTimeout(() => document.getElementById('mTaskName').focus(), 150);
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+  const overlay = document.getElementById('modalOverlay');
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
   editingId = null; draftSections = [];
 }
 function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
@@ -1557,11 +1552,15 @@ function openSettings() {
   document.getElementById('sLongBreakInterval').value = s.longBreakInterval;
   document.getElementById('sAutoCheck').checked     = s.autoCheck;
   document.getElementById('sMoveBottom').checked    = s.moveBottom;
-  document.getElementById('settingsOverlay').classList.add('open');
+  const sOverlay = document.getElementById('settingsOverlay');
+  sOverlay.classList.add('open');
+  sOverlay.setAttribute('aria-hidden', 'false');
 }
 
 function closeSettings() {
-  document.getElementById('settingsOverlay').classList.remove('open');
+  const sOverlay = document.getElementById('settingsOverlay');
+  sOverlay.classList.remove('open');
+  sOverlay.setAttribute('aria-hidden', 'true');
 }
 function closeSettingsOutside(e) {
   if (e.target === document.getElementById('settingsOverlay')) closeSettings();
