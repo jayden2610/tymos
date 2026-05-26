@@ -781,15 +781,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     </div>
     <h3 id="authModalTitle">Welcome back</h3>
     <div class="auth-modal-error" id="authModalError"></div>
-    <input type="email" id="authModalEmail" placeholder="Email" autocomplete="email"/>
-    <input type="password" id="authModalPassword" placeholder="Password" autocomplete="new-password" onkeydown="if(event.key==='Enter'&&authMode==='signin')submitAuthModal()" style="margin-bottom:0;"/>
-    <div id="authModalConfirmWrap" style="display:none;margin:0;padding:0;">
-      <input type="password" id="authModalConfirm" placeholder="Retype password" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuthModal()" style="margin-top:10px;"/>
-    </div>
-    <div style="margin-top:12px;">
-      <button class="auth-modal-btn primary" onclick="submitAuthModal()" id="authModalSubmit">Sign in</button>
-    </div>
-    <div class="auth-modal-divider">or continue with</div>
     <div class="auth-modal-social-row">
       <button class="auth-modal-btn secondary" onclick="authSignInGitHub()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -800,10 +791,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         Google
       </button>
     </div>
-    <div class="auth-modal-toggle">
-      <span id="authModalToggleText">Don't have an account?</span>
-      <a onclick="toggleAuthMode()"> <span id="authModalToggleLink">Sign up</span></a>
-    </div>
+
   </div>
 </div>
 <div class="main">
@@ -2073,97 +2061,17 @@ document.addEventListener('click', e => {
 });
 
 // ── Auth modal ──
-let authMode = 'signin'; // 'signin' | 'signup'
 
 function openAuthModal() {
-  authMode = 'signin';
-  document.getElementById('authModalTitle').textContent = 'Welcome back';
-  document.getElementById('authModalSubmit').textContent = 'Sign in';
-  document.getElementById('authModalToggleText').textContent = "Don't have an account?";
-  document.getElementById('authModalToggleLink').textContent = 'Sign up';
   document.getElementById('authModalError').textContent = '';
-  document.getElementById('authModalEmail').value = '';
-  document.getElementById('authModalPassword').value = '';
-  document.getElementById('authModalConfirm').value = '';
-  document.getElementById('authModalConfirmWrap').style.display = 'none';
-  document.getElementById('authModalPassword').placeholder = 'Password';
   document.getElementById('authModal').classList.add('open');
-  setTimeout(() => document.getElementById('authModalEmail').focus(), 50);
 }
 
 function closeAuthModal() {
   document.getElementById('authModal').classList.remove('open');
-  ['authModalEmail','authModalPassword','authModalConfirm'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.display = ''; el.value = ''; }
-  });
-  const wrap = document.getElementById('authModalConfirmWrap');
-  if (wrap) wrap.style.display = 'none';
-  const btn = document.getElementById('authModalSubmit');
-  if (btn) btn.style.display = '';
-  document.querySelectorAll('.auth-modal-divider, .auth-modal-btn.secondary, .auth-modal-toggle').forEach(el => el.style.display = '');
 }
 
-function toggleAuthMode() {
-  authMode = authMode === 'signin' ? 'signup' : 'signin';
-  const isSignIn = authMode === 'signin';
-  document.getElementById('authModalTitle').textContent = isSignIn ? 'Welcome back' : 'Sign up';
-  document.getElementById('authModalSubmit').textContent = isSignIn ? 'Sign in' : 'Sign up';
-  document.getElementById('authModalToggleText').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
-  document.getElementById('authModalToggleLink').textContent = isSignIn ? 'Sign up' : 'Sign in';
-  document.getElementById('authModalError').textContent = '';
-  document.getElementById('authModalConfirmWrap').style.display = isSignIn ? 'none' : 'block';
-  document.getElementById('authModalConfirm').value = '';
-  document.getElementById('authModalPassword').placeholder = isSignIn ? 'Password' : 'Password (min 6 chars, letters & digits)';
-}
 
-async function submitAuthModal() {
-  const errEl = document.getElementById('authModalError');
-  errEl.style.color = 'var(--red)';
-  if (!sb) { errEl.textContent = 'Connection error — please refresh and try again.'; return; }
-  const email = document.getElementById('authModalEmail').value.trim();
-  const password = document.getElementById('authModalPassword').value;
-  if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
-  if (authMode === 'signup') {
-    const confirm = document.getElementById('authModalConfirm').value;
-    if (password !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
-    if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
-    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      errEl.textContent = 'Password must contain both letters and digits.'; return;
-    }
-  }
-  errEl.textContent = '';
-  const btn = document.getElementById('authModalSubmit');
-  btn.disabled = true; btn.textContent = '...';
-  let error;
-  if (authMode === 'signin') {
-    ({ error } = await sb.auth.signInWithPassword({ email, password }));
-    btn.disabled = false; btn.textContent = 'Sign in';
-    if (error) { errEl.textContent = error.message; return; }
-    closeAuthModal();
-  } else {
-    const signUpResult = await sb.auth.signUp({ email, password });
-    const error = signUpResult.error;
-    btn.disabled = false; btn.textContent = 'Sign up';
-    if (error) { errEl.textContent = error.message; return; }
-    if (signUpResult.data.session) {
-      // Email confirm is OFF — user is live immediately
-      closeAuthModal();
-    } else {
-      // Email confirm is ON — show verification message
-      document.getElementById('authModalEmail').style.display = 'none';
-      document.getElementById('authModalPassword').style.display = 'none';
-      document.getElementById('authModalConfirmWrap').style.display = 'none';
-      btn.style.display = 'none';
-      document.querySelector('.auth-modal-divider').style.display = 'none';
-      document.querySelector('.auth-modal-btn.secondary').style.display = 'none';
-      document.querySelector('.auth-modal-toggle').style.display = 'none';
-      document.getElementById('authModalTitle').textContent = 'Check your email';
-      errEl.style.color = 'var(--text2)';
-      errEl.innerHTML = 'A verification link has been sent to <strong>' + email + '</strong>. Click it to activate your account, then sign in.';
-    }
-  }
-}
 
 async function authSignInGitHub() {
   closeAuthModal();
