@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "mcpServers": {
+    "antigravity-awesome-skills": {
+      "source": {
+        "source": "github",
+        "repo": "sickn33/antigravity-awesome-skills"
+      }
+    },
+    "karpathy-skills": {
+      "source": {
+        "source": "github",
+        "repo": "forrestchang/andrej-karpathy-skills"
+      }
+    }
+  },
+
+  "env": {
+    "DEERFLOW_URL": "http://187.77.132.151:2026",
+    "DEERFLOW_GATEWAY_URL": "http://187.77.132.151:2026",
+    "DEERFLOW_LANGGRAPH_URL": "http://187.77.132.151:2026/api/langgraph"
+  },
+
+  "permissions": {
+    "allow": ["Skill"]
+  }
+}
