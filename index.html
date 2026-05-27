@@ -829,20 +829,26 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   padding: 0 32px;
 }
 .about-scroll-hint {
-  text-align: center;
-  padding: 10px 0 12px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 12px; font-weight: 600;
-  color: var(--muted);
-  cursor: pointer;
-  opacity: 0.75;
-  transition: opacity 0.2s, color 0.2s;
   flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-top: 1px solid var(--border2);
+  background: linear-gradient(to right, var(--surface2), var(--surface), var(--surface2));
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 11px 28px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.about-scroll-hint:hover { opacity: 1; color: var(--accent); }
+.about-scroll-hint:hover {
+  background: linear-gradient(to right, var(--surface3), var(--surface2), var(--surface3));
+}
+.about-scroll-hint .hint-candle { display: flex; align-items: center; flex-shrink: 0; }
+.about-scroll-hint .hint-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--accent); opacity: 0.85;
+}
 .about-scroll-hint .hint-arrow {
   display: inline-block;
+  font-size: 10px; color: var(--muted);
   animation: hintBounce 2s ease-in-out infinite;
 }
 @keyframes hintBounce {
@@ -1073,6 +1079,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         </g>
       </svg>
       <div class="timer-time" id="timerDisplay">25:00</div>
+      <div id="timerTaskLabel" style="display:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--accent);opacity:0.8;text-align:center;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px;padding:2px 10px;background:var(--accent-bg);border-radius:100px;border:1px solid rgba(124,92,58,0.2);"></div>
     </div>
     <div class="controls">
       <button class="btn" onclick="resetTimer()">Reset</button>
@@ -1197,7 +1204,22 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 <!-- Scroll hint to about -->
 <div class="about-scroll-hint" onclick="document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'})">
-  <span class="hint-arrow">↓</span> What is Tymos?
+  <span class="hint-candle">
+    <svg width="14" height="26" viewBox="0 0 110 190" style="overflow:visible;">
+      <ellipse cx="55" cy="183" rx="33" ry="6" fill="#5e3d1e"/>
+      <rect x="24" y="177" width="62" height="6" rx="2" fill="#7c5c3a"/>
+      <rect x="35" y="55" width="40" height="122" rx="3" fill="#ede5d3" stroke="#c4b08a" stroke-width="1"/>
+      <ellipse cx="55" cy="55" rx="20" ry="4" fill="#e0d1b8"/>
+      <line x1="55" y1="55" x2="55" y2="38" stroke="#2a1a08" stroke-width="1.5" stroke-linecap="round"/>
+      <g style="animation:cFlicker 1.9s ease-in-out infinite;" transform="translate(55,38)">
+        <path d="M0,0 C-9,-9 -12,-24 -3,-35 C-1,-38 1,-38 3,-35 C12,-24 9,-9 0,0Z" fill="#b06108" opacity="0.7"/>
+        <path d="M0,-1 C-5,-8 -7,-18 -1,-27 C0,-30 0,-30 1,-27 C7,-18 5,-8 0,-1Z" fill="#e28a0c"/>
+        <ellipse cx="0" cy="-16" rx="2" ry="5" fill="#f0d870" opacity="0.92"/>
+      </g>
+    </svg>
+  </span>
+  <span class="hint-text">What is Tymos?</span>
+  <span class="hint-arrow">↓</span>
 </div>
 
 </div><!-- /.app-frame -->
@@ -2143,16 +2165,19 @@ function clearActiveTask() {
 function updateActiveTaskStrip() {
   const strip = document.getElementById('activeTaskStrip');
   const nameEl = document.getElementById('activeTaskName');
+  const timerLabel = document.getElementById('timerTaskLabel');
   if (!strip || !nameEl) return;
   if (activeTaskId !== null) {
     const t = tasks.find(x => x.id === activeTaskId);
     if (t) {
       nameEl.textContent = t.title;
       strip.classList.add('visible');
+      if (timerLabel) { timerLabel.textContent = t.title; timerLabel.style.display = 'block'; }
       return;
     }
   }
   strip.classList.remove('visible');
+  if (timerLabel) { timerLabel.textContent = ''; timerLabel.style.display = 'none'; }
 }
 
 function toggleDone(id) {
