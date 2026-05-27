@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://sdk.scdn.co https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://ovojwsfocmwclfyiefve.supabase.co; frame-src https://sdk.scdn.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://sdk.scdn.co https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://ovojwsfocmwclfyiefve.supabase.co; frame-src https://sdk.scdn.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Tymos</title>
@@ -3241,7 +3241,7 @@ async function sbLoadAll() {
 
     const { data: tasksRow } = await sb.from('user_tasks')
       .select('*').eq('user_id', sbUser.id).maybeSingle();
-    tasks  = tasksRow ? (() => { try { return JSON.parse(tasksRow.tasks || '[]'); } catch { return []; } })() : [];
+    tasks  = tasksRow ? (() => { try { return JSON.parse(tasksRow.tasks || '[]'); } catch { return []; } })() : (() => { try { return JSON.parse(localStorage.getItem('tasks') || '[]'); } catch { return []; } })();
     nextId = tasksRow ? (tasksRow.next_id || 1) : 1;
     renderTasks();
     updateActiveTaskStrip();
@@ -3292,6 +3292,7 @@ saveTasks    = function() { sbSaveTasks(); };
       loadLocalStats();
       updateStats();
       renderCandleShelf();
+      renderTasks();
     }
   });
 })();
