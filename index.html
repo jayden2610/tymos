@@ -1823,8 +1823,10 @@ function tick() {
     clearInterval(interval); running = false;
     playChime();
     if (!isBreak) {
-      sessionsComplete++;
       todaySessions++;
+      if (workSecs >= 600) {
+        sessionsComplete++; // candle only for sessions >= 10 min
+      }
       if (activeTaskId !== null) {
         const at = tasks.find(t => t.id === activeTaskId);
         if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
