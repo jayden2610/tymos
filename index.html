@@ -244,6 +244,72 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 }
 .add-task-btn:hover { background: rgba(124,92,58,0.15); }
 
+/* ── QUICK ADD ── */
+.quick-add-row {
+  background: var(--surface); border: 1px dashed rgba(120,95,65,0.28);
+  border-radius: 10px; display: flex; align-items: center;
+  gap: 10px; padding: 13px 14px; transition: border-color 0.15s;
+  cursor: text;
+}
+.quick-add-row.focused { border-color: rgba(120,95,65,0.45); border-style: solid; }
+.quick-add-row input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; color: var(--text);
+}
+.quick-add-row input::placeholder { color: var(--muted); font-weight: 500; }
+.quick-add-idle-hint {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+  color: var(--muted); opacity: 0.45; white-space: nowrap; flex-shrink: 0;
+}
+
+/* expanded card */
+.quick-add-card {
+  background: var(--surface);
+  border: 1px solid rgba(120,95,65,0.38);
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 3px rgba(124,92,58,0.06), var(--shadow);
+}
+.qac-header { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; }
+.qac-title-input {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600;
+  color: var(--text); line-height: 1.3;
+}
+.qac-title-input::placeholder { color: var(--muted); font-weight: 500; }
+.qac-subtasks {
+  border-top: 1px solid var(--border); padding: 8px 14px 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.qac-sub-item { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 5px; }
+.qac-check {
+  width: 15px; height: 15px; border: 1.5px solid var(--border2); border-radius: 4px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: transparent;
+}
+.qac-sub-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Nunito', sans-serif; font-size: 13px; color: var(--text);
+  border-bottom: 1px dashed transparent; transition: border-color 0.12s;
+}
+.qac-sub-input:focus { border-bottom-color: var(--border2); }
+.qac-sub-input::placeholder { color: var(--muted); }
+.qac-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 14px 10px; border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.qac-footer-left { display: flex; align-items: center; gap: 4px; }
+.qac-footer-right { display: flex; align-items: center; gap: 6px; }
+.qac-pri-chip {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.05em;
+  padding: 2px 8px; border-radius: 100px;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.qac-pri-chip.sel-high   { background: rgba(184,79,58,0.12); border-color: var(--red); color: var(--red); }
+.qac-pri-chip.sel-medium { background: rgba(184,144,58,0.12); border-color: var(--yellow); color: var(--yellow); }
+.qac-pri-chip.sel-low    { background: rgba(74,140,92,0.12); border-color: var(--green); color: var(--green); }
+
 .task-list {
   flex: 1; overflow-y: auto; padding: 12px 16px;
   display: flex; flex-direction: column; gap: 6px;
@@ -1196,9 +1262,10 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   <div class="task-panel">
     <div class="task-panel-header">
       <span class="panel-title">Tasks</span>
-      <button class="add-task-btn" onclick="openModal()">+ Add Task</button>
     </div>
-    <div class="task-list" id="taskList"></div>
+    <div class="task-list" id="taskList">
+      <!-- quick-add row injected by renderQuickAdd() -->
+    </div>
   </div>
 </div>
 
@@ -2021,21 +2088,187 @@ let nextId = 1, editingId = null, selectedPri = 'high', expandedId = null;
 let draftSections = [];
 let pendingDeleteTask = null, pendingDeleteSection = null, pendingInlineAdd = null;
 
+// ── QUICK ADD STATE ──
+let qaExpanded = false;
+let qaPri = 'high';
+let qaSubCount = 1; // visible subtask inputs
+
+function renderQuickAdd() {
+  const list = document.getElementById('taskList');
+  // remove existing quick-add element and re-prepend
+  const existing = document.getElementById('quickAddContainer');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'quickAddContainer';
+
+  if (!qaExpanded) {
+    wrap.innerHTML = `
+      <div class="quick-add-row" id="qaIdleRow" onclick="qaFocus()">
+        <input id="qaIdleInput" placeholder="Add a task…"
+          onfocus="qaFocus()"
+          onkeydown="qaIdleKeydown(event)">
+        <span class="quick-add-idle-hint">↵ to add</span>
+      </div>`;
+  } else {
+    const subInputs = Array.from({length: qaSubCount}, (_, i) => `
+      <div class="qac-sub-item">
+        <div class="qac-check"></div>
+        <input class="qac-sub-input" id="qaSub${i}"
+          placeholder="${i === 0 ? 'Add subtask…' : '+ another…'}"
+          onkeydown="qaSubKeydown(event, ${i})">
+      </div>`).join('');
+
+    wrap.innerHTML = `
+      <div class="quick-add-card" id="qaExpandedCard">
+        <div class="qac-header">
+          <div class="task-priority-bar pri-${qaPri}" id="qaPriBar"></div>
+          <input class="qac-title-input" id="qaTitleInput" placeholder="Task name…"
+            onkeydown="qaTitleKeydown(event)">
+        </div>
+        <div class="qac-subtasks" id="qaSubtasks">${subInputs}</div>
+        <div class="qac-footer">
+          <div class="qac-footer-left">
+            <button class="qac-pri-chip${qaPri==='high'?' sel-high':''}" onclick="qaSetPri('high')">high</button>
+            <button class="qac-pri-chip${qaPri==='medium'?' sel-medium':''}" onclick="qaSetPri('medium')">med</button>
+            <button class="qac-pri-chip${qaPri==='low'?' sel-low':''}" onclick="qaSetPri('low')">low</button>
+          </div>
+          <div class="qac-footer-right">
+            <button class="btn-ghost" onclick="qaCancel()">Esc</button>
+            <button class="btn-save" onclick="qaCommit()">Add ↵</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  list.prepend(wrap);
+}
+
+function qaFocus() {
+  if (qaExpanded) return;
+  const val = document.getElementById('qaIdleInput')?.value.trim() || '';
+  qaExpanded = true;
+  renderQuickAdd();
+  const t = document.getElementById('qaTitleInput');
+  if (t) { t.value = val; t.focus(); }
+}
+
+function qaIdleKeydown(e) {
+  if (e.key === 'Enter' && e.target.value.trim()) { qaFocus(); }
+  if (e.key === 'Escape') { e.target.value = ''; e.target.blur(); }
+}
+
+function qaTitleKeydown(e) {
+  if (e.key === 'Enter') { e.preventDefault(); qaCommit(); }
+  if (e.key === 'Escape') { e.preventDefault(); qaCancel(); }
+  if (e.key === 'Tab' && !e.shiftKey) {
+    e.preventDefault();
+    // focus first subtask input
+    const first = document.getElementById('qaSub0');
+    if (first) first.focus();
+  }
+}
+
+function qaSubKeydown(e, i) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    // add new subtask row if on last one and it has text
+    const cur = document.getElementById(`qaSub${i}`);
+    if (cur && cur.value.trim()) {
+      qaSubCount = Math.max(qaSubCount, i + 2);
+      // preserve existing values
+      const vals = Array.from({length: qaSubCount - 1}, (_, j) => {
+        const el = document.getElementById(`qaSub${j}`);
+        return el ? el.value : '';
+      });
+      renderQuickAdd();
+      // restore values
+      vals.forEach((v, j) => { const el = document.getElementById(`qaSub${j}`); if (el) el.value = v; });
+      const next = document.getElementById(`qaSub${i + 1}`);
+      if (next) next.focus();
+    } else {
+      qaCommit();
+    }
+  }
+  if (e.key === 'Escape') { e.preventDefault(); qaCancel(); }
+}
+
+function qaSetPri(pri) {
+  qaPri = pri;
+  // update bar color
+  const bar = document.getElementById('qaPriBar');
+  if (bar) { bar.className = `task-priority-bar pri-${pri}`; }
+  // update chip states
+  document.querySelectorAll('.qac-pri-chip').forEach(c => {
+    c.className = 'qac-pri-chip';
+    const p = c.textContent.trim();
+    const full = p === 'med' ? 'medium' : p;
+    if (full === pri) c.classList.add(`sel-${pri}`);
+  });
+}
+
+function qaCommit() {
+  const titleEl = document.getElementById('qaTitleInput');
+  const title = titleEl ? titleEl.value.trim() : '';
+  if (!title) { if (titleEl) titleEl.focus(); return; }
+
+  // collect subtasks
+  const subs = [];
+  for (let i = 0; i < qaSubCount; i++) {
+    const el = document.getElementById(`qaSub${i}`);
+    if (el && el.value.trim()) subs.push({ text: el.value.trim(), done: false });
+  }
+
+  const sections = subs.length ? [{ name: '', items: subs }] : [];
+  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes: '', sections });
+  saveTasks(); qaReset(); renderTasks();
+}
+
+function qaCancel() { qaReset(); renderQuickAdd(); }
+
+function qaReset() {
+  qaExpanded = false; qaPri = 'high'; qaSubCount = 1;
+}
+
 loadTasks();
 
 function renderTasks() {
   const list = document.getElementById('taskList');
+  renderQuickAdd();
   if (!tasks.length) {
-    list.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0;">No tasks yet — add one above.</div>`;
+    // remove stale task cards but keep quick-add
+    const cards = list.querySelectorAll('.task-card');
+    cards.forEach(c => c.remove());
+    if (!list.querySelector('.empty-state')) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.style.cssText = 'text-align:center;color:var(--muted);font-size:13px;padding:40px 0;';
+      empty.textContent = 'No tasks yet — add one above.';
+      list.appendChild(empty);
+    }
     return;
   }
+  // remove empty state if present
+  const empty = list.querySelector('.empty-state');
+  if (empty) empty.remove();
+
   const s = loadSettings();
   const sorted = [...tasks].sort((a,b) => {
     const p = {high:0,medium:1,low:2};
     if (s.moveBottom && a.done !== b.done) return a.done ? 1 : -1;
     return p[a.priority] - p[b.priority];
   });
-  list.innerHTML = sorted.map(t => taskCardHTML(t)).join('');
+  // replace task cards only (keep quick-add at top)
+  const existing = list.querySelectorAll('.task-card-wrapper');
+  existing.forEach(c => c.remove());
+  const frag = document.createDocumentFragment();
+  sorted.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'task-card-wrapper';
+    div.innerHTML = taskCardHTML(t);
+    frag.appendChild(div);
+  });
+  list.appendChild(frag);
 }
 
 function taskCardHTML(t) {
