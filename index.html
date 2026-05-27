@@ -387,9 +387,12 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   display: flex; align-items: center; gap: 6px;
   margin-bottom: 6px;
 }
+.section-header:not(:has(.section-name-text:empty)) .section-divider-line { display: block; }
+.section-name-text:empty ~ .section-divider-line { display: none; }
+.section-header:has(.section-name-text:empty) { margin-bottom: 0; }
 .section-name-text {
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--muted); flex: 1;
+  text-transform: uppercase; color: var(--muted); flex-shrink: 0;
 }
 .section-divider-line {
   flex: 1; height: 1px; background: var(--border); margin-left: 4px;
@@ -420,11 +423,13 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .section-item.done-item .item-text { text-decoration: line-through; opacity: 0.5; }
 .item-text { font-size: 13px; color: var(--text); flex: 1; }
 
-.section-add-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 0 8px; }
+.section-add-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 4px 8px; border-radius: 6px; transition: background 0.12s; cursor: pointer; }
+.section-add-row:hover { background: var(--surface2); }
+.section-add-row:hover .section-add-input { color: var(--accent2); }
 .section-add-input {
-  flex: 1; background: transparent; border: none;
-  border-bottom: 1px dashed var(--border2); color: var(--text);
-  font-family: 'Nunito', sans-serif; font-size: 12px; padding: 4px 0; outline: none;
+  flex: 1; background: transparent; border: none; border-bottom: none;
+  color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 12px;
+  font-weight: 600; padding: 4px 0; outline: none; cursor: pointer;
 }
 .section-add-input::placeholder { color: var(--muted); }
 .section-add-input:focus { border-bottom-color: var(--accent2); }
@@ -439,8 +444,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .task-notes:empty::before { content: 'Add notes...'; color: var(--muted); }
 
 .task-footer {
-  display: flex; align-items: center; justify-content: space-between; padding: 10px 0 2px;
-  border-top: 1px solid var(--border); margin-top: 2px;
+  display: flex; align-items: center; justify-content: space-between; padding: 6px 0 0;
+  margin-top: 4px;
 }
 .add-section-btn {
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); background: none;
