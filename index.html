@@ -178,6 +178,55 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .stat-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; color: var(--text); }
 .stat-lbl { font-size: 11px; font-weight: 600; color: var(--muted); }
 
+/* ── CANDLE SHELF ── */
+.candle-shelf {
+  display: none; /* shown only when signed in */
+  width: 100%;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px 9px;
+  flex-direction: column; gap: 7px;
+}
+.candle-shelf.visible { display: flex; }
+.shelf-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.shelf-rank-name {
+  font-family: 'Lora', serif; font-size: 12px; font-weight: 500;
+  color: var(--text); letter-spacing: 0.01em;
+}
+.shelf-rank-label {
+  font-family: 'DM Mono', monospace; font-size: 8px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+}
+.shelf-candles {
+  display: flex; align-items: flex-end; gap: 4px; flex-wrap: wrap; min-height: 30px;
+}
+.shelf-tier-divider {
+  width: 1px; height: 26px; background: var(--border2);
+  margin: 0 2px; flex-shrink: 0;
+}
+.shelf-progress-row {
+  display: flex; align-items: center; gap: 7px;
+}
+.shelf-bar-wrap {
+  flex: 1; height: 3px; background: var(--surface3);
+  border-radius: 100px; overflow: hidden;
+}
+.shelf-bar-fill {
+  height: 100%; border-radius: 100px;
+  transition: width 0.5s ease;
+}
+.shelf-bar-label {
+  font-family: 'DM Mono', monospace; font-size: 8px;
+  color: var(--muted); white-space: nowrap; letter-spacing: 0.04em;
+}
+
+/* candle flame flicker for shelf candles */
+@keyframes shelfFlicker {
+  0%,100% { opacity:1; } 30% { opacity:0.72; } 65% { opacity:0.87; }
+}
+.shelf-flame { animation: shelfFlicker 2s ease-in-out infinite; }
+
 /* ── TASK PANEL ── */
 .task-panel { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 .task-panel-header {
@@ -811,7 +860,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 /* Animated demo candles */
 .about-candle-row {
   display: flex; justify-content: center; align-items: flex-end;
-  gap: 24px; margin: 36px 0 48px;
+  gap: 12px; margin: 36px 0 48px; flex-wrap: wrap;
 }
 .about-candle-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .about-candle-col-label {
@@ -905,10 +954,44 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   65%       { opacity: 0.88; transform: scale(1.04) translateY(-1px); }
 }
 
+/* ── RANK TABLE ── */
+.about-rank-table {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border2); border-radius: 14px; overflow: hidden;
+}
+.about-rank-row {
+  display: grid; grid-template-columns: 56px 1fr 1fr;
+  align-items: center; gap: 14px;
+  padding: 14px 18px; background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.about-rank-row:last-child { border-bottom: none; }
+.about-rank-candles { display: flex; align-items: flex-end; gap: 3px; }
+.about-rank-info { display: flex; flex-direction: column; gap: 2px; }
+.about-rank-name {
+  font-family: 'Lora', serif; font-size: 14px; font-weight: 500;
+}
+.about-rank-sessions {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.1em; color: var(--muted);
+}
+.about-rank-note {
+  font-size: 11px; font-weight: 500; color: var(--text2); line-height: 1.5;
+}
+.about-rank-arrow {
+  text-align: center; padding: 5px 0;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.14em; color: var(--muted);
+  background: var(--surface); border-left: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
+}
+
 @media (max-width: 600px) {
   .about-inner { padding: 0 18px; }
   .about-title { font-size: 24px; }
   .about-card-grid { grid-template-columns: 1fr; }
+  .about-rank-row { grid-template-columns: 48px 1fr; }
+  .about-rank-note { display: none; }
 }
 </style>
 </head>
@@ -998,13 +1081,13 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       </div>
       <div class="qte-divider"></div>
       <div class="qte-group">
-        <span class="qte-label">Short</span>
+        <span class="qte-label">Short Break</span>
         <input class="qte-input" id="qteShort" type="number" min="1" max="60" value="5"
                onchange="quickTimeSave()" oninput="quickTimeSave()">
       </div>
       <div class="qte-divider"></div>
       <div class="qte-group">
-        <span class="qte-label">Long</span>
+        <span class="qte-label">Long Break</span>
         <input class="qte-input" id="qteLong" type="number" min="1" max="120" value="15"
                onchange="quickTimeSave()" oninput="quickTimeSave()">
       </div>
@@ -1027,6 +1110,22 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         <span class="stat-lbl">done</span>
       </div>
     </div>
+
+    <!-- Candle shelf — signed-in only -->
+    <div class="candle-shelf" id="candleShelf">
+      <div class="shelf-header">
+        <span class="shelf-rank-label">Candle collection</span>
+        <span class="shelf-rank-name" id="shelfRankName">Ember</span>
+      </div>
+      <div class="shelf-candles" id="shelfCandles"></div>
+      <div class="shelf-progress-row">
+        <div class="shelf-bar-wrap">
+          <div class="shelf-bar-fill" id="shelfBarFill" style="width:0%"></div>
+        </div>
+        <span class="shelf-bar-label" id="shelfBarLabel">0/4 → blue</span>
+      </div>
+    </div>
+
     <div class="active-task-strip" id="activeTaskStrip">
       <span style="font-size:10px;opacity:0.7;flex-shrink:0;">focusing on</span>
       <span class="active-task-name" id="activeTaskName"></span>
@@ -1108,56 +1207,85 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <p class="about-sub">A Pomodoro timer that treats your attention like a finite resource — and makes you feel it.</p>
     </div>
 
-    <!-- Live burn demo: three candles at different stages -->
+    <!-- Per-session candle cycle: full → burns → earned → resets -->
     <div class="about-candle-row" aria-hidden="true">
+
+      <!-- Step 1: full candle, session starts -->
       <div class="about-candle-col">
         <svg width="34" height="96" viewBox="0 0 34 96">
-          <!-- full candle, wick, flame -->
-          <line x1="17" y1="16" x2="17" y2="22" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
-          <g style="animation: flamePulse 2s ease-in-out infinite;">
-            <path d="M17 5 C14 10 12 15 17 18 C22 15 20 10 17 5Z" fill="#e8a840"/>
-            <path d="M17 9 C15.5 13 16 16 17 17.5 C18 16 18.5 13 17 9Z" fill="#f5d080"/>
+          <line x1="17" y1="14" x2="17" y2="20" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+          <g style="animation:flamePulse 2s ease-in-out infinite;">
+            <path d="M17 3 C14 8 12 13 17 16 C22 13 20 8 17 3Z" fill="#e8a840"/>
+            <path d="M17 7 C15.5 11 16 14 17 15.5 C18 14 18.5 11 17 7Z" fill="#f5d080"/>
           </g>
-          <rect x="8" y="22" width="18" height="68" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
-          <rect x="11" y="24" width="5" height="64" rx="2" fill="rgba(255,255,255,0.25)"/>
+          <rect x="8" y="20" width="18" height="70" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
+          <rect x="11" y="22" width="5" height="66" rx="2" fill="rgba(255,255,255,0.25)"/>
         </svg>
-        <span class="about-candle-col-label">Session 1</span>
+        <span class="about-candle-col-label">Session starts</span>
       </div>
 
-      <!-- Animated demo candle (burns during session) -->
+      <!-- Arrow -->
+      <div style="display:flex;align-items:center;padding-bottom:18px;color:var(--muted);font-size:13px;opacity:0.5;">→</div>
+
+      <!-- Step 2: mid-session, candle half burnt -->
       <div class="about-candle-col">
-        <svg id="demoCandle" width="44" height="120" viewBox="0 0 44 120">
-          <ellipse cx="22" cy="116" rx="16" ry="3.5" fill="#5e3d1e"/>
-          <rect x="10" y="112" width="24" height="4" rx="1.5" fill="#7c5c3a"/>
-          <!-- Drip effects -->
-          <path id="demoDrip1" d="M14,70 Q11,78 12,87" stroke="#ddd0b6" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0"/>
-          <path id="demoDrip2" d="M31,60 Q34,70 33,80" stroke="#ddd0b6" stroke-width="2" stroke-linecap="round" fill="none" opacity="0"/>
-          <!-- Candle body (height animated by JS) -->
-          <rect id="demoCandleBody" x="9" y="24" width="26" height="88" rx="3" fill="#ede5d3" stroke="#c4b08a" stroke-width="1"/>
-          <ellipse id="demoCandleWax" cx="22" cy="24" rx="13" ry="3.5" fill="#e0d1b8"/>
-          <line id="demoCandleWick" x1="22" y1="24" x2="22" y2="14" stroke="#2a1a08" stroke-width="1.5" stroke-linecap="round"/>
-          <g id="demoCandleFlame" transform="translate(22,14)" style="animation: flamePulse 1.8s ease-in-out infinite;">
-            <path d="M0,0 C-6,-6 -8,-16 -2,-24 C-1,-26 1,-26 2,-24 C8,-16 6,-6 0,0Z" fill="#b06108" opacity="0.75"/>
-            <path d="M0,-1 C-3.5,-5.5 -5,-12 -1,-18 C0,-21 0,-21 1,-18 C5,-12 3.5,-5.5 0,-1Z" fill="#e28a0c"/>
-            <ellipse cx="0" cy="-11" rx="1.5" ry="4" fill="#f0d870" opacity="0.9"/>
+        <svg width="34" height="96" viewBox="0 0 34 96">
+          <line x1="17" y1="44" x2="17" y2="50" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+          <g style="animation:flamePulse 1.9s ease-in-out infinite;animation-delay:0.3s;">
+            <path d="M17 33 C14 38 12 43 17 46 C22 43 20 38 17 33Z" fill="#e8a840"/>
+            <path d="M17 37 C15.5 41 16 44 17 45.5 C18 44 18.5 41 17 37Z" fill="#f5d080"/>
+          </g>
+          <!-- wax drip -->
+          <path d="M10,56 Q7.5,62 8,70" stroke="#ddd0b6" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.7"/>
+          <rect x="8" y="50" width="18" height="40" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
+          <rect x="11" y="52" width="5" height="36" rx="2" fill="rgba(255,255,255,0.25)"/>
+        </svg>
+        <span class="about-candle-col-label">Mid-session</span>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display:flex;align-items:center;padding-bottom:18px;color:var(--muted);font-size:13px;opacity:0.5;">→</div>
+
+      <!-- Step 3: session done — candle earned, show a red earned candle -->
+      <div class="about-candle-col">
+        <!-- earned candle badge -->
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="position:absolute;top:-8px;right:-8px;background:#b84f3a;color:#fff;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;border-radius:100px;padding:1px 5px;letter-spacing:0.05em;">+1</div>
+          <svg width="26" height="72" viewBox="0 0 26 72">
+            <line x1="13" y1="9" x2="13" y2="14" stroke="#2e1f0d" stroke-width="1.4" stroke-linecap="round"/>
+            <g style="animation:flamePulse 2s ease-in-out infinite;animation-delay:0.6s;">
+              <path d="M13 2 C10.5 6 10 10 13 12.5 C15.5 10 15 6 13 2Z" fill="#b84f3a"/>
+              <path d="M13 5 C11.5 8.5 12 11 13 12 C14 11 14.5 8.5 13 5Z" fill="#f0a080"/>
+            </g>
+            <rect x="4" y="14" width="18" height="52" rx="3.5" fill="#ede5d3" stroke="rgba(184,79,58,0.25)" stroke-width="1"/>
+            <rect x="7" y="16" width="5" height="48" rx="2" fill="rgba(255,255,255,0.25)"/>
+          </svg>
+          <span class="about-candle-col-label" style="color:#b84f3a;">Earned!</span>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display:flex;align-items:center;padding-bottom:18px;color:var(--muted);font-size:13px;opacity:0.5;">→</div>
+
+      <!-- Step 4: resets to full for next session -->
+      <div class="about-candle-col">
+        <!-- Animated demo candle (mirrors live session) -->
+        <svg id="demoCandle" width="34" height="96" viewBox="0 0 34 96">
+          <ellipse cx="17" cy="92" rx="13" ry="3" fill="#5e3d1e"/>
+          <rect x="8" y="88" width="18" height="4" rx="1.5" fill="#7c5c3a"/>
+          <path id="demoDrip1" d="M10,50 Q7.5,58 8,67" stroke="#ddd0b6" stroke-width="2" stroke-linecap="round" fill="none" opacity="0"/>
+          <path id="demoDrip2" d="M24,44 Q27,52 26,61" stroke="#ddd0b6" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0"/>
+          <rect id="demoCandleBody" x="8" y="18" width="18" height="70" rx="3" fill="#ede5d3" stroke="#c4b08a" stroke-width="1"/>
+          <ellipse id="demoCandleWax" cx="17" cy="18" rx="9" ry="3" fill="#e0d1b8"/>
+          <line id="demoCandleWick" x1="17" y1="18" x2="17" y2="10" stroke="#2a1a08" stroke-width="1.5" stroke-linecap="round"/>
+          <g id="demoCandleFlame" transform="translate(17,10)" style="animation:flamePulse 1.8s ease-in-out infinite;">
+            <path d="M0,0 C-5,-5 -6,-13 -2,-20 C-1,-22 1,-22 2,-20 C6,-13 5,-5 0,0Z" fill="#b06108" opacity="0.75"/>
+            <path d="M0,-1 C-2.5,-4.5 -3.5,-10 -1,-15 C0,-17 0,-17 1,-15 C3.5,-10 2.5,-4.5 0,-1Z" fill="#e28a0c"/>
+            <ellipse cx="0" cy="-9" rx="1.2" ry="3.5" fill="#f0d870" opacity="0.9"/>
           </g>
         </svg>
         <span class="about-live-pct" id="demoCandlePct">—</span>
-        <span class="about-candle-col-label">Live session</span>
-      </div>
-
-      <div class="about-candle-col">
-        <svg width="34" height="96" viewBox="0 0 34 96">
-          <!-- stubbed candle after many sessions -->
-          <line x1="17" y1="62" x2="17" y2="68" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
-          <g style="animation: flamePulse 2.1s ease-in-out infinite; animation-delay: 0.5s;">
-            <path d="M17 51 C14 56 12 61 17 64 C22 61 20 56 17 51Z" fill="#e8a840"/>
-            <path d="M17 55 C15.5 59 16 62 17 63.5 C18 62 18.5 59 17 55Z" fill="#f5d080"/>
-          </g>
-          <rect x="8" y="68" width="18" height="22" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
-          <rect x="11" y="70" width="5" height="18" rx="2" fill="rgba(255,255,255,0.25)"/>
-        </svg>
-        <span class="about-candle-col-label">Many sessions</span>
+        <span class="about-candle-col-label">Resets → live</span>
       </div>
     </div>
 
@@ -1177,17 +1305,17 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         </div>
       </div>
       <div class="about-flow-step">
-        <div class="about-flow-dot-col"><div class="about-flow-dot">☕</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯️</div><div class="about-flow-line"></div></div>
         <div class="about-flow-content">
-          <div class="about-flow-title">Session ends → take the break</div>
-          <div class="about-flow-body">When the chime rings, step away. The 5-minute break isn't optional — it's the method. Your brain needs the reset to keep the depth going.</div>
+          <div class="about-flow-title">The candle burns with you</div>
+          <div class="about-flow-body">As the timer counts down, the candle burns — wax drips, the flame flickers. When the session ends, you've earned that candle. It resets fresh for the next one.</div>
         </div>
       </div>
       <div class="about-flow-step">
-        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯️</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-dot-col"><div class="about-flow-dot">☕</div><div class="about-flow-line"></div></div>
         <div class="about-flow-content">
-          <div class="about-flow-title">Watch the candle burn</div>
-          <div class="about-flow-body">Your candle shrinks a little with every session. Over time, it visibly shortens — a real, physical record of focused work. Time spent is wax gone.</div>
+          <div class="about-flow-title">Take the break</div>
+          <div class="about-flow-body">When the chime rings, step away. The flame flickers blue during your break — a small visual breath before the next session.</div>
         </div>
       </div>
       <div class="about-flow-step">
@@ -1207,21 +1335,133 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     </div>
 
     <div class="about-pull-quote">
-      <div class="about-pull-text">"Your candle is a clock you can't rewind — every session you complete burns it a little shorter."</div>
+      <div class="about-pull-text">"Each session is one candle. You burn it completely — then earn it. That's the record."</div>
       <div class="about-pull-attr">— the idea behind Tymos</div>
     </div>
 
     <p style="font-size:13px;font-weight:500;color:var(--text2);line-height:1.7;margin-bottom:14px;">
-      Most productivity apps reward you with points, streaks, and badges — things that feel good but don't cost anything. Tymos tries something different.
+      Most productivity apps reward you with points and streaks — things that feel good but don't cost anything. Tymos tries something different.
     </p>
     <p style="font-size:13px;font-weight:500;color:var(--text2);line-height:1.7;margin-bottom:28px;">
-      Every session burns the candle a little shorter. The flame flickers blue during breaks. There's no way to top it up — that's the point. It's a quiet, honest signal: <em style="font-style:italic;color:var(--accent);">this is how much of your time has burned.</em>
+      Every session, you light a fresh candle. It burns down as you focus. When it's done, <em style="font-style:italic;color:var(--accent);">you've earned it</em> — added to your collection, permanently. The candle resets. You do it again.
     </p>
 
-    <!-- Feature cards -->
+    <!-- What you get signed in -->
     <div class="about-divider">
       <div class="about-divider-line"></div>
-      <div class="about-divider-label">What's inside</div>
+      <div class="about-divider-label">Sign in to unlock</div>
+      <div class="about-divider-line"></div>
+    </div>
+
+    <div class="about-card-grid" style="margin-bottom:28px;">
+      <div class="about-card" style="border-color:rgba(184,79,58,0.2);background:rgba(184,79,58,0.04);">
+        <div class="about-card-icon">🕯️</div>
+        <div class="about-card-title">Candle collection</div>
+        <div class="about-card-body">Every completed session earns you a candle. Collect enough and they promote — 4 red to 1 blue, 4 blue to 1 purple, all the way to gold and legendary.</div>
+      </div>
+      <div class="about-card" style="border-color:rgba(184,79,58,0.2);background:rgba(184,79,58,0.04);">
+        <div class="about-card-icon">✨</div>
+        <div class="about-card-title">Rank & progression</div>
+        <div class="about-card-body">From Ember to Eternal Flame — your rank grows as candles accumulate. It's a quiet record of every session you actually completed.</div>
+      </div>
+      <div class="about-card" style="border-color:rgba(58,107,140,0.2);background:rgba(58,107,140,0.04);">
+        <div class="about-card-icon">🔄</div>
+        <div class="about-card-title">Sync across devices</div>
+        <div class="about-card-body">Your tasks, candles, stats and rank follow you. Pick up exactly where you left off on any device.</div>
+      </div>
+      <div class="about-card" style="border-color:rgba(58,107,140,0.2);background:rgba(58,107,140,0.04);">
+        <div class="about-card-icon">📊</div>
+        <div class="about-card-title">Full report history</div>
+        <div class="about-card-body">Sessions and focus time logged per day, with charts and streaks. Your best days, your productive hours — all saved permanently.</div>
+      </div>
+    </div>
+
+    <!-- Ranking table -->
+    <div class="about-divider">
+      <div class="about-divider-line"></div>
+      <div class="about-divider-label">Candle ranks</div>
+      <div class="about-divider-line"></div>
+    </div>
+
+    <div class="about-rank-table">
+
+      <!-- Red -->
+      <div class="about-rank-row">
+        <div class="about-rank-candles">
+          <!-- 3 red candles -->
+          <svg width="11" height="30" viewBox="0 0 11 30"><line x1="5.5" y1="3.5" x2="5.5" y2="7.5" stroke="#2e1f0d" stroke-width="1.2" stroke-linecap="round"/><g style="animation:flamePulse 1.9s ease-in-out infinite;"><path d="M5.5 1 C3.5 3.5 3 6 5.5 7.5 C8 6 7.5 3.5 5.5 1Z" fill="#b84f3a"/><path d="M5.5 3 C4.5 5 5 6.8 5.5 7.2 C6 6.8 6.5 5 5.5 3Z" fill="#f0a080"/></g><rect x="1" y="7.5" width="9" height="20" rx="2.5" fill="#ede5d3" stroke="rgba(184,79,58,0.25)" stroke-width="0.8"/></svg>
+          <svg width="11" height="30" viewBox="0 0 11 30"><line x1="5.5" y1="3.5" x2="5.5" y2="7.5" stroke="#2e1f0d" stroke-width="1.2" stroke-linecap="round"/><g style="animation:flamePulse 2s ease-in-out infinite;animation-delay:0.2s"><path d="M5.5 1 C3.5 3.5 3 6 5.5 7.5 C8 6 7.5 3.5 5.5 1Z" fill="#b84f3a"/><path d="M5.5 3 C4.5 5 5 6.8 5.5 7.2 C6 6.8 6.5 5 5.5 3Z" fill="#f0a080"/></g><rect x="1" y="7.5" width="9" height="20" rx="2.5" fill="#ede5d3" stroke="rgba(184,79,58,0.25)" stroke-width="0.8"/></svg>
+          <svg width="11" height="30" viewBox="0 0 11 30"><line x1="5.5" y1="3.5" x2="5.5" y2="7.5" stroke="#2e1f0d" stroke-width="1.2" stroke-linecap="round"/><g style="animation:flamePulse 1.8s ease-in-out infinite;animation-delay:0.4s"><path d="M5.5 1 C3.5 3.5 3 6 5.5 7.5 C8 6 7.5 3.5 5.5 1Z" fill="#b84f3a"/><path d="M5.5 3 C4.5 5 5 6.8 5.5 7.2 C6 6.8 6.5 5 5.5 3Z" fill="#f0a080"/></g><rect x="1" y="7.5" width="9" height="20" rx="2.5" fill="#ede5d3" stroke="rgba(184,79,58,0.25)" stroke-width="0.8"/></svg>
+        </div>
+        <div class="about-rank-info">
+          <span class="about-rank-name" style="color:#b84f3a;">Ember</span>
+          <span class="about-rank-sessions">1 – 3 sessions</span>
+        </div>
+        <div class="about-rank-note">Start here. Every session earns one red candle.</div>
+      </div>
+
+      <div class="about-rank-arrow">↓ 4 red = 1 blue</div>
+
+      <!-- Blue -->
+      <div class="about-rank-row">
+        <div class="about-rank-candles">
+          <svg width="13" height="36" viewBox="0 0 13 36"><line x1="6.5" y1="4" x2="6.5" y2="9" stroke="#2e1f0d" stroke-width="1.3" stroke-linecap="round"/><g style="animation:flamePulse 2s ease-in-out infinite;animation-delay:0.1s"><path d="M6.5 1 C4 5 3.5 8.5 6.5 10 C9.5 8.5 9 5 6.5 1Z" fill="#3a6b8c"/><path d="M6.5 3.5 C5 6.5 5.5 8.5 6.5 9.5 C7.5 8.5 8 6.5 6.5 3.5Z" fill="#a8d0e8"/></g><rect x="1" y="9" width="11" height="24" rx="2.5" fill="#dce8f0" stroke="rgba(58,107,140,0.3)" stroke-width="0.8"/></svg>
+        </div>
+        <div class="about-rank-info">
+          <span class="about-rank-name" style="color:#3a6b8c;">Blue Keeper</span>
+          <span class="about-rank-sessions">4 sessions</span>
+        </div>
+        <div class="about-rank-note">First promotion. Red candles consolidate into blue.</div>
+      </div>
+
+      <div class="about-rank-arrow">↓ 4 blue = 1 purple</div>
+
+      <!-- Purple -->
+      <div class="about-rank-row">
+        <div class="about-rank-candles">
+          <svg width="15" height="42" viewBox="0 0 15 42"><line x1="7.5" y1="5" x2="7.5" y2="10" stroke="#2e1f0d" stroke-width="1.4" stroke-linecap="round"/><g style="animation:flamePulse 2.1s ease-in-out infinite;animation-delay:0.3s"><path d="M7.5 1 C4.5 6 4 10 7.5 12 C11 10 10.5 6 7.5 1Z" fill="#6b3a8c"/><path d="M7.5 4 C5.5 7.5 6 10.5 7.5 11.5 C9 10.5 9.5 7.5 7.5 4Z" fill="#c4a0e0"/></g><rect x="1" y="10" width="13" height="28" rx="3" fill="#ede0f5" stroke="rgba(107,58,140,0.3)" stroke-width="0.8"/></svg>
+        </div>
+        <div class="about-rank-info">
+          <span class="about-rank-name" style="color:#6b3a8c;">Violet Flame</span>
+          <span class="about-rank-sessions">16 sessions</span>
+        </div>
+        <div class="about-rank-note">Consistency shows. Blues distill into purple.</div>
+      </div>
+
+      <div class="about-rank-arrow">↓ 4 purple = 1 gold</div>
+
+      <!-- Gold -->
+      <div class="about-rank-row">
+        <div class="about-rank-candles">
+          <svg width="17" height="48" viewBox="0 0 17 48"><line x1="8.5" y1="5.5" x2="8.5" y2="11" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/><g style="animation:flamePulse 1.9s ease-in-out infinite;animation-delay:0.5s"><path d="M8.5 1 C5 7 4.5 11.5 8.5 14 C12.5 11.5 12 7 8.5 1Z" fill="#b8903a"/><path d="M8.5 4.5 C6.5 8.5 7 12 8.5 13 C10 12 10.5 8.5 8.5 4.5Z" fill="#f5d080"/><ellipse cx="8.5" cy="13" rx="2.5" ry="1" fill="rgba(255,230,100,0.5)"/></g><rect x="2" y="11" width="13" height="33" rx="3" fill="#f5edd0" stroke="rgba(184,144,58,0.4)" stroke-width="0.9"/><rect x="5" y="13" width="4" height="29" rx="2" fill="rgba(255,255,255,0.22)"/></svg>
+        </div>
+        <div class="about-rank-info">
+          <span class="about-rank-name" style="color:#b8903a;">Gold Flame</span>
+          <span class="about-rank-sessions">64 sessions</span>
+        </div>
+        <div class="about-rank-note">Rare. You've burned through more than most people attempt.</div>
+      </div>
+
+      <div class="about-rank-arrow">↓ 4 gold = 1 legendary</div>
+
+      <!-- Legendary -->
+      <div class="about-rank-row" style="background:linear-gradient(135deg,rgba(232,200,74,0.06),rgba(255,250,200,0.04));border-color:rgba(232,200,74,0.3);">
+        <div class="about-rank-candles">
+          <svg width="20" height="56" viewBox="0 0 20 56"><line x1="10" y1="6" x2="10" y2="13" stroke="#2e1f0d" stroke-width="1.6" stroke-linecap="round"/><g style="animation:flamePulse 1.8s ease-in-out infinite;animation-delay:0.2s"><path d="M10 1 C6 8 5.5 13.5 10 16.5 C14.5 13.5 14 8 10 1Z" fill="#e8c84a"/><path d="M10 5 C7.5 10 8 14 10 15.5 C12 14 12.5 10 10 5Z" fill="#fff8b0"/><ellipse cx="10" cy="15.5" rx="3" ry="1.2" fill="rgba(255,245,120,0.6)"/></g><rect x="2" y="13" width="16" height="39" rx="3.5" fill="#fffae0" stroke="rgba(232,200,74,0.5)" stroke-width="1"/><rect x="6" y="15" width="5" height="35" rx="2.5" fill="rgba(255,255,255,0.3)"/></svg>
+        </div>
+        <div class="about-rank-info">
+          <span class="about-rank-name" style="color:#b8903a;letter-spacing:0.02em;">Eternal Flame</span>
+          <span class="about-rank-sessions">256 sessions</span>
+        </div>
+        <div class="about-rank-note">The ceiling. 256 sessions of deep focus, all burned and earned.</div>
+      </div>
+
+    </div>
+
+    <!-- Feature cards (always available) -->
+    <div class="about-divider" style="margin-top:36px;">
+      <div class="about-divider-line"></div>
+      <div class="about-divider-label">Always available</div>
       <div class="about-divider-line"></div>
     </div>
 
@@ -1234,17 +1474,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <div class="about-card">
         <div class="about-card-icon">⏱</div>
         <div class="about-card-title">Flexible sessions</div>
-        <div class="about-card-body">Edit focus, short break, and long break durations directly on the home screen — no need to open Settings.</div>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">🕯️</div>
-        <div class="about-card-title">Living candle</div>
-        <div class="about-card-body">A candle that shortens across sessions, flickers during breaks, and goes blue at rest. A slow, honest record of real work done.</div>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">📊</div>
-        <div class="about-card-title">Daily report</div>
-        <div class="about-card-body">Sessions, focus time, and tasks completed — tracked per day and synced to your account so the history follows you across devices.</div>
+        <div class="about-card-body">Edit focus, short break, and long break durations directly on the home screen — no settings modal needed.</div>
       </div>
     </div>
 
@@ -1427,7 +1657,8 @@ const _dcFlame = document.getElementById('demoCandleFlame');
 const _dcD1    = document.getElementById('demoDrip1');
 const _dcD2    = document.getElementById('demoDrip2');
 const _dcPct   = document.getElementById('demoCandlePct');
-const DC_BASE=112, DC_FH=88, DC_MH=10;
+// Demo candle: body bottom=88, full height=70, min stub=9
+const DC_BASE=88, DC_FH=70, DC_MH=9;
 
 function updateRing() {
   const p = (1 - remaining/totalSecs) * 100;
@@ -1443,17 +1674,17 @@ function updateRing() {
   _cD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
   _cFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
 
-  // Mirror to demo candle in about section
+  // Mirror to demo candle in about section (34×96 SVG, cx=17)
   if (_dcBody) {
     const dh  = DC_FH - (p/100)*(DC_FH - DC_MH);
     const dty = DC_BASE - dh;
     _dcBody.setAttribute('y', dty); _dcBody.setAttribute('height', dh);
     _dcWax.setAttribute('cy', dty);
-    _dcWick.setAttribute('y1', dty); _dcWick.setAttribute('y2', dty - 11);
-    _dcFlame.setAttribute('transform', `translate(22,${dty - 11})`);
-    _dcD1.setAttribute('d', `M14,${dty+dh*.35} Q11,${dty+dh*.47} 12,${dty+dh*.60}`);
+    _dcWick.setAttribute('y1', dty); _dcWick.setAttribute('y2', dty - 9);
+    _dcFlame.setAttribute('transform', `translate(17,${dty - 9})`);
+    _dcD1.setAttribute('d', `M10,${dty+dh*.35} Q7.5,${dty+dh*.48} 8,${dty+dh*.62}`);
     _dcD1.setAttribute('opacity', p > 28 ? Math.min(0.82, (p-28)/16) : 0);
-    _dcD2.setAttribute('d', `M31,${dty+dh*.22} Q34,${dty+dh*.36} 33,${dty+dh*.50}`);
+    _dcD2.setAttribute('d', `M24,${dty+dh*.22} Q27,${dty+dh*.36} 26,${dty+dh*.52}`);
     _dcD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
     _dcFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
     _dcPct.textContent = running && !isBreak ? Math.round(p) + '% burned' : isBreak ? 'on break' : 'not started';
@@ -1621,9 +1852,128 @@ function updateStats() {
   document.getElementById('statSessions').textContent = todaySessions;
   document.getElementById('statTime').textContent = Math.floor(todayFocusSecs/60) + 'm';
   document.getElementById('statTasks').textContent = todayDone;
+  renderCandleShelf();
 }
 
 updateStats();
+
+// ── CANDLE SHELF ──
+// Ranking: every 4 of a tier promotes to the next.
+// Tiers: red → blue → purple → gold → legendary
+const SHELF_TIERS = [
+  { key: 'legendary', color: '#e8c84a', bodyFill: '#fffae0', bodyStroke: 'rgba(232,200,74,0.5)', flameTop: '#e8c84a', flameMid: '#fff0a0', label: 'Eternal Flame', w: 16, h: 46 },
+  { key: 'gold',      color: '#b8903a', bodyFill: '#f5edd0', bodyStroke: 'rgba(184,144,58,0.4)',  flameTop: '#b8903a', flameMid: '#f5d080', label: 'Gold Flame',    w: 14, h: 40 },
+  { key: 'purple',    color: '#6b3a8c', bodyFill: '#ede0f5', bodyStroke: 'rgba(107,58,140,0.3)', flameTop: '#6b3a8c', flameMid: '#c4a0e0', label: 'Violet Flame',  w: 12, h: 35 },
+  { key: 'blue',      color: '#3a6b8c', bodyFill: '#dce8f0', bodyStroke: 'rgba(58,107,140,0.3)', flameTop: '#3a6b8c', flameMid: '#a8d0e8', label: 'Blue Keeper',   w: 11, h: 30 },
+  { key: 'red',       color: '#b84f3a', bodyFill: '#ede5d3', bodyStroke: 'rgba(184,79,58,0.2)',  flameTop: '#b84f3a', flameMid: '#f0a080', label: 'Ember',         w: 9,  h: 25 },
+];
+
+function getShelfBreakdown(total) {
+  let r = total;
+  const legendary = Math.floor(r / 256); r = r % 256;
+  const gold      = Math.floor(r / 64);  r = r % 64;
+  const purple    = Math.floor(r / 16);  r = r % 16;
+  const blue      = Math.floor(r / 4);   r = r % 4;
+  const red       = r;
+  return { legendary, gold, purple, blue, red };
+}
+
+function getShelfRankName(bd) {
+  if (bd.legendary > 0) return 'Eternal Flame';
+  if (bd.gold      > 0) return 'Gold Flame';
+  if (bd.purple    > 0) return 'Violet Flame';
+  if (bd.blue      > 0) return 'Blue Keeper';
+  if (bd.red       > 0) return 'Ember';
+  return 'Unlit';
+}
+
+function makeShelfCandleSvg(tier, delay) {
+  const t = SHELF_TIERS.find(x => x.key === tier);
+  const cx = t.w / 2;
+  const wickTop = Math.round(t.h * 0.12);
+  const wickBot = Math.round(t.h * 0.26);
+  const bodyH   = Math.round(t.h * 0.72);
+  const bodyY   = wickBot;
+  return `<svg width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}" style="flex-shrink:0">
+    <line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBot}" stroke="#2e1f0d" stroke-width="1.2" stroke-linecap="round"/>
+    <g class="shelf-flame" style="animation-delay:${delay}s">
+      <path d="M${cx} 1 C${cx-3} ${wickTop*0.6} ${cx-3.5} ${wickTop*0.9} ${cx} ${wickBot-1} C${cx+3.5} ${wickTop*0.9} ${cx+3} ${wickTop*0.6} ${cx} 1Z" fill="${t.flameTop}" opacity="0.9"/>
+      <path d="M${cx} ${Math.round(wickTop*0.4)} C${cx-1.5} ${wickTop*0.7} ${cx-1} ${wickTop*0.9} ${cx} ${wickBot-1} C${cx+1} ${wickTop*0.9} ${cx+1.5} ${wickTop*0.7} ${cx} ${Math.round(wickTop*0.4)}Z" fill="${t.flameMid}"/>
+    </g>
+    <rect x="1" y="${bodyY}" width="${t.w-2}" height="${bodyH}" rx="${Math.round(t.w*0.18)}" fill="${t.bodyFill}" stroke="${t.bodyStroke}" stroke-width="0.8"/>
+  </svg>`;
+}
+
+function makeGhostCandleSvg(tier) {
+  const t = SHELF_TIERS.find(x => x.key === tier);
+  const cx = t.w / 2;
+  const wickBot = Math.round(t.h * 0.26);
+  const bodyH   = Math.round(t.h * 0.72);
+  return `<svg width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}" style="flex-shrink:0;opacity:0.18">
+    <line x1="${cx}" y1="${Math.round(t.h*0.12)}" x2="${cx}" y2="${wickBot}" stroke="#2e1f0d" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M${cx} 1 C${cx-3} ${t.h*0.07} ${cx-3.5} ${t.h*0.22} ${cx} ${wickBot-1} C${cx+3.5} ${t.h*0.22} ${cx+3} ${t.h*0.07} ${cx} 1Z" fill="${t.flameTop}"/>
+    <rect x="1" y="${wickBot}" width="${t.w-2}" height="${bodyH}" rx="${Math.round(t.w*0.18)}" fill="${t.bodyFill}" stroke="${t.bodyStroke}" stroke-width="0.8"/>
+  </svg>`;
+}
+
+function renderCandleShelf() {
+  const shelf = document.getElementById('candleShelf');
+  if (!shelf) return;
+
+  // Only show when signed in
+  if (!sbUser) { shelf.classList.remove('visible'); return; }
+  shelf.classList.add('visible');
+
+  const total = sessionsComplete;
+  const bd = getShelfBreakdown(total);
+
+  // Rank name
+  document.getElementById('shelfRankName').textContent = getShelfRankName(bd);
+
+  // Determine current bottom tier (for progress bar)
+  // Find the lowest non-ghost tier to fill
+  let progressTierKey = 'red', progressCount = bd.red, nextTierLabel = 'blue';
+  if (bd.legendary > 0 || bd.gold > 0 || bd.purple > 0 || bd.blue > 0) {
+    // Show progress for the current red candles toward next blue
+    progressCount = bd.red;
+    progressTierKey = 'red';
+    nextTierLabel = 'blue';
+  }
+  if (total === 0) { progressCount = 0; }
+
+  // Progress bar
+  const pct = total === 0 ? 0 : (progressCount / 4) * 100;
+  const fill = document.getElementById('shelfBarFill');
+  const lbl  = document.getElementById('shelfBarLabel');
+  const nextTier = SHELF_TIERS.find(t => t.key === nextTierLabel);
+  fill.style.width = pct + '%';
+  fill.style.background = SHELF_TIERS.find(t => t.key === 'red').color + '99';
+  lbl.textContent = progressCount + '/4 → ' + nextTierLabel;
+
+  // Build candle icons
+  const container = document.getElementById('shelfCandles');
+  let html = '';
+  let firstTier = true;
+  let delay = 0;
+  // Highest → lowest tier
+  for (const t of SHELF_TIERS) {
+    const count = bd[t.key];
+    if (count === 0) continue;
+    if (!firstTier) html += `<div class="shelf-tier-divider"></div>`;
+    firstTier = false;
+    for (let i = 0; i < count; i++) {
+      html += makeShelfCandleSvg(t.key, (delay * 0.18) % 1.8);
+      delay++;
+    }
+  }
+  // Ghost slot for next red candle (if we're below rank)
+  if (bd.red < 4 && total < 256 * 4) {
+    if (!firstTier && bd.red === 0) html += `<div class="shelf-tier-divider"></div>`;
+    html += makeGhostCandleSvg('red');
+  }
+  if (total === 0) html = `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:0.1em;">complete a session to earn your first candle</span>`;
+  container.innerHTML = html;
+}
 
 const notify = msg => {
   const n = document.getElementById('notif');
@@ -2659,6 +3009,7 @@ saveTasks    = function() { sbSaveTasks(); };
       // Reload localStorage stats now that the user is signed out
       loadLocalStats();
       updateStats();
+      renderCandleShelf();
     }
   });
 })();
