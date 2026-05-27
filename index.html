@@ -268,7 +268,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   border-radius: 4px; padding: 2px 6px; transition: background 0.15s, opacity 0.15s;
 }
 .quick-add-idle-hint:hover {
-  background: rgba(120,95,65,0.12); opacity: 1;
+  background: rgba(120,95,65,0.12); opacity: 1; cursor: pointer;
 }
 
 /* expanded card */
@@ -2117,7 +2117,7 @@ function renderQuickAdd() {
         <input id="qaIdleInput" placeholder="Add a task…"
           onfocus="qaFocus()"
           onkeydown="qaIdleKeydown(event)">
-        <span class="quick-add-idle-hint">↵ to add</span>
+        <span class="quick-add-idle-hint" onclick="document.getElementById('qaInput').focus()">↵ to add</span>
       </div>`;
   } else {
     const subInputs = Array.from({length: qaSubCount}, (_, i) => `
