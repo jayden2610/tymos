@@ -3,11 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://sdk.scdn.co https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://ovojwsfocmwclfyiefve.supabase.co; frame-src https://sdk.scdn.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Tymos</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+        integrity="sha384-4Cjkyy4cE1EgIS0C+Y3xzGmJ2noQFRRU91yKAW8IxtPfVtbQXPMqadSc3sYnjwou"
+        crossorigin="anonymous"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2625,7 +2630,13 @@ function syncQuickTimeInputs(s) {
   syncQuickTimeInputs(s);
 })();
 
-// ── SPOTIFY (PKCE) ──
+// ── SPOTIFY INTEGRATION ──
+// SECURITY NOTE: Spotify tokens are stored in localStorage.
+// Acceptable for Tymos (SPA, no backend, no user accounts) because:
+// 1. XSS is well-defended (textContent everywhere, CSP blocks inline scripts)
+// 2. Tokens are short-lived OAuth tokens with PKCE, not long-lived keys
+// 3. CSP + SRI prevent third-party script injection
+// If Tymos ever adds user accounts or a backend, migrate tokens to httpOnly cookies.
 const SP_CLIENT_ID  = '7504a53817024d88a6d68b36b27f8861';
 const SP_REDIRECT   = 'https://jayden2610.github.io/tymos/';
 const SP_SCOPES     = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
