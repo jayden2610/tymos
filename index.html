@@ -387,9 +387,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   display: flex; align-items: center; gap: 6px;
   margin-bottom: 6px;
 }
-.section-header:not(:has(.section-name-text:empty)) .section-divider-line { display: block; }
 .section-name-text:empty ~ .section-divider-line { display: none; }
-.section-header:has(.section-name-text:empty) { margin-bottom: 0; }
+.section-header:has(.section-name-text:empty) { display: none; }
 .section-name-text {
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--muted); flex-shrink: 0;
@@ -438,7 +437,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   font-size: 12px; color: var(--text2); line-height: 1.5;
   background: var(--surface2); border-radius: 6px; padding: 9px 12px;
   margin-top: 0; margin-bottom: 14px; white-space: pre-wrap; cursor: text; min-height: 32px;
-  outline: none; border: 1px solid var(--border); transition: border-color 0.15s;
+  outline: none; border: 1px solid var(--border2); transition: border-color 0.15s;
 }
 .task-notes:focus { border-color: var(--border2); }
 .task-notes:empty::before { content: 'Add notes...'; color: var(--muted); }
