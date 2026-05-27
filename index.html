@@ -39,9 +39,18 @@ body {
   font-family: 'Nunito', sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.app-frame {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -66,6 +75,7 @@ body {
 
 .main {
   flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 420px 1px 1fr;
   overflow: hidden;
@@ -134,6 +144,29 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   padding: 9px 32px; font-size: 14px; box-shadow: 0 2px 8px rgba(124,92,58,0.25);
 }
 .btn-primary:hover { background: var(--accent2); }
+
+/* ── QUICK TIME EDITOR ── */
+.quick-time-row {
+  display: flex; gap: 8px; align-items: center; justify-content: center;
+  padding: 10px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 10px; width: 100%;
+}
+.qte-group { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.qte-label {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.qte-input {
+  width: 100%; text-align: center;
+  font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 400;
+  color: var(--text); background: transparent; border: none; outline: none;
+  padding: 2px 0;
+}
+.qte-input:focus { color: var(--accent2); }
+.qte-input::-webkit-inner-spin-button,
+.qte-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.qte-input[type=number] { -moz-appearance: textfield; }
+.qte-divider { width: 1px; height: 28px; background: var(--border2); flex-shrink: 0; }
 
 .stats-row { display: flex; gap: 6px; width: 100%; justify-content: center; flex-wrap: wrap; }
 .stat-pill {
@@ -642,7 +675,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 /* ── MOBILE ── */
 @media (max-width: 680px) {
-  body { overflow: auto; height: auto; }
+  .app-frame { height: auto; overflow: visible; }
   .main { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: visible; }
   .divider { display: none; }
   .timer-panel { padding: 28px 20px; gap: 20px; }
@@ -734,14 +767,158 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   flex-shrink: 0; display: none;
 }
 .sync-dot.active { display: block; }
+
+/* ── ABOUT SECTION (inline, bottom of page) ── */
+.about-section {
+  background: var(--surface);
+  border-top: 2px solid var(--border2);
+  padding: 56px 0 72px;
+}
+.about-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.about-scroll-hint {
+  text-align: center;
+  padding: 12px 0 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+.about-scroll-hint:hover { opacity: 1; }
+.about-hero { text-align: center; margin-bottom: 48px; }
+.about-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+}
+.about-title {
+  font-family: 'Lora', serif;
+  font-size: 30px; font-weight: 600; color: var(--text);
+  line-height: 1.2; margin-bottom: 12px;
+}
+.about-title em { font-style: italic; color: var(--accent); }
+.about-sub {
+  font-size: 15px; font-weight: 500; color: var(--text2);
+  line-height: 1.65; max-width: 500px; margin: 0 auto;
+}
+
+/* Animated demo candles */
+.about-candle-row {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: 24px; margin: 36px 0 48px;
+}
+.about-candle-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.about-candle-col-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* Live candle mirrors the session candle — driven by JS */
+.about-live-candle-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 20px;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 14px; margin: 0 auto 40px; max-width: 200px;
+}
+.about-live-label {
+  font-family: 'DM Mono', monospace; font-size: 8px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+}
+.about-live-pct {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent2);
+  letter-spacing: 0.06em;
+}
+
+/* Section divider */
+.about-divider {
+  display: flex; align-items: center; gap: 14px; margin: 40px 0 28px;
+}
+.about-divider-line { flex: 1; height: 1px; background: var(--border2); }
+.about-divider-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+}
+
+/* How it works flow */
+.about-flow { display: flex; flex-direction: column; }
+.about-flow-step { display: grid; grid-template-columns: 40px 1fr; gap: 0 16px; }
+.about-flow-dot-col { display: flex; flex-direction: column; align-items: center; }
+.about-flow-dot {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface2); border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.about-flow-line { flex: 1; width: 1px; background: var(--border2); min-height: 20px; }
+.about-flow-step:last-child .about-flow-line { display: none; }
+.about-flow-content { padding: 6px 0 22px; }
+.about-flow-title {
+  font-family: 'Lora', serif; font-size: 15px; font-weight: 500;
+  color: var(--text); margin-bottom: 4px;
+}
+.about-flow-body { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.6; }
+
+/* Feature cards */
+.about-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.about-card {
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 18px;
+}
+.about-card-icon { font-size: 20px; margin-bottom: 8px; }
+.about-card-title {
+  font-family: 'Lora', serif; font-size: 14px; font-weight: 500;
+  color: var(--text); margin-bottom: 6px;
+}
+.about-card-body { font-size: 12px; font-weight: 500; color: var(--text2); line-height: 1.6; }
+
+/* Pull quote */
+.about-pull-quote {
+  border-left: 3px solid var(--accent3);
+  padding: 14px 18px; margin: 28px 0;
+  background: var(--bg); border-radius: 0 10px 10px 0;
+}
+.about-pull-text {
+  font-family: 'Lora', serif; font-size: 15px; font-style: italic;
+  color: var(--text); line-height: 1.6;
+}
+.about-pull-attr {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 6px;
+}
+
+/* Candle animation keyframes */
+@keyframes burnDemo {
+  0%   { transform: scaleY(1);   transform-origin: bottom; }
+  100% { transform: scaleY(0.15); transform-origin: bottom; }
+}
+@keyframes flamePulse {
+  0%, 100% { opacity: 1; transform: scale(1) translateY(0); }
+  30%       { opacity: 0.75; transform: scale(0.92) translateY(1px); }
+  65%       { opacity: 0.88; transform: scale(1.04) translateY(-1px); }
+}
+
+@media (max-width: 600px) {
+  .about-inner { padding: 0 18px; }
+  .about-title { font-size: 24px; }
+  .about-card-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
+<div class="app-frame">
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
   <div style="display:flex;align-items:center;gap:8px;">
-    <a href="about.html" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;text-decoration:none;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">ℹ️ About</a>
+    <button onclick="document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'})" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">ℹ️ About</button>
     <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
     <button id="reportBtn" onclick="reportAction()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'" title="Sign in to view your report">🔒 Report</button>
     <button class="auth-btn" id="authBtn" onclick="authAction()">👤 Sign in</button>
@@ -811,6 +988,28 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
       <button class="btn" onclick="skipPhase()">Skip</button>
     </div>
+
+    <!-- Quick time editor -->
+    <div class="quick-time-row" title="Edit durations — changes apply when timer is not running">
+      <div class="qte-group">
+        <span class="qte-label">Focus</span>
+        <input class="qte-input" id="qtePomo" type="number" min="1" max="120" value="25"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+      <div class="qte-divider"></div>
+      <div class="qte-group">
+        <span class="qte-label">Short</span>
+        <input class="qte-input" id="qteShort" type="number" min="1" max="60" value="5"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+      <div class="qte-divider"></div>
+      <div class="qte-group">
+        <span class="qte-label">Long</span>
+        <input class="qte-input" id="qteLong" type="number" min="1" max="120" value="15"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+    </div>
+
     <div class="stats-row">
       <div class="stat-pill">
         <span class="stat-pill-icon">🍅</span>
@@ -888,6 +1087,169 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     <div class="task-list" id="taskList"></div>
   </div>
 </div>
+
+<!-- Scroll hint to about -->
+<div class="about-scroll-hint" onclick="document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'})">
+  ↓ &nbsp; scroll to learn more about Tymos
+</div>
+
+</div><!-- /.app-frame -->
+
+<!-- ══════════════════════════════════════════════
+     ABOUT SECTION — lives at the bottom of the page
+     ══════════════════════════════════════════════ -->
+<section id="aboutSection" class="about-section">
+  <div class="about-inner">
+
+    <!-- Hero -->
+    <div class="about-hero">
+      <div class="about-eyebrow">What is Tymos?</div>
+      <h2 class="about-title">Focus that <em>burns</em><br>for a reason.</h2>
+      <p class="about-sub">A Pomodoro timer that treats your attention like a finite resource — and makes you feel it.</p>
+    </div>
+
+    <!-- Live burn demo: three candles at different stages -->
+    <div class="about-candle-row" aria-hidden="true">
+      <div class="about-candle-col">
+        <svg width="34" height="96" viewBox="0 0 34 96">
+          <!-- full candle, wick, flame -->
+          <line x1="17" y1="16" x2="17" y2="22" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+          <g style="animation: flamePulse 2s ease-in-out infinite;">
+            <path d="M17 5 C14 10 12 15 17 18 C22 15 20 10 17 5Z" fill="#e8a840"/>
+            <path d="M17 9 C15.5 13 16 16 17 17.5 C18 16 18.5 13 17 9Z" fill="#f5d080"/>
+          </g>
+          <rect x="8" y="22" width="18" height="68" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
+          <rect x="11" y="24" width="5" height="64" rx="2" fill="rgba(255,255,255,0.25)"/>
+        </svg>
+        <span class="about-candle-col-label">Session 1</span>
+      </div>
+
+      <!-- Animated demo candle (burns during session) -->
+      <div class="about-candle-col">
+        <svg id="demoCandle" width="44" height="120" viewBox="0 0 44 120">
+          <ellipse cx="22" cy="116" rx="16" ry="3.5" fill="#5e3d1e"/>
+          <rect x="10" y="112" width="24" height="4" rx="1.5" fill="#7c5c3a"/>
+          <!-- Drip effects -->
+          <path id="demoDrip1" d="M14,70 Q11,78 12,87" stroke="#ddd0b6" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0"/>
+          <path id="demoDrip2" d="M31,60 Q34,70 33,80" stroke="#ddd0b6" stroke-width="2" stroke-linecap="round" fill="none" opacity="0"/>
+          <!-- Candle body (height animated by JS) -->
+          <rect id="demoCandleBody" x="9" y="24" width="26" height="88" rx="3" fill="#ede5d3" stroke="#c4b08a" stroke-width="1"/>
+          <ellipse id="demoCandleWax" cx="22" cy="24" rx="13" ry="3.5" fill="#e0d1b8"/>
+          <line id="demoCandleWick" x1="22" y1="24" x2="22" y2="14" stroke="#2a1a08" stroke-width="1.5" stroke-linecap="round"/>
+          <g id="demoCandleFlame" transform="translate(22,14)" style="animation: flamePulse 1.8s ease-in-out infinite;">
+            <path d="M0,0 C-6,-6 -8,-16 -2,-24 C-1,-26 1,-26 2,-24 C8,-16 6,-6 0,0Z" fill="#b06108" opacity="0.75"/>
+            <path d="M0,-1 C-3.5,-5.5 -5,-12 -1,-18 C0,-21 0,-21 1,-18 C5,-12 3.5,-5.5 0,-1Z" fill="#e28a0c"/>
+            <ellipse cx="0" cy="-11" rx="1.5" ry="4" fill="#f0d870" opacity="0.9"/>
+          </g>
+        </svg>
+        <span class="about-live-pct" id="demoCandlePct">—</span>
+        <span class="about-candle-col-label">Live session</span>
+      </div>
+
+      <div class="about-candle-col">
+        <svg width="34" height="96" viewBox="0 0 34 96">
+          <!-- stubbed candle after many sessions -->
+          <line x1="17" y1="62" x2="17" y2="68" stroke="#2e1f0d" stroke-width="1.5" stroke-linecap="round"/>
+          <g style="animation: flamePulse 2.1s ease-in-out infinite; animation-delay: 0.5s;">
+            <path d="M17 51 C14 56 12 61 17 64 C22 61 20 56 17 51Z" fill="#e8a840"/>
+            <path d="M17 55 C15.5 59 16 62 17 63.5 C18 62 18.5 59 17 55Z" fill="#f5d080"/>
+          </g>
+          <rect x="8" y="68" width="18" height="22" rx="4" fill="#ede5d3" stroke="rgba(120,95,65,0.22)" stroke-width="1"/>
+          <rect x="11" y="70" width="5" height="18" rx="2" fill="rgba(255,255,255,0.25)"/>
+        </svg>
+        <span class="about-candle-col-label">Many sessions</span>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="about-divider">
+      <div class="about-divider-line"></div>
+      <div class="about-divider-label">How it works</div>
+      <div class="about-divider-line"></div>
+    </div>
+
+    <div class="about-flow">
+      <div class="about-flow-step">
+        <div class="about-flow-dot-col"><div class="about-flow-dot">🍅</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-content">
+          <div class="about-flow-title">Pick a task, set a timer</div>
+          <div class="about-flow-body">Choose what you're working on and adjust the session length right on the home screen. The timer counts down. You focus.</div>
+        </div>
+      </div>
+      <div class="about-flow-step">
+        <div class="about-flow-dot-col"><div class="about-flow-dot">☕</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-content">
+          <div class="about-flow-title">Session ends → take the break</div>
+          <div class="about-flow-body">When the chime rings, step away. The 5-minute break isn't optional — it's the method. Your brain needs the reset to keep the depth going.</div>
+        </div>
+      </div>
+      <div class="about-flow-step">
+        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯️</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-content">
+          <div class="about-flow-title">Watch the candle burn</div>
+          <div class="about-flow-body">Your candle shrinks a little with every session. Over time, it visibly shortens — a real, physical record of focused work. Time spent is wax gone.</div>
+        </div>
+      </div>
+      <div class="about-flow-step">
+        <div class="about-flow-dot-col"><div class="about-flow-dot">📈</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-content">
+          <div class="about-flow-title">Stats that mean something</div>
+          <div class="about-flow-body">Sessions, focus time, tasks done — tracked daily. No leaderboards, no social features. Just a quiet record of how you spent the day.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The candle -->
+    <div class="about-divider" style="margin-top:32px;">
+      <div class="about-divider-line"></div>
+      <div class="about-divider-label">The Candle</div>
+      <div class="about-divider-line"></div>
+    </div>
+
+    <div class="about-pull-quote">
+      <div class="about-pull-text">"Your candle is a clock you can't rewind — every session you complete burns it a little shorter."</div>
+      <div class="about-pull-attr">— the idea behind Tymos</div>
+    </div>
+
+    <p style="font-size:13px;font-weight:500;color:var(--text2);line-height:1.7;margin-bottom:14px;">
+      Most productivity apps reward you with points, streaks, and badges — things that feel good but don't cost anything. Tymos tries something different.
+    </p>
+    <p style="font-size:13px;font-weight:500;color:var(--text2);line-height:1.7;margin-bottom:28px;">
+      Every session burns the candle a little shorter. The flame flickers blue during breaks. There's no way to top it up — that's the point. It's a quiet, honest signal: <em style="font-style:italic;color:var(--accent);">this is how much of your time has burned.</em>
+    </p>
+
+    <!-- Feature cards -->
+    <div class="about-divider">
+      <div class="about-divider-line"></div>
+      <div class="about-divider-label">What's inside</div>
+      <div class="about-divider-line"></div>
+    </div>
+
+    <div class="about-card-grid">
+      <div class="about-card">
+        <div class="about-card-icon">🎯</div>
+        <div class="about-card-title">Task management</div>
+        <div class="about-card-body">Add tasks with sections, priorities, and notes. Link a session to a task and track pomodoros per task automatically.</div>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">⏱</div>
+        <div class="about-card-title">Flexible sessions</div>
+        <div class="about-card-body">Edit focus, short break, and long break durations directly on the home screen — no need to open Settings.</div>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">🕯️</div>
+        <div class="about-card-title">Living candle</div>
+        <div class="about-card-body">A candle that shortens across sessions, flickers during breaks, and goes blue at rest. A slow, honest record of real work done.</div>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">📊</div>
+        <div class="about-card-title">Daily report</div>
+        <div class="about-card-body">Sessions, focus time, and tasks completed — tracked per day and synced to your account so the history follows you across devices.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Task editor">
@@ -1057,6 +1419,16 @@ const _cD1   = document.getElementById('cDrip1');
 const _cD2   = document.getElementById('cDrip2');
 const C_BASE=177, C_FH=122, C_MH=14;
 
+// Demo candle elements (in about section)
+const _dcBody  = document.getElementById('demoCandleBody');
+const _dcWax   = document.getElementById('demoCandleWax');
+const _dcWick  = document.getElementById('demoCandleWick');
+const _dcFlame = document.getElementById('demoCandleFlame');
+const _dcD1    = document.getElementById('demoDrip1');
+const _dcD2    = document.getElementById('demoDrip2');
+const _dcPct   = document.getElementById('demoCandlePct');
+const DC_BASE=112, DC_FH=88, DC_MH=10;
+
 function updateRing() {
   const p = (1 - remaining/totalSecs) * 100;
   const h = C_FH - (p/100)*(C_FH - C_MH);
@@ -1070,6 +1442,22 @@ function updateRing() {
   _cD2.setAttribute('d', `M70,${ty+h*.22} Q74,${ty+h*.36} 72,${ty+h*.50}`);
   _cD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
   _cFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
+
+  // Mirror to demo candle in about section
+  if (_dcBody) {
+    const dh  = DC_FH - (p/100)*(DC_FH - DC_MH);
+    const dty = DC_BASE - dh;
+    _dcBody.setAttribute('y', dty); _dcBody.setAttribute('height', dh);
+    _dcWax.setAttribute('cy', dty);
+    _dcWick.setAttribute('y1', dty); _dcWick.setAttribute('y2', dty - 11);
+    _dcFlame.setAttribute('transform', `translate(22,${dty - 11})`);
+    _dcD1.setAttribute('d', `M14,${dty+dh*.35} Q11,${dty+dh*.47} 12,${dty+dh*.60}`);
+    _dcD1.setAttribute('opacity', p > 28 ? Math.min(0.82, (p-28)/16) : 0);
+    _dcD2.setAttribute('d', `M31,${dty+dh*.22} Q34,${dty+dh*.36} 33,${dty+dh*.50}`);
+    _dcD2.setAttribute('opacity', p > 44 ? Math.min(0.82, (p-44)/16) : 0);
+    _dcFlame.style.opacity = p > 90 ? Math.max(0, 1-(p-90)/10) : 1;
+    _dcPct.textContent = running && !isBreak ? Math.round(p) + '% burned' : isBreak ? 'on break' : 'not started';
+  }
 }
 
 function setPreset(min, el) {
@@ -1097,8 +1485,8 @@ function tick() {
     clearInterval(interval); running = false;
     playChime();
     if (!isBreak) {
-      sessionsComplete++; totalFocusSecs += workSecs;
-      todaySessions++; todayFocusSecs += workSecs;
+      sessionsComplete++;
+      todaySessions++;
       if (activeTaskId !== null) {
         const at = tasks.find(t => t.id === activeTaskId);
         if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
@@ -1585,12 +1973,37 @@ function saveSettings() {
   };
   localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
   applySettings(s);
+  syncQuickTimeInputs(s);
   closeSettings();
   notify('Settings saved.');
 }
 
+// Quick time editor — save & apply immediately
+function quickTimeSave() {
+  const pomo  = Math.max(1, Math.min(120, parseInt(document.getElementById('qtePomo').value)  || 25));
+  const short = Math.max(1, Math.min(60,  parseInt(document.getElementById('qteShort').value) || 5));
+  const lng   = Math.max(1, Math.min(120, parseInt(document.getElementById('qteLong').value)  || 15));
+  const s = { ...loadSettings(), pomoDur: pomo, shortBreak: short, longBreak: lng };
+  localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
+  // Sync the full settings modal inputs so they stay in sync
+  document.getElementById('sPomoDur').value    = pomo;
+  document.getElementById('sShortBreak').value = short;
+  document.getElementById('sLongBreak').value  = lng;
+  applySettings(s);
+}
+
+function syncQuickTimeInputs(s) {
+  document.getElementById('qtePomo').value  = s.pomoDur;
+  document.getElementById('qteShort').value = s.shortBreak;
+  document.getElementById('qteLong').value  = s.longBreak;
+}
+
 // Init settings on load
-applySettings(loadSettings());
+(function() {
+  const s = loadSettings();
+  applySettings(s);
+  syncQuickTimeInputs(s);
+})();
 
 // ── SPOTIFY (PKCE) ──
 const SP_CLIENT_ID  = '7504a53817024d88a6d68b36b27f8861';
