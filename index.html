@@ -1825,6 +1825,10 @@ function loadStats() {
 let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
 let activeTaskId = null;
 
+// Declared early so renderCandleShelf (called via updateStats at page load)
+// doesn't hit the temporal dead zone before the Supabase auth block runs.
+let sbUser = null;
+
 // Today-only counters (reset each new day)
 const LS_TODAY = 'tymos_today';
 let todaySessions = 0, todayFocusSecs = 0, todayDone = 0;
@@ -2762,7 +2766,7 @@ const SB_URL  = 'https://ovojwsfocmwclfyiefve.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92b2p3c2ZvY213Y2xmeWllZnZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NjI2NjcsImV4cCI6MjA5NTIzODY2N30.6LgvLoCCYIwKMtk1hrSzXTGa4s2FWfCb5fIEbrtUmLk';
 
 let sb = null;
-let sbUser = null;
+// sbUser declared early (near stats) to avoid TDZ when renderCandleShelf runs at page load
 
 try {
   sb = supabase.createClient(SB_URL, SB_ANON);
