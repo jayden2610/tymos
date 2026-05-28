@@ -2815,10 +2815,14 @@ function spApplyState(source, opts) {
     if (artEl && artEl.tagName !== 'IMG') {
       const img = document.createElement('img');
       img.className = 'spotify-art'; img.id = 'spArt'; img.alt = '';
+      img.referrerPolicy = 'no-referrer';
+      img.crossOrigin = 'anonymous';
       img.onerror = () => { img.style.display = 'none'; };
       img.src = artUrl;
       artEl.replaceWith(img);
     } else if (artEl) {
+      artEl.referrerPolicy = 'no-referrer';
+      artEl.crossOrigin = 'anonymous';
       artEl.onerror = () => { artEl.style.display = 'none'; };
       artEl.src = artUrl;
       artEl.style.display = '';
