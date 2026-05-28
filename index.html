@@ -92,12 +92,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 24px 20px;
-  gap: 0;
+  justify-content: flex-start;
+  padding: 20px 20px;
+  gap: 14px;
   background: var(--surface);
   overflow-y: auto;
+  scrollbar-width: none;
 }
+.timer-panel::-webkit-scrollbar { display: none; }
 
 .ring-wrap { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
 .ring-svg { width: 180px; height: 180px; transform: rotate(-90deg); }
@@ -187,8 +189,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   display: none; /* shown only when signed in */
   width: 100%;
   background: var(--bg); border: 1px solid var(--border2);
-  border-radius: 10px; padding: 10px 14px 9px;
-  flex-direction: column; gap: 7px;
+  border-radius: 10px; padding: 8px 12px 7px;
+  flex-direction: column; gap: 4px;
 }
 .candle-shelf.visible { display: flex; }
 .shelf-header {
@@ -203,7 +205,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
 }
 .shelf-candles {
-  display: flex; align-items: flex-end; gap: 4px; flex-wrap: wrap; min-height: 30px;
+  display: flex; align-items: flex-end; gap: 4px; flex-wrap: wrap; min-height: 24px;
 }
 .shelf-tier-divider {
   width: 1px; height: 26px; background: var(--border2);
