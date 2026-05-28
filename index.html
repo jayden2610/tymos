@@ -2699,6 +2699,7 @@ let spLastSdkUpdate = 0;
 let spPlayPending = false;  // debounce for play/pause only
 let spSkipPending = false;  // debounce for next/prev only
 let spSeeking = false;      // true while seek in-flight — pauses ticker
+let spCommandTs = 0;        // timestamp of last play/pause/skip command — suppresses SDK flicker
 
 // ── PKCE helpers ──
 function spRandBytes(n) {
@@ -2788,6 +2789,12 @@ async function spRefreshToken() {
     localStorage.setItem(SP_EXPIRY_KEY, String(expiry));
     if (data.refresh_token) localStorage.setItem(SP_REFRESH_KEY, data.refresh_token);
   } catch(e) { spDisconnect(); }
+}
+
+function spBestArt(images) {
+  if (!images || !images.length) return null;
+  const sorted = [...images].sort((a, b) => (b.width || 0) - (a.width || 0));
+  return (sorted.find(i => (i.width || 0) >= 150) || sorted[0])?.url || null;
 }
 
 function spApplyState(source, opts) {
@@ -2917,12 +2924,14 @@ function createSpotifyPlayer(token) {
       spSdkActive = true;
       spLastSdkUpdate = Date.now();
       spFirstPoll = false;
+      // Suppress play/pause flicker for 1s after a user command
+      if (Date.now() - spCommandTs < 1000) return;
       const track = state.track_window?.current_track;
       if (!track) return;
       spApplyState('sdk', {
         title:      track.name,
         artist:     track.artists.map(a => a.name).join(', '),
-        artUrl:     track.album?.images?.[1]?.url || track.album?.images?.[0]?.url,
+        artUrl:     spBestArt(track.album?.images),
         playing:    !state.paused,
         posMs:      state.position,
         durMs:      state.duration,
@@ -2962,7 +2971,7 @@ function spFetchState(token) {
     spApplyState('poll', {
       title:      data.item.name,
       artist:     data.item.artists.map(a => a.name).join(', '),
-      artUrl:     data.item.album?.images?.[1]?.url || data.item.album?.images?.[0]?.url,
+      artUrl:     spBestArt(data.item.album?.images),
       playing:    data.is_playing,
       posMs:      data.progress_ms,
       durMs:      data.item.duration_ms,
@@ -2979,20 +2988,22 @@ function spFmtMs(ms) {
 function spApiCall(endpoint, method = 'POST') {
   const token = spGetToken(); if (!token) return Promise.resolve(null);
   const deviceParam = spDeviceId ? `?device_id=${spDeviceId}` : '';
+  const hasBody = method === 'PUT' && (endpoint === 'play' || endpoint === 'pause');
   return fetch(`https://api.spotify.com/v1/me/player/${endpoint}${deviceParam}`, {
-    method, headers: { 'Authorization': `Bearer ${token}` }
+    method,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: hasBody ? '{}' : undefined
   }).catch(() => null);
 }
 
 function spTogglePlay() {
   if (spPlayPending) return;
   spPlayPending = true;
+  spCommandTs = Date.now();
   const wasPlaying = spPlaying;
-  // Optimistic UI flip
   spPlaying = !spPlaying;
   document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
   spApiCall(spPlaying ? 'play' : 'pause', 'PUT').then(r => {
-    // If Spotify rejected the command, revert the optimistic flip
     if (r && !r.ok && r.status !== 204) {
       spPlaying = wasPlaying;
       document.getElementById('spPlayBtn').innerHTML = spPlaying ? '&#9646;&#9646;' : '&#9654;';
@@ -3005,9 +3016,10 @@ function spTogglePlay() {
 function spNext() {
   if (spSkipPending) return;
   spSkipPending = true;
+  spCommandTs = Date.now();
   const token = spGetToken();
   spApiCall('next').then(() => {
-    if (token) setTimeout(() => spFetchState(token), 400);
+    if (token) setTimeout(() => spFetchState(token), 600);
   }).finally(() => {
     setTimeout(() => { spSkipPending = false; }, 800);
   });
@@ -3016,9 +3028,10 @@ function spNext() {
 function spPrev() {
   if (spSkipPending) return;
   spSkipPending = true;
+  spCommandTs = Date.now();
   const token = spGetToken();
   spApiCall('previous').then(() => {
-    if (token) setTimeout(() => spFetchState(token), 400);
+    if (token) setTimeout(() => spFetchState(token), 600);
   }).finally(() => {
     setTimeout(() => { spSkipPending = false; }, 800);
   });
