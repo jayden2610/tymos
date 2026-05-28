@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://sdk.scdn.co https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://ovojwsfocmwclfyiefve.supabase.co wss://ovojwsfocmwclfyiefve.supabase.co https://accounts.supabase.co; frame-src https://sdk.scdn.co https://accounts.supabase.co https://ovojwsfocmwclfyiefve.supabase.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://sdk.scdn.co https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://ovojwsfocmwclfyiefve.supabase.co wss://ovojwsfocmwclfyiefve.supabase.co https://accounts.supabase.co; frame-src https://sdk.scdn.co https://accounts.supabase.co https://ovojwsfocmwclfyiefve.supabase.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Tymos</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -80,7 +81,7 @@ body {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 420px 1px 1fr;
+  grid-template-columns: 360px 1px 1fr;
   overflow: hidden;
 }
 
@@ -91,15 +92,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 40px 36px;
-  gap: 28px;
+  justify-content: space-between;
+  padding: 24px 20px;
+  gap: 0;
   background: var(--surface);
   overflow-y: auto;
 }
 
-.ring-wrap { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
-.ring-svg { width: 220px; height: 220px; transform: rotate(-90deg); }
+.ring-wrap { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+.ring-svg { width: 180px; height: 180px; transform: rotate(-90deg); }
 .ring-track { fill: none; stroke: var(--surface3); stroke-width: 4; }
 .ring-fill {
   fill: none; stroke: var(--ring-work); stroke-width: 4; stroke-linecap: round;
@@ -120,7 +121,7 @@ body {
 }
 
 /* ── CANDLE ── */
-.candle-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
+.candle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
 .candle-sublabel { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
 #candleSvg { overflow: visible; display: block; }
 #candleFlame { animation: cFlicker 1.9s ease-in-out infinite; }
@@ -173,8 +174,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 
 .stats-row { display: flex; gap: 6px; width: 100%; justify-content: center; flex-wrap: wrap; }
 .stat-pill {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 13px; border-radius: 100px;
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 100px;
   background: var(--bg); border: 1px solid var(--border);
 }
 .stat-pill-icon { font-size: 12px; line-height: 1; opacity: 0.75; }
@@ -316,17 +317,41 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .qac-pri-chip.sel-high   { background: rgba(184,79,58,0.12); border-color: var(--red); color: var(--red); }
 .qac-pri-chip.sel-medium { background: rgba(184,144,58,0.12); border-color: var(--yellow); color: var(--yellow); }
 .qac-pri-chip.sel-low    { background: rgba(74,140,92,0.12); border-color: var(--green); color: var(--green); }
-.qac-est-wrap { display: flex; align-items: center; gap: 4px; margin-left: 6px; }
-.qac-est-input {
-  width: 38px; font-family: 'DM Mono', monospace; font-size: 11px;
-  text-align: center; padding: 2px 4px; border-radius: 6px;
-  border: 1px solid var(--border2); background: transparent; color: var(--text);
-  -moz-appearance: textfield;
+.qac-est-wrap {
+  display: flex; align-items: center; gap: 0; margin-left: 8px;
+  border: 1px solid var(--border2); border-radius: 100px; overflow: hidden;
+  background: transparent; height: 26px;
 }
+.qac-est-step {
+  width: 26px; height: 26px; border: none; background: transparent;
+  color: var(--muted); font-size: 15px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s; font-family: 'Nunito', sans-serif; font-weight: 700;
+  flex-shrink: 0;
+}
+.qac-est-step:hover { background: var(--surface3); color: var(--text); }
+.qac-est-mid {
+  display: flex; align-items: center; justify-content: center;
+  border-left: 1px solid var(--border2); border-right: 1px solid var(--border2);
+  padding: 0 8px; min-width: 72px; height: 100%; cursor: pointer; position: relative;
+}
+.qac-est-input {
+  position: absolute; opacity: 0; width: 40px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  text-align: center; border: none; background: transparent; color: var(--text);
+  outline: none; -moz-appearance: textfield; padding: 0; cursor: text;
+  pointer-events: none;
+}
+.qac-est-mid.editing .qac-est-input { opacity: 1; pointer-events: auto; }
+.qac-est-mid.editing .qac-est-label-text { display: none; }
 .qac-est-input::-webkit-inner-spin-button,
 .qac-est-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.qac-est-input::placeholder { color: var(--muted); }
-.qac-est-input:focus { outline: none; border-color: var(--accent3); }
+.qac-est-label-text {
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+  letter-spacing: 0.03em; white-space: nowrap; pointer-events: none;
+  display: flex; align-items: center; gap: 5px;
+}
+.qac-candle-icon { display: block; flex-shrink: 0; }
 
 .task-list {
   flex: 1; overflow-y: auto; padding: 12px 16px;
@@ -348,6 +373,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 
 .task-card-header {
   display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px;
+  cursor: default;
 }
 .task-priority-bar { width: 3px; border-radius: 4px; flex-shrink: 0; align-self: stretch; min-height: 16px; }
 .pri-high   { background: var(--red); }
@@ -366,21 +392,43 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .badge-low    { background: rgba(74,140,92,0.12); color: var(--green); }
 .task-progress-mini { font-size: 11px; color: var(--muted); }
 .task-focus-badge { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 100px; background: rgba(124,92,58,0.12); color: var(--accent); letter-spacing: 0.04em; }
-.task-card.is-active-task { border-color: rgba(124,92,58,0.35); box-shadow: 0 0 0 2px rgba(124,92,58,0.12); }
-.focus-btn { font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--muted); cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; transition: background 0.12s, color 0.12s; flex-shrink: 0; }
-.focus-btn:hover { background: var(--accent-bg); color: var(--accent); border-color: rgba(124,92,58,0.3); }
-.focus-btn.active { background: var(--accent-bg); color: var(--accent); border-color: rgba(124,92,58,0.35); }
+.task-card.is-active-task { border-color: var(--accent3); box-shadow: 0 0 0 2px rgba(201,168,122,0.25), var(--shadow2); background: #f5efe3; }
+.task-card.is-active-task .task-card-title { color: var(--accent); }
+/* focus tags */
+.focus-tag-idle {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+  border: 1px dashed var(--border2); border-radius: 100px;
+  padding: 2px 8px; margin-top: 5px; cursor: pointer; transition: all 0.15s;
+}
+.focus-tag-idle:hover { border-color: var(--accent3); color: var(--accent2); background: var(--accent-bg); border-style: solid; }
+.task-card.is-active-task .focus-tag-idle { display: none; }
+.focus-tag-active {
+  display: none; align-items: center; gap: 5px;
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent2); margin-top: 5px; cursor: pointer;
+}
+.focus-tag-active::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); animation: focusPulse 1.5s ease-in-out infinite; flex-shrink: 0; }
+@keyframes focusPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+.task-card.is-active-task .focus-tag-active { display: inline-flex; }
 .active-task-strip { display: none; align-items: center; gap: 8px; padding: 7px 14px; margin: 8px 0 0; border-radius: 8px; background: var(--accent-bg); border: 1px solid rgba(124,92,58,0.2); font-size: 12px; color: var(--accent); font-weight: 600; }
 .active-task-strip.visible { display: flex; }
 .active-task-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.task-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
-.icon-btn {
-  width: 28px; height: 28px; border-radius: 6px; border: none;
-  background: transparent; color: var(--muted); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; transition: all 0.15s;
+.task-card-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.ghost-icon {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: none; background: transparent;
+  color: var(--muted); cursor: pointer; font-size: 16px; transition: background 0.15s, color 0.15s;
 }
+.ghost-icon:hover { background: rgba(120,100,70,0.12); color: var(--text); }
+.ghost-icon.active { color: var(--accent); background: var(--accent-bg); }
+.ghost-icon.success:hover { color: #4a7a3a; background: rgba(80,140,70,0.1); }
+.ghost-icon.danger:hover { color: var(--red); background: rgba(184,79,58,0.08); }
+.ghost-icon.confirm-delete { color: var(--red); background: rgba(184,79,58,0.12); font-size: 11px; width: auto; padding: 0 6px; font-family: 'Nunito', sans-serif; font-weight: 700; }
+/* keep icon-btn alias for any other uses */
+.icon-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s; }
 .icon-btn:hover { background: var(--surface2); color: var(--text); }
 .icon-btn.confirm-delete { background: rgba(184,79,58,0.12); color: var(--red); font-size: 11px; width: auto; padding: 0 6px; }
 
@@ -442,14 +490,25 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .section-add-input::placeholder { color: var(--muted); }
 .section-add-input:focus { border-bottom-color: var(--accent2); }
 
-.task-notes {
-  font-size: 12px; color: var(--text2); line-height: 1.5;
-  background: var(--surface2); border-radius: 6px; padding: 9px 12px;
-  margin-top: 0; margin-bottom: 14px; white-space: pre-wrap; cursor: text; min-height: 32px;
-  outline: none; border: 1px solid var(--border2); transition: border-color 0.15s;
+.notes-section { padding: 0; }
+.notes-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 18px 6px;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); font-family: 'DM Mono', monospace;
 }
-.task-notes:focus { border-color: var(--border2); }
-.task-notes:empty::before { content: 'Add notes...'; color: var(--muted); }
+.notes-header i { font-size: 13px; }
+.task-notes {
+  margin: 0 18px 14px; padding: 10px 14px;
+  background: rgba(255,252,244,0.6); border-radius: 8px;
+  border-left: 2px solid var(--accent3);
+  font-size: 13.5px; color: var(--text2); line-height: 1.7;
+  font-style: italic; min-height: 38px;
+  white-space: pre-wrap; cursor: text; outline: none;
+  transition: border-color 0.15s;
+}
+.task-notes:focus { border-left-color: var(--accent2); }
+.task-notes:empty::before { content: 'Add notes...'; color: var(--muted); font-style: italic; }
 
 .task-footer {
   display: flex; align-items: center; justify-content: space-between; padding: 6px 0 0;
@@ -703,15 +762,12 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
 /* ── SPOTIFY PLAYER ── */
 .spotify-bar {
-  width: 100%; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 12px;
-  padding: 8px;
+  width: 100%;
 }
 .spotify-connect {
   display: flex; align-items: center; justify-content: center; gap: 9px;
   padding: 9px 16px; cursor: pointer;
-  border: 1px solid var(--border2);
-  background: var(--surface);
+  border: 1px solid var(--border2); background: var(--surface);
   width: 100%; border-radius: 10px;
   transition: all 0.18s;
   box-shadow: 0 1px 4px rgba(80,50,20,0.07);
@@ -1160,7 +1216,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   <div class="timer-panel">
     <div class="candle-wrap">
       <div class="candle-sublabel" id="timerSub">Focus</div>
-      <svg id="candleSvg" width="110" height="190" viewBox="0 0 110 190">
+      <svg id="candleSvg" width="80" height="140" viewBox="0 0 110 190">
         <ellipse cx="55" cy="183" rx="33" ry="6" fill="#5e3d1e"/>
         <rect x="24" y="177" width="62" height="6" rx="2" fill="#7c5c3a"/>
         <path id="cDrip1" d="M39,140 Q36,148 37,157" stroke="#ddd0b6" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0"/>
@@ -1175,7 +1231,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         </g>
       </svg>
       <div class="timer-time" id="timerDisplay">25:00</div>
-      <div id="timerTaskLabel" style="display:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--accent);opacity:0.8;text-align:center;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px;padding:2px 10px;background:var(--accent-bg);border-radius:100px;border:1px solid rgba(124,92,58,0.2);"></div>
     </div>
     <div class="controls">
       <button class="btn" onclick="resetTimer()">Reset</button>
@@ -1206,7 +1261,19 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
     <div class="stats-row">
       <div class="stat-pill">
-        <span class="stat-pill-icon">🍅</span>
+        <span class="stat-pill-icon">
+          <svg width="13" height="22" viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs><radialGradient id="glowStat" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs>
+            <ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/>
+            <rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/>
+            <rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/>
+            <ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/>
+            <line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/>
+            <ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowStat)"/>
+            <path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/>
+            <ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/>
+          </svg>
+        </span>
         <span class="stat-val" id="statSessions">0</span>
         <span class="stat-lbl">sessions</span>
       </div>
@@ -1425,14 +1492,14 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
     <div class="about-flow">
       <div class="about-flow-step">
-        <div class="about-flow-dot-col"><div class="about-flow-dot">🍅</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯</div><div class="about-flow-line"></div></div>
         <div class="about-flow-content">
           <div class="about-flow-title">Pick a task, set a timer</div>
           <div class="about-flow-body">Choose what you're working on and adjust the session length right on the home screen. The timer counts down. You focus.</div>
         </div>
       </div>
       <div class="about-flow-step">
-        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯️</div><div class="about-flow-line"></div></div>
+        <div class="about-flow-dot-col"><div class="about-flow-dot">🕯</div><div class="about-flow-line"></div></div>
         <div class="about-flow-content">
           <div class="about-flow-title">The candle burns with you</div>
           <div class="about-flow-body">As the timer counts down, the candle burns — wax drips, the flame flickers. When the session ends, you've earned that candle. It resets fresh for the next one.</div>
@@ -1625,20 +1692,15 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       </div>
     </div>
     <div class="form-field">
-      <label class="form-label">Est. Sessions</label>
+      <label class="form-label">Est. Pomodoros</label>
       <div style="display:flex;align-items:center;gap:8px;">
-        <input class="form-input" id="mEstSessions" type="number" min="1" max="99" placeholder="how many 🍅?" style="width:130px;">
-        <span style="color:var(--muted);font-size:12px;">pomodoros</span>
+        <input class="form-input" id="mEstSessions" type="number" min="1" max="99" placeholder="how many 🕯️?" style="width:130px;">
+        <span style="color:var(--muted);font-size:12px;">candles</span>
       </div>
     </div>
     <div class="form-field">
       <label class="form-label">Notes</label>
       <textarea class="form-textarea" id="mTaskNotes" placeholder="Any context or details..."></textarea>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Sections</label>
-      <div class="modal-sections" id="modalSections"></div>
-      <button class="add-modal-section-btn" style="margin-top:8px;" onclick="addModalSection()">+ Add Section</button>
     </div>
     <div class="modal-actions">
       <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
@@ -1855,9 +1917,12 @@ function tick() {
       if (workSecs >= 600) {
         sessionsComplete++; // candle only for sessions >= 10 min
       }
-      if (activeTaskId !== null) {
-        const at = tasks.find(t => t.id === activeTaskId);
-        if (at) { at.focusSessions = (at.focusSessions || 0) + 1; saveTasks(); renderTasks(); }
+      if (activeTaskIds.size > 0) {
+        activeTaskIds.forEach(id => {
+          const at = tasks.find(t => t.id === id);
+          if (at) at.focusSessions = (at.focusSessions || 0) + 1;
+        });
+        saveTasks(); renderTasks();
       }
       notify('Session complete — take a break!');
       enterBreak();
@@ -1918,7 +1983,7 @@ function saveDailyLog() {
     const today = dateKey(new Date());
     let log = JSON.parse(localStorage.getItem(LS_DAILY) || '[]');
     const idx = log.findIndex(e => e.date === today);
-    const entry = { date: today, sessions: sessionsComplete, focusMins: Math.floor(totalFocusSecs / 60), tasksDone };
+    const entry = { date: today, sessions: todaySessions, focusMins: Math.floor(todayFocusSecs / 60), tasksDone: todayDone };
     if (idx >= 0) log[idx] = entry; else log.push(entry);
     localStorage.setItem(LS_DAILY, JSON.stringify(log));
   } catch(e) {}
@@ -1927,7 +1992,7 @@ function saveDailyLog() {
 function saveTasks() {
   localStorage.setItem(LS_TASKS, JSON.stringify(tasks));
   localStorage.setItem(LS_NEXT_ID, nextId);
-  localStorage.setItem('tymos_active_task', activeTaskId !== null ? String(activeTaskId) : '');
+  localStorage.setItem('tymos_active_task', JSON.stringify([...activeTaskIds]));
 }
 function loadTasks() {
   try {
@@ -1936,7 +2001,7 @@ function loadTasks() {
     const at = localStorage.getItem('tymos_active_task');
     if (t) tasks = JSON.parse(t);
     if (id) nextId = parseInt(id);
-    activeTaskId = (at !== null && at !== '') ? parseInt(at) : null;
+    try { activeTaskIds = new Set(JSON.parse(at || '[]')); } catch { activeTaskIds = new Set(); }
   } catch(e) { tasks = []; }
   updateActiveTaskStrip();
 }
@@ -1952,7 +2017,7 @@ function loadStats() {
 
 // ── STATS ──
 let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
-let activeTaskId = null;
+let activeTaskIds = new Set();
 
 // Declared early so renderCandleShelf (called via updateStats at page load)
 // doesn't hit the temporal dead zone before the Supabase auth block runs.
@@ -2131,7 +2196,6 @@ let pendingDeleteTask = null, pendingDeleteSection = null, pendingInlineAdd = nu
 // ── QUICK ADD STATE ──
 let qaExpanded = false;
 let qaPri = 'high';
-let qaSubCount = 1; // visible subtask inputs
 
 function renderQuickAdd() {
   const list = document.getElementById('taskList');
@@ -2151,14 +2215,6 @@ function renderQuickAdd() {
         <span class="quick-add-idle-hint" onclick="document.getElementById('qaInput').focus()">↵ to add</span>
       </div>`;
   } else {
-    const subInputs = Array.from({length: qaSubCount}, (_, i) => `
-      <div class="qac-sub-item">
-        <div class="qac-check"></div>
-        <input class="qac-sub-input" id="qaSub${i}"
-          placeholder="${i === 0 ? 'Add subtask…' : '+ another…'}"
-          onkeydown="qaSubKeydown(event, ${i})">
-      </div>`).join('');
-
     wrap.innerHTML = `
       <div class="quick-add-card" id="qaExpandedCard">
         <div class="qac-header">
@@ -2166,13 +2222,38 @@ function renderQuickAdd() {
           <input class="qac-title-input" id="qaTitleInput" placeholder="Task name…"
             onkeydown="qaTitleKeydown(event)">
         </div>
-        <div class="qac-subtasks" id="qaSubtasks">${subInputs}</div>
+        <div class="qac-subtasks" id="qaSubtasks">
+          <textarea class="qac-sub-input" id="qaNotesInput" placeholder="Add notes…"
+            style="width:100%;resize:none;min-height:36px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);outline:none;padding:4px 0;"
+            rows="2" onkeydown="if(event.key==='Escape'){event.preventDefault();qaCancel();}"></textarea>
+        </div>
         <div class="qac-footer">
           <div class="qac-footer-left">
             <button class="qac-pri-chip${qaPri==='high'?' sel-high':''}" onclick="qaSetPri('high')">high</button>
             <button class="qac-pri-chip${qaPri==='medium'?' sel-medium':''}" onclick="qaSetPri('medium')">med</button>
             <button class="qac-pri-chip${qaPri==='low'?' sel-low':''}" onclick="qaSetPri('low')">low</button>
-            <span class="qac-est-wrap" title="Estimated pomodoros">🍅<input class="qac-est-input" id="qaEstInput" type="number" min="1" max="99" placeholder="est" onclick="event.stopPropagation()"></span>
+            <span class="qac-est-wrap" onclick="event.stopPropagation()">
+              <button class="qac-est-step" onclick="qaEstStep(-1)" tabindex="-1">−</button>
+              <span class="qac-est-mid" id="qaEstMid" onclick="qaEstStartEdit()">
+                <input class="qac-est-input" id="qaEstInput" type="number" min="1" max="999"
+                  oninput="qaEstSync()" onblur="qaEstBlur()">
+                <span class="qac-est-label-text" id="qaEstLabel">
+                  <svg class="qac-candle-icon" width="12" height="20" viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs><radialGradient id="glowQac" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs>
+                    <ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/>
+                    <rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/>
+                    <rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/>
+                    <ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/>
+                    <line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/>
+                    <ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowQac)"/>
+                    <path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/>
+                    <ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/>
+                  </svg>
+                  <span id="qaEstDisplay">—</span>
+                </span>
+              </span>
+              <button class="qac-est-step" onclick="qaEstStep(1)" tabindex="-1">+</button>
+            </span>
           </div>
           <div class="qac-footer-right">
             <button class="btn-ghost" onclick="qaCancel()">Esc</button>
@@ -2204,34 +2285,45 @@ function qaTitleKeydown(e) {
   if (e.key === 'Escape') { e.preventDefault(); qaCancel(); }
   if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault();
-    // focus first subtask input
-    const first = document.getElementById('qaSub0');
-    if (first) first.focus();
+    const notes = document.getElementById('qaNotesInput');
+    if (notes) notes.focus();
   }
 }
 
-function qaSubKeydown(e, i) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    // add new subtask row if on last one and it has text
-    const cur = document.getElementById(`qaSub${i}`);
-    if (cur && cur.value.trim()) {
-      qaSubCount = Math.max(qaSubCount, i + 2);
-      // preserve existing values
-      const vals = Array.from({length: qaSubCount - 1}, (_, j) => {
-        const el = document.getElementById(`qaSub${j}`);
-        return el ? el.value : '';
-      });
-      renderQuickAdd();
-      // restore values
-      vals.forEach((v, j) => { const el = document.getElementById(`qaSub${j}`); if (el) el.value = v; });
-      const next = document.getElementById(`qaSub${i + 1}`);
-      if (next) next.focus();
-    } else {
-      qaCommit();
-    }
+
+const QA_EST_STEPS = [1,2,3,4,5,6,8,10,12,15];
+function qaEstStep(dir) {
+  const inp = document.getElementById('qaEstInput');
+  const cur = parseInt(inp.value) || 0;
+  let next;
+  if (dir > 0) {
+    next = QA_EST_STEPS.find(s => s > cur) || QA_EST_STEPS[QA_EST_STEPS.length - 1];
+  } else {
+    const below = QA_EST_STEPS.filter(s => s < cur);
+    next = below.length ? below[below.length - 1] : 0;
   }
-  if (e.key === 'Escape') { e.preventDefault(); qaCancel(); }
+  inp.value = next > 0 ? next : '';
+  qaEstUpdateDisplay();
+}
+function qaEstStartEdit() {
+  const mid = document.getElementById('qaEstMid');
+  const inp = document.getElementById('qaEstInput');
+  mid.classList.add('editing');
+  inp.focus();
+  inp.select();
+}
+function qaEstSync() { qaEstUpdateDisplay(); }
+function qaEstBlur() {
+  const inp = document.getElementById('qaEstInput');
+  if (!inp.value || parseInt(inp.value) < 1) inp.value = '';
+  document.getElementById('qaEstMid').classList.remove('editing');
+  qaEstUpdateDisplay();
+}
+function qaEstUpdateDisplay() {
+  const inp = document.getElementById('qaEstInput');
+  const disp = document.getElementById('qaEstDisplay');
+  const val = parseInt(inp.value);
+  disp.textContent = val > 0 ? `${val}` : '—';
 }
 
 function qaSetPri(pri) {
@@ -2253,26 +2345,21 @@ function qaCommit() {
   const title = titleEl ? titleEl.value.trim() : '';
   if (!title) { if (titleEl) titleEl.focus(); notify("no name? even cavemen labeled their rocks 🪨"); return; }
 
-  // collect subtasks
-  const subs = [];
-  for (let i = 0; i < qaSubCount; i++) {
-    const el = document.getElementById(`qaSub${i}`);
-    if (el && el.value.trim()) subs.push({ text: el.value.trim(), done: false });
-  }
+  const notesEl = document.getElementById('qaNotesInput');
+  const notes = notesEl ? notesEl.value.trim() : '';
 
   const estEl = document.getElementById('qaEstInput');
   const estRaw = estEl ? estEl.value.trim() : '';
-  const estimatedSessions = estRaw ? (parseInt(estRaw) || null) : null;
+  const estimatedPomodoros = estRaw ? (parseInt(estRaw) || null) : null;
 
-  const sections = subs.length ? [{ name: '', items: subs }] : [];
-  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes: '', sections, estimatedSessions });
+  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes, sections: [], estimatedPomodoros });
   saveTasks(); qaReset(); renderTasks();
 }
 
 function qaCancel() { qaReset(); renderQuickAdd(); }
 
 function qaReset() {
-  qaExpanded = false; qaPri = 'high'; qaSubCount = 1;
+  qaExpanded = false; qaPri = 'high';
 }
 
 loadTasks();
@@ -2318,90 +2405,46 @@ function renderTasks() {
 }
 
 function taskCardHTML(t) {
-  const total = t.sections.reduce((a,s) => a + s.items.length, 0);
-  const done  = t.sections.reduce((a,s) => a + s.items.filter(i=>i.done).length, 0);
-  const isOpen = expandedId === t.id;
   const isConfirmDel = pendingDeleteTask === t.id;
 
-  const sectionsHTML = t.sections.map((sec, si) => {
-    const isConfirmSec = pendingDeleteSection && pendingDeleteSection.tid===t.id && pendingDeleteSection.si===si;
-    return `
-    <div class="section-block">
-      <div class="section-header">
-        <span class="section-name-text">${esc(sec.name)}</span>
-        <div class="section-divider-line"></div>
-        <button class="section-del-btn${isConfirmSec?' confirm-delete':''}"
-          onclick="event.stopPropagation();deleteSectionClick(${t.id},${si})">${isConfirmSec?'Sure?':'✕'}</button>
-      </div>
-      <div class="section-items">
-        ${sec.items.map((item,ii) => `
-          <div class="section-item${item.done?' done-item':''}"
-            onclick="event.stopPropagation();toggleItem(${t.id},${si},${ii})">
-            <div class="check-box">${item.done?'✓':''}</div>
-            <span class="item-text">${esc(item.text)}</span>
-          </div>`).join('')}
-        <div class="section-add-row" onclick="event.stopPropagation()">
-          <input class="section-add-input" placeholder="+ Add item"
-            onkeydown="addItem(event,${t.id},${si})">
-        </div>
-      </div>
-    </div>`; }).join('');
-
-  const showInline = isOpen && pendingInlineAdd === t.id;
-
+  const isFocused = activeTaskIds.has(t.id);
   return `
-  <div class="task-card${t.done?' done':''}${isOpen?' active':''}${activeTaskId===t.id?' is-active-task':''}" id="task-${t.id}">
-    <div class="task-card-header" onclick="toggleExpand(${t.id})">
+  <div class="task-card${t.done?' done':''}${isFocused?' is-active-task':''}" id="task-${t.id}">
+    <div class="task-card-header">
       <div class="task-priority-bar pri-${t.priority}"></div>
       <div class="task-card-body">
         <div class="task-card-title">${esc(t.title)}</div>
         <div class="task-card-meta">
           <span class="task-badge badge-${t.priority}">${t.priority}</span>
-          ${total > 0 ? `<span class="task-progress-mini">${done}/${total} done</span>` : ''}
-          ${(() => { const act = t.focusSessions||0; const est = t.estimatedSessions||null; if (!act && !est) return ''; const mins = loadSettings().pomoDur||25; const label = est ? `${act}/${est} 🍅` : `${act} 🍅`; const time = act > 0 ? ` · ${act*mins}m` : ''; return `<span class="task-focus-badge">${label}${time}</span>`; })()}
+          ${(() => { const sessions = t.focusSessions||0; const estPomo = t.estimatedPomodoros||null; if (!sessions && !estPomo) return ''; const candleSvg = `<svg style="display:inline-block;vertical-align:middle;margin-left:2px" width="9" height="16" viewBox="0 0 20 36" fill="none"><defs><radialGradient id="glowBadge" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs><ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/><rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/><rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/><ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/><line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/><ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowBadge)"/><path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/><ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/></svg>`;
+              const label = estPomo ? `${sessions}/${estPomo}${candleSvg}` : `${sessions}${candleSvg}`; return `<span class="task-focus-badge">${label}</span>`; })()}
         </div>
+        <span class="focus-tag-idle" onclick="setActiveTask(${t.id})">· focus</span>
+        <span class="focus-tag-active" onclick="setActiveTask(${t.id})">focusing now</span>
       </div>
       <div class="task-card-actions" onclick="event.stopPropagation()">
-        <button class="focus-btn${activeTaskId===t.id?' active':''}" onclick="setActiveTask(${t.id})" title="Focus on this task">${activeTaskId===t.id?'● focusing':'Focus'}</button>
-        <button class="icon-btn" onclick="openModal(${t.id})">✏️</button>
-        <button class="icon-btn" onclick="toggleDone(${t.id})">${t.done?'↩':'✓'}</button>
-        <button class="icon-btn${isConfirmDel?' confirm-delete':''}"
-          onclick="deleteTaskClick(${t.id})">${isConfirmDel?'Sure?':'🗑'}</button>
+        <button class="ghost-icon" onclick="openModal(${t.id})" aria-label="edit" title="Edit task">
+          <i class="ti ti-pencil" aria-hidden="true"></i>
+        </button>
+        <button class="ghost-icon success" onclick="toggleDone(${t.id})" aria-label="complete" title="${t.done?'Undo':'Mark complete'}">
+          <i class="ti ${t.done?'ti-circle-minus':'ti-circle-check'}" aria-hidden="true"></i>
+        </button>
+        <button class="ghost-icon danger${isConfirmDel?' confirm-delete':''}" onclick="deleteTaskClick(${t.id})" aria-label="delete" title="Delete task">
+          ${isConfirmDel ? 'Sure?' : '<i class="ti ti-circle-x" aria-hidden="true"></i>'}
+        </button>
       </div>
     </div>
-    <div class="task-sections${isOpen?' open':''}">
-      <div class="task-notes" contenteditable="true"
-        onblur="saveNotes(${t.id},this)">${esc(t.notes||'')}</div>
-      ${sectionsHTML}
-      <div class="task-footer">
-        <button class="add-section-btn" onclick="event.stopPropagation();showInlineAddSection(${t.id})">+ Add Section</button>
+    <div class="task-sections open">
+      <div class="notes-section">
+        <div class="notes-header"><i class="ti ti-notes" aria-hidden="true"></i> notes</div>
+        <div class="task-notes" contenteditable="true"
+          onclick="event.stopPropagation()"
+          onblur="saveNotes(${t.id},this)">${esc(t.notes||'')}</div>
       </div>
-      ${showInline ? `
-        <div class="inline-section-add" onclick="event.stopPropagation()">
-          <input class="inline-section-input" id="inlineSecInput-${t.id}"
-            placeholder="Section name..."
-            onkeydown="inlineSectionKeydown(event,${t.id})">
-          <button class="inline-section-confirm" onclick="commitInlineSection(${t.id})">Add</button>
-        </div>` : ''}
     </div>
   </div>`;
 }
 
-function showInlineAddSection(tid) {
-  pendingInlineAdd = tid; expandedId = tid; renderTasks();
-  setTimeout(() => { const el = document.getElementById(`inlineSecInput-${tid}`); if(el) el.focus(); }, 30);
-}
-function inlineSectionKeydown(e, tid) {
-  if (e.key === 'Enter') { e.preventDefault(); commitInlineSection(tid); }
-  if (e.key === 'Escape') { pendingInlineAdd = null; renderTasks(); }
-}
-function commitInlineSection(tid) {
-  const el = document.getElementById(`inlineSecInput-${tid}`);
-  const name = el ? el.value.trim() : '';
-  if (!name) { pendingInlineAdd = null; renderTasks(); return; }
-  tasks.find(x=>x.id===tid).sections.push({name, items:[]});
-  pendingInlineAdd = null; expandedId = tid; saveTasks(); renderTasks();
-}
 
 function toggleExpand(id) {
   pendingDeleteTask = null; pendingDeleteSection = null; pendingInlineAdd = null;
@@ -2421,8 +2464,7 @@ function deleteTaskClick(id) {
 
 function deleteSectionClick(tid, si) {
   if (pendingDeleteSection && pendingDeleteSection.tid===tid && pendingDeleteSection.si===si) {
-    tasks.find(x=>x.id===tid).sections.splice(si,1);
-    pendingDeleteSection = null; expandedId = tid; saveTasks(); renderTasks();
+    pendingDeleteSection = null; renderTasks();
   } else {
     pendingDeleteSection = {tid,si}; renderTasks();
     setTimeout(() => { if(pendingDeleteSection&&pendingDeleteSection.tid===tid&&pendingDeleteSection.si===si){pendingDeleteSection=null;renderTasks();} }, 3000);
@@ -2430,13 +2472,16 @@ function deleteSectionClick(tid, si) {
 }
 
 function setActiveTask(id) {
-  activeTaskId = activeTaskId === id ? null : id;
+  if (activeTaskIds.has(id)) activeTaskIds.delete(id);
+  else activeTaskIds.add(id);
+  saveTasks();
   updateActiveTaskStrip();
   renderTasks();
 }
 
 function clearActiveTask() {
-  activeTaskId = null;
+  activeTaskIds.clear();
+  saveTasks();
   updateActiveTaskStrip();
   renderTasks();
 }
@@ -2444,19 +2489,14 @@ function clearActiveTask() {
 function updateActiveTaskStrip() {
   const strip = document.getElementById('activeTaskStrip');
   const nameEl = document.getElementById('activeTaskName');
-  const timerLabel = document.getElementById('timerTaskLabel');
   if (!strip || !nameEl) return;
-  if (activeTaskId !== null) {
-    const t = tasks.find(x => x.id === activeTaskId);
-    if (t) {
-      nameEl.textContent = t.title;
-      strip.classList.add('visible');
-      if (timerLabel) { timerLabel.textContent = t.title; timerLabel.style.display = 'block'; }
-      return;
-    }
+  const focused = tasks.filter(x => activeTaskIds.has(x.id));
+  if (focused.length > 0) {
+    nameEl.textContent = focused.map(x => x.title).join(', ');
+    strip.classList.add('visible');
+  } else {
+    strip.classList.remove('visible');
   }
-  strip.classList.remove('visible');
-  if (timerLabel) { timerLabel.textContent = ''; timerLabel.style.display = 'none'; }
 }
 
 function toggleDone(id) {
@@ -2490,9 +2530,9 @@ function openModal(id = null) {
     const t = tasks.find(x=>x.id===id);
     document.getElementById('mTaskName').value = t.title;
     document.getElementById('mTaskNotes').value = t.notes;
-    document.getElementById('mEstSessions').value = t.estimatedSessions || '';
+    document.getElementById('mEstSessions').value = t.estimatedPomodoros || '';
     selectedPri = t.priority;
-    draftSections = t.sections.map(s => ({name:s.name, items:s.items.map(i=>({text:i.text,done:i.done}))}));
+    draftSections = [];
   } else {
     document.getElementById('mTaskName').value = '';
     document.getElementById('mTaskNotes').value = '';
@@ -2526,60 +2566,20 @@ function selectPri(el) {
   });
 }
 
-function renderModalSections() {
-  document.getElementById('modalSections').innerHTML = draftSections.map((sec,si) => `
-    <div class="modal-section-row" id="msec-${si}">
-      <div class="modal-section-top">
-        <input class="modal-section-name" value="${esc(sec.name)}" placeholder="Section name"
-          oninput="draftSections[${si}].name=this.value">
-        <button class="modal-sec-del" onclick="deleteModalSection(${si})">✕</button>
-      </div>
-      <div class="modal-section-items" id="msec-items-${si}">
-        ${sec.items.map((item,ii) => `
-          <div class="modal-item-row">
-            <input class="modal-item-input" value="${esc(item.text)}" placeholder="Item..."
-              oninput="draftSections[${si}].items[${ii}].text=this.value"
-              onkeydown="modalItemKeydown(event,${si},${ii})">
-            <button class="modal-item-del" onclick="deleteModalItem(${si},${ii})">✕</button>
-          </div>`).join('')}
-        <button class="modal-item-add" onclick="addModalItem(${si})">+ Add item</button>
-      </div>
-    </div>`).join('');
-}
-
-function addModalSection() {
-  draftSections.push({name:'',items:[]}); renderModalSections();
-  setTimeout(() => { const i = document.querySelectorAll('.modal-section-name'); if(i.length) i[i.length-1].focus(); }, 50);
-}
-function deleteModalSection(si) { draftSections.splice(si,1); renderModalSections(); }
-function addModalItem(si) {
-  draftSections[si].items.push({text:'',done:false}); renderModalSections();
-  setTimeout(() => { const r = document.querySelectorAll(`#msec-items-${si} .modal-item-input`); if(r.length) r[r.length-1].focus(); }, 50);
-}
-function deleteModalItem(si,ii) { draftSections[si].items.splice(ii,1); renderModalSections(); }
-function modalItemKeydown(e,si,ii) { if(e.key==='Enter'){e.preventDefault();addModalItem(si);} }
+function renderModalSections() {}
 
 function saveTask() {
   const name = document.getElementById('mTaskName').value.trim();
   if (!name) { document.getElementById('mTaskName').focus(); notify("no name? even cavemen labeled their rocks 🪨"); return; }
   const notes = document.getElementById('mTaskNotes').value.trim();
   const estRaw = document.getElementById('mEstSessions').value.trim();
-  const estimatedSessions = estRaw ? (parseInt(estRaw) || null) : null;
-
-  document.querySelectorAll('.modal-section-name').forEach((inp,si) => { if(draftSections[si]) draftSections[si].name=inp.value.trim(); });
-  document.querySelectorAll('.modal-item-input').forEach(inp => {
-    const si = parseInt(inp.closest('[id^="msec-items-"]').id.replace('msec-items-',''));
-    const ii = Array.from(inp.parentElement.parentElement.querySelectorAll('.modal-item-input')).indexOf(inp);
-    if(draftSections[si]&&draftSections[si].items[ii]!==undefined) draftSections[si].items[ii].text=inp.value.trim();
-  });
-
-  const cleanSections = draftSections.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),items:s.items.filter(i=>i.text.trim())}));
+  const estimatedPomodoros = estRaw ? (parseInt(estRaw) || null) : null;
 
   if (editingId) {
     const t = tasks.find(x=>x.id===editingId);
-    t.title=name; t.notes=notes; t.priority=selectedPri; t.sections=cleanSections; t.estimatedSessions=estimatedSessions;
+    t.title=name; t.notes=notes; t.priority=selectedPri; t.estimatedPomodoros=estimatedPomodoros;
   } else {
-    tasks.push({id:nextId++,title:name,priority:selectedPri,done:false,notes,sections:cleanSections,estimatedSessions});
+    tasks.push({id:nextId++,title:name,priority:selectedPri,done:false,notes,sections:[],estimatedPomodoros});
   }
   closeModal(); saveTasks(); renderTasks();
   notify(editingId ? 'Task updated.' : 'Task added!');
@@ -3216,9 +3216,9 @@ async function sbSaveDailyLog() {
     const entry = {
       user_id:    sbUser.id,
       date:       today,
-      sessions:   sessionsComplete,
-      focus_mins: Math.floor(totalFocusSecs / 60),
-      tasks_done: tasksDone,
+      sessions:   todaySessions,
+      focus_mins: Math.floor(todayFocusSecs / 60),
+      tasks_done: todayDone,
       updated_at: new Date().toISOString()
     };
     const { error } = await sb.from('daily_log').upsert(entry, { onConflict: 'user_id,date' });
