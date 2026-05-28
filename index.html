@@ -318,6 +318,17 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .qac-pri-chip.sel-high   { background: rgba(184,79,58,0.12); border-color: var(--red); color: var(--red); }
 .qac-pri-chip.sel-medium { background: rgba(184,144,58,0.12); border-color: var(--yellow); color: var(--yellow); }
 .qac-pri-chip.sel-low    { background: rgba(74,140,92,0.12); border-color: var(--green); color: var(--green); }
+.qac-est-wrap { display: flex; align-items: center; gap: 4px; margin-left: 6px; }
+.qac-est-input {
+  width: 38px; font-family: 'DM Mono', monospace; font-size: 11px;
+  text-align: center; padding: 2px 4px; border-radius: 6px;
+  border: 1px solid var(--border2); background: transparent; color: var(--text);
+  -moz-appearance: textfield;
+}
+.qac-est-input::-webkit-inner-spin-button,
+.qac-est-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.qac-est-input::placeholder { color: var(--muted); }
+.qac-est-input:focus { outline: none; border-color: var(--accent3); }
 
 .task-list {
   flex: 1; overflow-y: auto; padding: 12px 16px;
@@ -1616,6 +1627,13 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       </div>
     </div>
     <div class="form-field">
+      <label class="form-label">Est. Sessions</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input class="form-input" id="mEstSessions" type="number" min="1" max="99" placeholder="how many 🍅?" style="width:130px;">
+        <span style="color:var(--muted);font-size:12px;">pomodoros</span>
+      </div>
+    </div>
+    <div class="form-field">
       <label class="form-label">Notes</label>
       <textarea class="form-textarea" id="mTaskNotes" placeholder="Any context or details..."></textarea>
     </div>
@@ -2156,6 +2174,7 @@ function renderQuickAdd() {
             <button class="qac-pri-chip${qaPri==='high'?' sel-high':''}" onclick="qaSetPri('high')">high</button>
             <button class="qac-pri-chip${qaPri==='medium'?' sel-medium':''}" onclick="qaSetPri('medium')">med</button>
             <button class="qac-pri-chip${qaPri==='low'?' sel-low':''}" onclick="qaSetPri('low')">low</button>
+            <span class="qac-est-wrap" title="Estimated pomodoros">🍅<input class="qac-est-input" id="qaEstInput" type="number" min="1" max="99" placeholder="est" onclick="event.stopPropagation()"></span>
           </div>
           <div class="qac-footer-right">
             <button class="btn-ghost" onclick="qaCancel()">Esc</button>
@@ -2234,7 +2253,7 @@ function qaSetPri(pri) {
 function qaCommit() {
   const titleEl = document.getElementById('qaTitleInput');
   const title = titleEl ? titleEl.value.trim() : '';
-  if (!title) { if (titleEl) titleEl.focus(); return; }
+  if (!title) { if (titleEl) titleEl.focus(); notify("no name? even cavemen labeled their rocks 🪨"); return; }
 
   // collect subtasks
   const subs = [];
@@ -2243,8 +2262,12 @@ function qaCommit() {
     if (el && el.value.trim()) subs.push({ text: el.value.trim(), done: false });
   }
 
+  const estEl = document.getElementById('qaEstInput');
+  const estRaw = estEl ? estEl.value.trim() : '';
+  const estimatedSessions = estRaw ? (parseInt(estRaw) || null) : null;
+
   const sections = subs.length ? [{ name: '', items: subs }] : [];
-  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes: '', sections });
+  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes: '', sections, estimatedSessions });
   saveTasks(); qaReset(); renderTasks();
 }
 
@@ -2337,7 +2360,7 @@ function taskCardHTML(t) {
         <div class="task-card-meta">
           <span class="task-badge badge-${t.priority}">${t.priority}</span>
           ${total > 0 ? `<span class="task-progress-mini">${done}/${total} done</span>` : ''}
-          ${(t.focusSessions||0) > 0 ? `<span class="task-focus-badge">${t.focusSessions}🍅 · ${t.focusSessions*25}m</span>` : ''}
+          ${(() => { const act = t.focusSessions||0; const est = t.estimatedSessions||null; if (!act && !est) return ''; const mins = loadSettings().pomoDur||25; const label = est ? `${act}/${est} 🍅` : `${act} 🍅`; const time = act > 0 ? ` · ${act*mins}m` : ''; return `<span class="task-focus-badge">${label}${time}</span>`; })()}
         </div>
       </div>
       <div class="task-card-actions" onclick="event.stopPropagation()">
@@ -2469,11 +2492,13 @@ function openModal(id = null) {
     const t = tasks.find(x=>x.id===id);
     document.getElementById('mTaskName').value = t.title;
     document.getElementById('mTaskNotes').value = t.notes;
+    document.getElementById('mEstSessions').value = t.estimatedSessions || '';
     selectedPri = t.priority;
     draftSections = t.sections.map(s => ({name:s.name, items:s.items.map(i=>({text:i.text,done:i.done}))}));
   } else {
     document.getElementById('mTaskName').value = '';
     document.getElementById('mTaskNotes').value = '';
+    document.getElementById('mEstSessions').value = '';
     draftSections = [];
   }
   document.querySelectorAll('.pri-chip').forEach(c => {
@@ -2538,8 +2563,10 @@ function modalItemKeydown(e,si,ii) { if(e.key==='Enter'){e.preventDefault();addM
 
 function saveTask() {
   const name = document.getElementById('mTaskName').value.trim();
-  if (!name) { document.getElementById('mTaskName').focus(); return; }
+  if (!name) { document.getElementById('mTaskName').focus(); notify("no name? even cavemen labeled their rocks 🪨"); return; }
   const notes = document.getElementById('mTaskNotes').value.trim();
+  const estRaw = document.getElementById('mEstSessions').value.trim();
+  const estimatedSessions = estRaw ? (parseInt(estRaw) || null) : null;
 
   document.querySelectorAll('.modal-section-name').forEach((inp,si) => { if(draftSections[si]) draftSections[si].name=inp.value.trim(); });
   document.querySelectorAll('.modal-item-input').forEach(inp => {
@@ -2552,9 +2579,9 @@ function saveTask() {
 
   if (editingId) {
     const t = tasks.find(x=>x.id===editingId);
-    t.title=name; t.notes=notes; t.priority=selectedPri; t.sections=cleanSections;
+    t.title=name; t.notes=notes; t.priority=selectedPri; t.sections=cleanSections; t.estimatedSessions=estimatedSessions;
   } else {
-    tasks.push({id:nextId++,title:name,priority:selectedPri,done:false,notes,sections:cleanSections});
+    tasks.push({id:nextId++,title:name,priority:selectedPri,done:false,notes,sections:cleanSections,estimatedSessions});
   }
   closeModal(); saveTasks(); renderTasks();
   notify(editingId ? 'Task updated.' : 'Task added!');
