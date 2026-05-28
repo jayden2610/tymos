@@ -922,7 +922,7 @@ async function authSignOut() {
   updateAuthUI(null);
   const badge = document.getElementById('syncBadge');
   if (badge) badge.remove();
-  render(); // re-render with localStorage fallback
+  showLockedState();
 }
 
 async function loadLogFromSupabase() {
