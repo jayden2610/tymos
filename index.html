@@ -2240,16 +2240,12 @@ function renderQuickAdd() {
                 <input class="qac-est-input" id="qaEstInput" type="number" min="1" max="999"
                   oninput="qaEstSync()" onblur="qaEstBlur()">
                 <span class="qac-est-label-text" id="qaEstLabel">
-                  <svg class="qac-candle-icon" width="12" height="20" viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs><radialGradient id="glowQac" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs>
-                    <ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/>
-                    <rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/>
-                    <rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/>
-                    <ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/>
-                    <line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/>
-                    <ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowQac)"/>
-                    <path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/>
-                    <ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/>
+                  <svg class="qac-candle-icon" width="11" height="19" viewBox="0 0 20 36" fill="none" stroke="#8c6844" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="16" width="12" height="17" rx="2" stroke-width="1.4" fill="none"/>
+                    <ellipse cx="10" cy="16" rx="6" ry="1.8" stroke-width="1.2" fill="none"/>
+                    <line x1="10" y1="14" x2="10" y2="10" stroke-width="1.2"/>
+                    <path d="M10,10 C7.5,7 7.5,3 10,0.5 C12.5,3 12.5,7 10,10Z" stroke-width="1.2" fill="none"/>
+                    <path d="M10,8.5 C9,7 9,4.5 10,2.5 C11,4.5 11,7 10,8.5Z" stroke-width="0.8" fill="none" opacity="0.5"/>
                   </svg>
                   <span id="qaEstDisplay">—</span>
                 </span>
