@@ -2808,10 +2808,13 @@ function spApplyState(source, opts) {
     if (artEl && artEl.tagName !== 'IMG') {
       const img = document.createElement('img');
       img.className = 'spotify-art'; img.id = 'spArt'; img.alt = '';
+      img.onerror = () => { img.style.display = 'none'; };
       img.src = artUrl;
       artEl.replaceWith(img);
     } else if (artEl) {
+      artEl.onerror = () => { artEl.style.display = 'none'; };
       artEl.src = artUrl;
+      artEl.style.display = '';
     }
   }
   if (deviceName !== undefined) document.querySelector('.sp-device').textContent = '🔊 ' + deviceName;
@@ -2919,7 +2922,7 @@ function createSpotifyPlayer(token) {
       spApplyState('sdk', {
         title:      track.name,
         artist:     track.artists.map(a => a.name).join(', '),
-        artUrl:     track.album?.images?.[0]?.url,
+        artUrl:     track.album?.images?.[1]?.url || track.album?.images?.[0]?.url,
         playing:    !state.paused,
         posMs:      state.position,
         durMs:      state.duration,
@@ -2959,7 +2962,7 @@ function spFetchState(token) {
     spApplyState('poll', {
       title:      data.item.name,
       artist:     data.item.artists.map(a => a.name).join(', '),
-      artUrl:     data.item.album?.images?.[0]?.url,
+      artUrl:     data.item.album?.images?.[1]?.url || data.item.album?.images?.[0]?.url,
       playing:    data.is_playing,
       posMs:      data.progress_ms,
       durMs:      data.item.duration_ms,
