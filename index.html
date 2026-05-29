@@ -1898,15 +1898,6 @@ function updateRing() {
   }
 }
 
-function setPreset(min, el) {
-  if (running) return;
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  workSecs = min*60; totalSecs = workSecs; remaining = workSecs;
-  document.getElementById('timerDisplay').textContent = fmt(remaining);
-  updateRing();
-}
-
 function toggleTimer() {
   if (running) {
     clearInterval(interval); running = false;
@@ -2452,11 +2443,6 @@ function taskCardHTML(t) {
 }
 
 
-function toggleExpand(id) {
-  pendingDeleteTask = null; pendingDeleteSection = null; pendingInlineAdd = null;
-  expandedId = expandedId === id ? null : id; renderTasks();
-}
-
 function deleteTaskClick(id) {
   if (pendingDeleteTask === id) {
     tasks = tasks.filter(x=>x.id!==id);
@@ -2465,15 +2451,6 @@ function deleteTaskClick(id) {
   } else {
     pendingDeleteTask = id; renderTasks();
     setTimeout(() => { if (pendingDeleteTask===id) { pendingDeleteTask=null; renderTasks(); } }, 3000);
-  }
-}
-
-function deleteSectionClick(tid, si) {
-  if (pendingDeleteSection && pendingDeleteSection.tid===tid && pendingDeleteSection.si===si) {
-    pendingDeleteSection = null; renderTasks();
-  } else {
-    pendingDeleteSection = {tid,si}; renderTasks();
-    setTimeout(() => { if(pendingDeleteSection&&pendingDeleteSection.tid===tid&&pendingDeleteSection.si===si){pendingDeleteSection=null;renderTasks();} }, 3000);
   }
 }
 
@@ -2510,18 +2487,6 @@ function toggleDone(id) {
   tasksDone += t.done ? 1 : -1; tasksDone = Math.max(0, tasksDone);
   todayDone += t.done ? 1 : -1; todayDone = Math.max(0, todayDone);
   updateStats(); saveTasks(); saveStats(); saveTodayStats(); saveDailyLog(); renderTasks();
-}
-
-function toggleItem(tid, si, ii) {
-  tasks.find(x=>x.id===tid).sections[si].items[ii].done ^= true;
-  expandedId = tid; saveTasks(); renderTasks();
-}
-
-function addItem(e, tid, si) {
-  if (e.key !== 'Enter') return;
-  const val = e.target.value.trim(); if (!val) return;
-  tasks.find(x=>x.id===tid).sections[si].items.push({text:val,done:false});
-  expandedId = tid; saveTasks(); renderTasks();
 }
 
 function saveNotes(tid, el) {

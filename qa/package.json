@@ -1,0 +1,16 @@
+{
+  "name": "tymos-qa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-contained QA harness for the Tymos static app (no app dependencies).",
+  "scripts": {
+    "qa": "node run-qa.mjs",
+    "qa:static": "node static-check.mjs",
+    "qa:runtime": "node runtime-check.mjs",
+    "postinstall:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
