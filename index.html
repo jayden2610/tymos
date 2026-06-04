@@ -1253,6 +1253,203 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   .about-rank-row { grid-template-columns: 48px 1fr; }
   .about-rank-note { display: none; }
 }
+
+/* ── FOCUS VIEW WRAPPER ── */
+#focusView {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── TAB BAR ── */
+.tab-bar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 4px;
+}
+.tab-btn {
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--muted); background: transparent;
+  border: 1px solid transparent; border-radius: 7px;
+  padding: 5px 14px; cursor: pointer; transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.tab-btn:hover { background: var(--surface2); color: var(--text2); }
+.tab-btn.active {
+  background: var(--accent-bg); border-color: rgba(124,92,58,0.22);
+  color: var(--accent); font-weight: 700;
+}
+
+/* ── ACTIVE CARD STRIP (on Focus tab) ── */
+.active-card-strip {
+  display: none; align-items: center; gap: 8px;
+  padding: 7px 14px; margin: 8px 0 0;
+  border-radius: 8px; background: rgba(124,92,58,0.06);
+  border: 1px solid rgba(124,92,58,0.18);
+  font-size: 12px; color: var(--accent2); font-weight: 600;
+}
+.active-card-strip.visible { display: flex; }
+.active-card-strip-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── PROJECTS VIEW ── */
+#projectsView {
+  display: none; flex: 1; min-height: 0;
+  flex-direction: column; overflow: hidden;
+}
+#projectsView.visible { display: flex; }
+
+.projects-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.projects-select {
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--border2); border-radius: 8px;
+  padding: 6px 10px; cursor: pointer; outline: none;
+  min-width: 160px; transition: border-color 0.15s;
+}
+.projects-select:focus { border-color: var(--accent2); }
+.projects-add-btn {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--accent); background: var(--accent-bg);
+  border: 1px solid rgba(124,92,58,0.22); border-radius: 8px;
+  padding: 6px 14px; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.projects-add-btn:hover { background: rgba(124,92,58,0.14); }
+
+/* Kanban board */
+.kanban-board {
+  flex: 1; min-height: 0; display: flex; gap: 12px;
+  padding: 16px 20px; overflow-x: auto; overflow-y: hidden;
+  align-items: flex-start;
+}
+.kanban-col {
+  flex: 0 0 220px; min-height: 80px;
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.kanban-col.drag-over { box-shadow: 0 0 0 2px var(--accent2); }
+.kanban-col-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+  flex-shrink: 0;
+}
+.kanban-col-body {
+  flex: 1; overflow-y: auto; padding: 8px;
+  display: flex; flex-direction: column; gap: 7px;
+  min-height: 40px;
+}
+.kanban-card {
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 9px 10px;
+  cursor: grab; user-select: none;
+  transition: box-shadow 0.15s, transform 0.1s;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.kanban-card:hover { box-shadow: var(--shadow); }
+.kanban-card.dragging { opacity: 0.45; transform: scale(0.97); }
+.kanban-card-top {
+  display: flex; align-items: center; gap: 6px;
+}
+.kanban-card-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.kanban-card-dot.pri-1 { background: var(--red); }
+.kanban-card-dot.pri-2 { background: var(--yellow); }
+.kanban-card-dot.pri-3 { background: var(--muted); }
+.kanban-card-title {
+  flex: 1; font-size: 13px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kanban-card-meta {
+  display: flex; align-items: center; gap: 6px;
+}
+.kanban-session-badge {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent2); background: var(--accent-bg);
+  border-radius: 100px; padding: 1px 7px;
+  border: 1px solid rgba(124,92,58,0.18);
+}
+.kanban-focus-btn {
+  font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700;
+  color: var(--accent2); background: transparent;
+  border: 1px solid var(--border2); border-radius: 6px;
+  padding: 3px 9px; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.kanban-focus-btn:hover { background: var(--accent-bg); border-color: rgba(124,92,58,0.3); }
+.kanban-col-foot {
+  padding: 6px 8px 8px; flex-shrink: 0;
+  border-top: 1px solid var(--border);
+}
+.kanban-add-row {
+  display: flex; gap: 5px; align-items: center;
+}
+.kanban-add-input {
+  flex: 1; font-family: 'Nunito', sans-serif; font-size: 12px;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--border2); border-radius: 7px;
+  padding: 5px 8px; outline: none; display: none;
+  transition: border-color 0.15s;
+}
+.kanban-add-input.visible { display: block; }
+.kanban-add-input:focus { border-color: var(--accent2); }
+.kanban-add-link {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  background: none; border: none; cursor: pointer;
+  padding: 4px 6px; border-radius: 6px; transition: all 0.15s;
+  font-family: 'Nunito', sans-serif;
+}
+.kanban-add-link:hover { color: var(--accent); background: var(--accent-bg); }
+.kanban-add-confirm {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  background: var(--accent-bg); border: 1px solid rgba(124,92,58,0.22);
+  border-radius: 6px; padding: 4px 8px; cursor: pointer;
+  font-family: 'Nunito', sans-serif; transition: all 0.15s; display: none;
+}
+.kanban-add-confirm.visible { display: block; }
+.kanban-add-confirm:hover { background: rgba(124,92,58,0.14); }
+
+/* Projects empty state */
+.projects-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; flex: 1;
+  color: var(--muted); font-size: 14px; font-weight: 600;
+  padding: 60px 20px;
+}
+.projects-empty-sub { font-size: 12px; font-weight: 400; color: var(--muted); opacity: 0.7; }
+
+/* Project modal */
+#projectModalOverlay {
+  display: none; position: fixed; inset: 0; z-index: 120;
+  background: rgba(46,31,13,0.35); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+}
+#projectModalOverlay.open { display: flex; }
+
+/* Card edit modal */
+#cardModalOverlay {
+  display: none; position: fixed; inset: 0; z-index: 120;
+  background: rgba(46,31,13,0.35); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+}
+#cardModalOverlay.open { display: flex; }
+.card-modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 22px 24px;
+  width: 340px; box-shadow: var(--shadow2);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.card-modal-title {
+  font-family: 'Lora', serif; font-size: 16px; font-weight: 600;
+  color: var(--text); margin-bottom: 2px;
+}
 </style>
 </head>
 <body>
@@ -1260,6 +1457,10 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 <div class="app-frame">
 <div class="header">
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabFocus" onclick="switchTab('focus')">Focus</button>
+    <button class="tab-btn" id="tabProjects" onclick="switchTab('projects')">Kanban</button>
+  </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
     <button id="reportBtn" onclick="reportAction()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'" title="Sign in to view your report">🔒 Report</button>
@@ -1305,6 +1506,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 
   </div>
 </div>
+<div id="focusView">
 <div class="main">
   <div class="timer-panel">
     <div class="candle-wrap">
@@ -1404,6 +1606,12 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button onclick="clearActiveTask()" style="background:none;border:none;color:var(--accent);opacity:0.6;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;" title="Clear active task">✕</button>
     </div>
 
+    <div class="active-card-strip" id="activeCardStrip">
+      <span style="font-size:10px;opacity:0.7;flex-shrink:0;">card</span>
+      <span class="active-card-strip-name" id="activeCardStripName"></span>
+      <button onclick="clearActiveCard()" style="background:none;border:none;color:var(--accent2);opacity:0.6;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;" title="Clear active card">✕</button>
+    </div>
+
     <!-- Spotify Player -->
     <div class="spotify-bar" id="spotifyBar">
       <!-- Connect state -->
@@ -1458,6 +1666,18 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <!-- quick-add row injected by renderQuickAdd() -->
     </div>
   </div>
+</div>
+</div><!-- /#focusView -->
+
+<!-- ── PROJECTS VIEW ── -->
+<div id="projectsView">
+  <div class="projects-toolbar">
+    <select class="projects-select" id="projectPicker" onchange="onProjectPick()">
+      <option value="">— select project —</option>
+    </select>
+    <button class="projects-add-btn" onclick="openProjectModal()">+ Project</button>
+  </div>
+  <div id="kanbanBoard" class="kanban-board"></div>
 </div>
 
 <!-- Scroll hint to about -->
@@ -2013,6 +2233,19 @@ function tick() {
         });
         saveTasks(); renderTasks();
       }
+      // ── Card session badge increment ──
+      if (activeCardProjectId && activeCardId) {
+        const cProj = kbProjects.find(p => p.id === activeCardProjectId);
+        const cCard = cProj ? cProj.cards.find(c => c.id === activeCardId) : null;
+        if (cCard) {
+          cCard.sessions = (cCard.sessions || 0) + 1;
+          cCard.focusMins = (cCard.focusMins || 0) + Math.round(workSecs / 60);
+          cCard.updated = todayStr();
+          saveProjects();
+          // Re-render kanban if on Projects tab so badge is live
+          if (currentTab === 'projects') renderKanban();
+        }
+      }
       notify('Session complete — take a break!');
       enterBreak();
     } else {
@@ -2103,6 +2336,339 @@ function loadStats() {
     if (s) { const d = JSON.parse(s); sessionsComplete = d.sessionsComplete||0; totalFocusSecs = d.totalFocusSecs||0; tasksDone = d.tasksDone||0; }
   } catch(e) {}
 }
+
+// ── PROJECTS LOCALSTORAGE ──
+const LS_PROJECTS = 'tymos_projects';
+
+function saveProjects() {
+  // Stored as a bare array to match the other tymos_* keys and the MCP export shape.
+  try { localStorage.setItem(LS_PROJECTS, JSON.stringify(kbProjects)); } catch(e) {}
+}
+function loadProjects() {
+  try {
+    const raw = localStorage.getItem(LS_PROJECTS);
+    if (!raw) { kbProjects = []; return; }
+    const d = JSON.parse(raw);
+    // Accept bare array (canonical) or legacy { projects: [...] } wrapper.
+    kbProjects = Array.isArray(d) ? d : (Array.isArray(d && d.projects) ? d.projects : []);
+  } catch(e) { kbProjects = []; }
+}
+
+// ── PROJECTS STATE ──
+let kbProjects = [];
+let kbActiveProjectId = null;  // which project is shown in kanban
+let kbEditingCard = null;       // { projectId, cardId } for card modal
+
+// Active card state — the card a focus session is currently logged against
+let activeCardProjectId = null;
+let activeCardId = null;
+
+function loadActiveCard() {
+  try {
+    const raw = localStorage.getItem('tymos_active_card');
+    if (raw) { const d = JSON.parse(raw); activeCardProjectId = d.projectId||null; activeCardId = d.cardId||null; }
+  } catch(e) {}
+}
+function saveActiveCard() {
+  try { localStorage.setItem('tymos_active_card', JSON.stringify({ projectId: activeCardProjectId, cardId: activeCardId })); } catch(e) {}
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── TAB SWITCHING ──
+let currentTab = 'focus';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('focusView').style.display = tab === 'focus' ? '' : 'none';
+  document.getElementById('projectsView').classList.toggle('visible', tab === 'projects');
+  document.getElementById('tabFocus').classList.toggle('active', tab === 'focus');
+  document.getElementById('tabProjects').classList.toggle('active', tab === 'projects');
+  if (tab === 'projects') renderKanban();
+}
+
+// ── ACTIVE CARD STRIP ──
+function updateActiveCardStrip() {
+  const strip = document.getElementById('activeCardStrip');
+  const nameEl = document.getElementById('activeCardStripName');
+  if (!strip || !nameEl) return;
+  if (activeCardProjectId && activeCardId) {
+    const proj = kbProjects.find(p => p.id === activeCardProjectId);
+    const card = proj ? proj.cards.find(c => c.id === activeCardId) : null;
+    if (card) {
+      nameEl.textContent = card.title;
+      strip.classList.add('visible');
+      return;
+    }
+  }
+  strip.classList.remove('visible');
+  nameEl.textContent = '';
+}
+
+function clearActiveCard() {
+  activeCardProjectId = null; activeCardId = null;
+  saveActiveCard(); updateActiveCardStrip();
+}
+
+// ── PROJECT MODAL ──
+function openProjectModal() {
+  document.getElementById('pmName').value = '';
+  document.getElementById('pmDesc').value = '';
+  document.getElementById('pmCols').value = 'Backlog, This Week, In Progress, Done';
+  const ov = document.getElementById('projectModalOverlay');
+  ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
+  setTimeout(() => document.getElementById('pmName').focus(), 120);
+}
+function closeProjectModal() {
+  const ov = document.getElementById('projectModalOverlay');
+  ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
+}
+function saveProjectModal() {
+  const name = document.getElementById('pmName').value.trim();
+  if (!name) { document.getElementById('pmName').focus(); notify('Project needs a name.'); return; }
+  const desc = document.getElementById('pmDesc').value.trim();
+  const colsRaw = document.getElementById('pmCols').value;
+  const columns = colsRaw.split(',').map(c => c.trim()).filter(Boolean);
+  if (!columns.length) { notify('Add at least one column.'); return; }
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '-' + Date.now();
+  if (kbProjects.find(p => p.id === id)) { notify('Project id collision — rename.'); return; }
+  const proj = { id, name, status: 'active', description: desc, url: '', columns, cards: [] };
+  kbProjects.push(proj);
+  saveProjects();
+  closeProjectModal();
+  kbActiveProjectId = id;
+  renderProjectPicker();
+  renderKanban();
+  notify('Project created!');
+}
+
+// ── CARD MODAL ──
+function openCardModal(projectId, cardId) {
+  const proj = kbProjects.find(p => p.id === projectId);
+  const card = proj ? proj.cards.find(c => c.id === cardId) : null;
+  if (!card) return;
+  kbEditingCard = { projectId, cardId };
+  document.getElementById('cmTitle').value = card.title;
+  document.getElementById('cmPriority').value = String(card.priority || 2);
+  const ov = document.getElementById('cardModalOverlay');
+  ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
+  setTimeout(() => document.getElementById('cmTitle').focus(), 120);
+}
+function closeCardModal() {
+  const ov = document.getElementById('cardModalOverlay');
+  ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
+  kbEditingCard = null;
+}
+function saveCardModal() {
+  if (!kbEditingCard) return;
+  const { projectId, cardId } = kbEditingCard;
+  const proj = kbProjects.find(p => p.id === projectId);
+  const card = proj ? proj.cards.find(c => c.id === cardId) : null;
+  if (!card) { closeCardModal(); return; }
+  const title = document.getElementById('cmTitle').value.trim();
+  if (!title) { document.getElementById('cmTitle').focus(); notify('Card needs a title.'); return; }
+  card.title = title;
+  card.priority = parseInt(document.getElementById('cmPriority').value) || 2;
+  card.updated = todayStr();
+  saveProjects(); closeCardModal(); renderKanban();
+  notify('Card updated.');
+}
+function deleteCardFromModal() {
+  if (!kbEditingCard) return;
+  const { projectId, cardId } = kbEditingCard;
+  const proj = kbProjects.find(p => p.id === projectId);
+  if (!proj) { closeCardModal(); return; }
+  proj.cards = proj.cards.filter(c => c.id !== cardId);
+  // If this was the active card, clear it
+  if (activeCardProjectId === projectId && activeCardId === cardId) clearActiveCard();
+  saveProjects(); closeCardModal(); renderKanban();
+  notify('Card deleted.');
+}
+
+// ── START FOCUS FROM CARD ──
+function startFocusFromCard(projectId, cardId) {
+  const proj = kbProjects.find(p => p.id === projectId);
+  const card = proj ? proj.cards.find(c => c.id === cardId) : null;
+  if (!card) return;
+  activeCardProjectId = projectId; activeCardId = cardId;
+  saveActiveCard(); updateActiveCardStrip();
+  switchTab('focus');
+  // Start the timer if not already running
+  if (!running) toggleTimer();
+}
+
+// ── INLINE ADD CARD ──
+function showKanbanAddInput(colName, projectId) {
+  const safeId = (projectId + '_' + colName).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const inputId = 'kaInput_' + safeId;
+  const confirmId = 'kaConfirm_' + safeId;
+  const linkId = 'kaLink_' + safeId;
+  const inputEl = document.getElementById(inputId);
+  const confirmEl = document.getElementById(confirmId);
+  const linkEl = document.getElementById(linkId);
+  if (!inputEl) return;
+  inputEl.classList.add('visible');
+  confirmEl.classList.add('visible');
+  if (linkEl) linkEl.style.display = 'none';
+  inputEl.focus();
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmKanbanAdd(projectId, colName, inputId, confirmId, linkId); }
+    if (e.key === 'Escape') { hideKanbanAddInput(inputId, confirmId, linkId); }
+  };
+}
+function confirmKanbanAdd(projectId, colName, inputId, confirmId, linkId) {
+  const inputEl = document.getElementById(inputId);
+  if (!inputEl) return;
+  const title = inputEl.value.trim();
+  if (!title) { hideKanbanAddInput(inputId, confirmId, linkId); return; }
+  const proj = kbProjects.find(p => p.id === projectId);
+  if (!proj) return;
+  const card = {
+    id: projectId + '-' + Date.now(),
+    col: colName, title,
+    priority: 2, updated: todayStr(),
+    tags: [], sessions: 0, focusMins: 0
+  };
+  proj.cards.push(card);
+  saveProjects();
+  hideKanbanAddInput(inputId, confirmId, linkId);
+  renderKanban();
+}
+function hideKanbanAddInput(inputId, confirmId, linkId) {
+  const inputEl = document.getElementById(inputId);
+  const confirmEl = document.getElementById(confirmId);
+  const linkEl = document.getElementById(linkId);
+  if (inputEl) { inputEl.value = ''; inputEl.classList.remove('visible'); }
+  if (confirmEl) confirmEl.classList.remove('visible');
+  if (linkEl) linkEl.style.display = '';
+}
+
+// ── RENDER PROJECT PICKER ──
+function renderProjectPicker() {
+  const sel = document.getElementById('projectPicker');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— select project —</option>';
+  kbProjects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if (p.id === kbActiveProjectId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+function onProjectPick() {
+  kbActiveProjectId = document.getElementById('projectPicker').value || null;
+  renderKanban();
+}
+
+// ── RENDER KANBAN ──
+function renderKanban() {
+  renderProjectPicker();
+  const board = document.getElementById('kanbanBoard');
+  if (!board) return;
+  board.innerHTML = '';
+
+  if (!kbProjects.length) {
+    board.innerHTML = '<div class="projects-empty"><div>No projects yet</div><div class="projects-empty-sub">Click + Project to create your first one</div></div>';
+    return;
+  }
+
+  const proj = kbActiveProjectId ? kbProjects.find(p => p.id === kbActiveProjectId) : kbProjects[0];
+  if (!proj) {
+    board.innerHTML = '<div class="projects-empty"><div>Select a project above</div></div>';
+    return;
+  }
+  // Ensure active project is synced
+  if (!kbActiveProjectId) kbActiveProjectId = proj.id;
+
+  proj.columns.forEach(col => {
+    const cards = proj.cards.filter(c => c.col === col);
+    const safeId = (proj.id + '_' + col).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const inputId = 'kaInput_' + safeId;
+    const confirmId = 'kaConfirm_' + safeId;
+    const linkId = 'kaLink_' + safeId;
+
+    const colEl = document.createElement('div');
+    colEl.className = 'kanban-col';
+    colEl.dataset.col = col;
+    colEl.dataset.projectId = proj.id;
+
+    // DnD: dragover
+    colEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      colEl.classList.add('drag-over');
+    });
+    colEl.addEventListener('dragleave', () => { colEl.classList.remove('drag-over'); });
+    colEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      colEl.classList.remove('drag-over');
+      const cardId = e.dataTransfer.getData('text/plain');
+      const targetProjectId = colEl.dataset.projectId;
+      const targetCol = colEl.dataset.col;
+      const targetProj = kbProjects.find(p => p.id === targetProjectId);
+      if (!targetProj) return;
+      const draggedCard = targetProj.cards.find(c => c.id === cardId);
+      if (!draggedCard) return;
+      draggedCard.col = targetCol;
+      draggedCard.updated = todayStr();
+      saveProjects();
+      renderKanban();
+    });
+
+    let cardsHTML = '';
+    cards.forEach(card => {
+      const dotClass = 'pri-' + (card.priority || 2);
+      const sessionBadge = (card.sessions && card.sessions > 0)
+        ? `<span class="kanban-session-badge">⏱ ${card.sessions}</span>` : '';
+      cardsHTML += `
+        <div class="kanban-card" draggable="true" id="kcard-${esc(card.id)}"
+             data-card-id="${esc(card.id)}" data-project-id="${esc(proj.id)}"
+             onclick="openCardModal('${esc(proj.id)}','${esc(card.id)}')"
+             ondragstart="kanbanDragStart(event,'${esc(card.id)}')"
+             ondragend="kanbanDragEnd(event)">
+          <div class="kanban-card-top">
+            <div class="kanban-card-dot ${dotClass}"></div>
+            <div class="kanban-card-title" title="${esc(card.title)}">${esc(card.title)}</div>
+          </div>
+          <div class="kanban-card-meta">
+            ${sessionBadge}
+            <button class="kanban-focus-btn" onclick="event.stopPropagation();startFocusFromCard('${esc(proj.id)}','${esc(card.id)}')">▶ Start focus</button>
+          </div>
+        </div>`;
+    });
+
+    colEl.innerHTML = `
+      <div class="kanban-col-header">${esc(col)}</div>
+      <div class="kanban-col-body">${cardsHTML}</div>
+      <div class="kanban-col-foot">
+        <div class="kanban-add-row">
+          <input class="kanban-add-input" id="${inputId}" placeholder="Card title…">
+          <button class="kanban-add-confirm" id="${confirmId}"
+            onclick="confirmKanbanAdd('${esc(proj.id)}','${esc(col)}','${inputId}','${confirmId}','${linkId}')">Add</button>
+        </div>
+        <button class="kanban-add-link" id="${linkId}"
+          onclick="showKanbanAddInput('${esc(col)}','${esc(proj.id)}')">+ add</button>
+      </div>`;
+    board.appendChild(colEl);
+  });
+}
+
+function kanbanDragStart(e, cardId) {
+  e.dataTransfer.setData('text/plain', cardId);
+  e.dataTransfer.effectAllowed = 'move';
+  const el = document.getElementById('kcard-' + cardId);
+  if (el) el.classList.add('dragging');
+}
+function kanbanDragEnd(e) {
+  document.querySelectorAll('.kanban-card.dragging').forEach(el => el.classList.remove('dragging'));
+}
+
+// ── INIT PROJECTS ──
+loadProjects();
+loadActiveCard();
+updateActiveCardStrip();
 
 // ── STATS ──
 let sessionsComplete = 0, totalFocusSecs = 0, tasksDone = 0;
@@ -3580,6 +4146,53 @@ saveTasks    = function() { sbSaveTasks(); };
   });
 })();
 </script>
+
+<!-- ── PROJECT MODAL ── -->
+<div id="projectModalOverlay" onclick="if(event.target===this)closeProjectModal()" aria-hidden="true">
+  <div class="modal" style="max-width:420px;" role="dialog" aria-modal="true" aria-label="New project">
+    <div class="modal-title">New Project</div>
+    <div class="form-field">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="pmName" placeholder="e.g. Tymos">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="pmDesc" placeholder="Short description (optional)">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Columns (comma separated)</label>
+      <input class="form-input" id="pmCols" value="Backlog, This Week, In Progress, Done">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" type="button" onclick="closeProjectModal()">Cancel</button>
+      <button class="btn-save" type="button" onclick="saveProjectModal()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CARD EDIT MODAL ── -->
+<div id="cardModalOverlay" onclick="if(event.target===this)closeCardModal()" aria-hidden="true">
+  <div class="card-modal" role="dialog" aria-modal="true" aria-label="Edit card">
+    <div class="card-modal-title">Edit Card</div>
+    <div class="form-field">
+      <label class="form-label">Title</label>
+      <input class="form-input" id="cmTitle" placeholder="Card title">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Priority</label>
+      <select class="form-input" id="cmPriority" style="cursor:pointer;">
+        <option value="1">1 — High</option>
+        <option value="2">2 — Medium</option>
+        <option value="3">3 — Low</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" type="button" style="color:var(--red);border-color:rgba(184,79,58,0.3);" onclick="deleteCardFromModal()">Delete</button>
+      <button class="btn-ghost" type="button" onclick="closeCardModal()">Cancel</button>
+      <button class="btn-save" type="button" onclick="saveCardModal()">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── NO-TASKS MODAL ── -->
 <div class="modal-overlay" id="noTasksOverlay" onclick="if(event.target===this)closeNoTasksModal()" aria-hidden="true">
