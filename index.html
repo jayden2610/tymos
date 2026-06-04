@@ -1676,6 +1676,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <option value="">— select project —</option>
     </select>
     <button class="projects-add-btn" onclick="openProjectModal()">+ Project</button>
+    <button class="projects-add-btn" onclick="importProjectsPrompt()" title="Paste projects JSON to import">Import</button>
   </div>
   <div id="kanbanBoard" class="kanban-board"></div>
 </div>
@@ -2425,6 +2426,22 @@ function openProjectModal() {
 function closeProjectModal() {
   const ov = document.getElementById('projectModalOverlay');
   ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
+}
+function importProjectsPrompt() {
+  const raw = prompt('Paste your projects JSON (array of projects). This replaces all current projects.');
+  if (raw === null) return; // cancelled
+  const text = raw.trim();
+  if (!text) return;
+  let data;
+  try { data = JSON.parse(text); } catch (e) { alert('That is not valid JSON: ' + e.message); return; }
+  // Accept a bare array, or { projects: [...] } wrapper.
+  const arr = Array.isArray(data) ? data : (data && Array.isArray(data.projects) ? data.projects : null);
+  if (!arr) { alert('Expected a JSON array of projects (or { "projects": [...] }).'); return; }
+  kbProjects = arr;
+  saveProjects();
+  renderProjectPicker();
+  renderKanban();
+  alert('Imported ' + arr.length + ' project' + (arr.length === 1 ? '' : 's') + '.');
 }
 function saveProjectModal() {
   const name = document.getElementById('pmName').value.trim();
