@@ -2430,7 +2430,8 @@ function closeProjectModal() {
 function importProjectsPrompt() {
   const raw = prompt('Paste your projects JSON (array of projects). This replaces all current projects.');
   if (raw === null) return; // cancelled
-  const text = raw.trim();
+  // Strip raw control chars (newlines/tabs the prompt box may inject) so paste survives.
+  const text = raw.replace(/[\x00-\x1F]+/g, ' ').trim();
   if (!text) return;
   let data;
   try { data = JSON.parse(text); } catch (e) { alert('That is not valid JSON: ' + e.message); return; }
