@@ -1459,7 +1459,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
   <span class="logo">Tymos <span style="color:var(--border2);margin:0 6px;font-weight:300;">·</span><span style="font-family:'DM Mono',monospace;font-weight:400;opacity:0.45;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Pomodoro Timer</span></span>
   <div class="tab-bar">
     <button class="tab-btn active" id="tabFocus" onclick="switchTab('focus')">Focus</button>
-    <button class="tab-btn" id="tabProjects" onclick="switchTab('projects')">Kanban</button>
+    <!-- kanban tab hidden: <button class="tab-btn" id="tabProjects" onclick="switchTab('projects')">Kanban</button> -->
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="openSettings()" style="font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--text2);background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⚙ Settings</button>
@@ -1669,8 +1669,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 </div>
 </div><!-- /#focusView -->
 
-<!-- ── PROJECTS VIEW ── -->
-<div id="projectsView">
+<!-- ── PROJECTS VIEW (hidden) ── -->
+<div id="projectsView" style="display:none!important">
   <div class="projects-toolbar">
     <select class="projects-select" id="projectPicker" onchange="onProjectPick()">
       <option value="">— select project —</option>
