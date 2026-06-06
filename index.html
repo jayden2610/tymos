@@ -635,7 +635,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   border-radius: 8px; color: var(--text); font-family: 'Nunito', sans-serif;
   font-size: 13px; padding: 10px 12px; outline: none; resize: vertical;
   min-height: 72px; max-height: 140px; transition: border-color 0.15s;
-  margin-bottom: 16px; line-height: 1.5;
+  line-height: 1.5;
 }
 .ntm-notes:focus { border-color: var(--accent2); }
 .ntm-notes::placeholder { color: var(--muted); }
@@ -3737,9 +3737,12 @@ renderTasks();
 
 // ── NO-TASKS MODAL ──
 let ntmPendingTasks = [];
+let ntmSelectedPri = 'high';
 
 function openNoTasksModal() {
   ntmPendingTasks = [];
+  ntmSelectedPri = 'high';
+  ntmResetForm();
   renderNtmList();
   const overlay = document.getElementById('noTasksOverlay');
   overlay.classList.add('open');
@@ -3753,16 +3756,38 @@ function closeNoTasksModal() {
   overlay.setAttribute('aria-hidden', 'true');
   ntmPendingTasks = [];
   document.getElementById('ntmTaskList').innerHTML = '';
+  ntmResetForm();
+}
+
+function ntmResetForm() {
   document.getElementById('ntmInput').value = '';
+  document.getElementById('ntmCandles').value = '';
+  document.getElementById('ntmNotes').value = '';
+  ntmSelectedPri = 'high';
+  document.querySelectorAll('.ntm-pri-chip').forEach(c => {
+    c.className = 'pri-chip ntm-pri-chip';
+    if (c.dataset.pri === 'high') c.classList.add('sel-high');
+  });
+}
+
+function ntmSelectPri(el) {
+  ntmSelectedPri = el.dataset.pri;
+  document.querySelectorAll('.ntm-pri-chip').forEach(c => {
+    c.className = 'pri-chip ntm-pri-chip';
+    if (c.dataset.pri === ntmSelectedPri) c.classList.add('sel-' + ntmSelectedPri);
+  });
 }
 
 function ntmAddTask() {
   const input = document.getElementById('ntmInput');
   const title = input.value.trim();
   if (!title) { input.focus(); return; }
-  ntmPendingTasks.push({ title });
-  input.value = '';
-  input.focus();
+  const notes = document.getElementById('ntmNotes').value.trim();
+  const candlesRaw = document.getElementById('ntmCandles').value.trim();
+  const estimatedPomodoros = candlesRaw ? (parseInt(candlesRaw) || null) : null;
+  ntmPendingTasks.push({ title, priority: ntmSelectedPri, notes, estimatedPomodoros });
+  ntmResetForm();
+  document.getElementById('ntmInput').focus();
   renderNtmList();
 }
 
@@ -3771,15 +3796,25 @@ function ntmRemoveTask(idx) {
   renderNtmList();
 }
 
+const NTM_PRI_LABELS = { high: 'High', medium: 'Med', low: 'Low' };
+const NTM_PRI_COLORS = { high: 'var(--red)', medium: 'var(--yellow)', low: 'var(--green)' };
+
 function renderNtmList() {
   const list = document.getElementById('ntmTaskList');
   const btn  = document.getElementById('ntmStartBtn');
-  list.innerHTML = ntmPendingTasks.map((t, i) =>
-    `<div class="ntm-task-item">
-      <span>${escHtml(t.title)}</span>
+  list.innerHTML = ntmPendingTasks.map((t, i) => {
+    const priColor = NTM_PRI_COLORS[t.priority] || 'var(--muted)';
+    const priLabel = NTM_PRI_LABELS[t.priority] || t.priority;
+    const candles  = t.estimatedPomodoros ? `🕯️ ${t.estimatedPomodoros}` : '';
+    return `<div class="ntm-task-item">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+        <span style="font-size:11px;font-weight:700;color:${priColor};flex-shrink:0;">${escHtml(priLabel)}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(t.title)}</span>
+        ${candles ? `<span style="font-size:11px;color:var(--muted);flex-shrink:0;">${escHtml(candles)}</span>` : ''}
+      </div>
       <button class="ntm-task-del" onclick="ntmRemoveTask(${i})" title="Remove">×</button>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   btn.disabled = ntmPendingTasks.length === 0;
 }
 
@@ -3789,24 +3824,18 @@ function escHtml(s) {
 
 function ntmStartWithTasks() {
   if (!ntmPendingTasks.length) return;
-  const notes = (document.getElementById('ntmNotes')?.value || '').trim();
   ntmPendingTasks.forEach(t => {
-    tasks.push({ id: nextId++, title: t.title, priority: 'high', done: false, notes: notes, sections: [], estimatedPomodoros: null });
+    tasks.push({ id: nextId++, title: t.title, priority: t.priority, done: false, notes: t.notes, sections: [], estimatedPomodoros: t.estimatedPomodoros });
   });
-  if (notes) localStorage.setItem('tymos_session_notes', notes);
   saveTasks(); renderTasks();
   closeNoTasksModal();
-  // Now actually start the timer
   running = true;
   document.getElementById('startBtn').textContent = 'Pause';
   interval = setInterval(tick, 1000);
 }
 
 function ntmStartAnyway() {
-  const notes = (document.getElementById('ntmNotes')?.value || '').trim();
-  if (notes) localStorage.setItem('tymos_session_notes', notes);
   closeNoTasksModal();
-  // Start without tasks
   running = true;
   document.getElementById('startBtn').textContent = 'Pause';
   interval = setInterval(tick, 1000);
@@ -4211,18 +4240,39 @@ saveTasks    = function() { sbSaveTasks(); };
 
 <!-- ── NO-TASKS MODAL ── -->
 <div class="modal-overlay" id="noTasksOverlay" onclick="if(event.target===this)closeNoTasksModal()" aria-hidden="true">
-  <div class="modal" style="max-width:420px;" role="dialog" aria-labelledby="ntmTitle">
+  <div class="modal" style="max-width:440px;" role="dialog" aria-labelledby="ntmTitle">
     <div class="modal-title" id="ntmTitle">Before you start…</div>
     <p class="ntm-prompt">What do you want to achieve this session?</p>
-    <div class="ntm-input-row">
-      <input class="ntm-input" id="ntmInput" placeholder="Add a task…"
+
+    <div class="form-field">
+      <label class="form-label">Task Name</label>
+      <input class="form-input" id="ntmInput" placeholder="What needs to get done?"
         onkeydown="if(event.key==='Enter'){event.preventDefault();ntmAddTask();}">
-      <button class="ntm-add-btn" onclick="ntmAddTask()">+ Add</button>
     </div>
-    <p class="ntm-hint">Press Enter to add · add as many as you need</p>
+    <div class="form-field">
+      <label class="form-label">Priority</label>
+      <div class="pri-row">
+        <button class="pri-chip ntm-pri-chip sel-high" data-pri="high" onclick="ntmSelectPri(this)">High</button>
+        <button class="pri-chip ntm-pri-chip" data-pri="medium" onclick="ntmSelectPri(this)">Medium</button>
+        <button class="pri-chip ntm-pri-chip" data-pri="low" onclick="ntmSelectPri(this)">Low</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Est. Pomodoros</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input class="form-input" id="ntmCandles" type="number" min="1" max="99" placeholder="how many 🕯️?" style="width:130px;">
+        <span style="color:var(--muted);font-size:12px;">candles</span>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Notes</label>
+      <textarea class="ntm-notes" id="ntmNotes" placeholder="Any context or details…"></textarea>
+    </div>
+
+    <button class="ntm-add-btn" style="width:100%;margin-bottom:16px;" onclick="ntmAddTask()">+ Add task</button>
+
     <div class="ntm-task-list" id="ntmTaskList"></div>
-    <label class="ntm-notes-label" for="ntmNotes">Session notes</label>
-    <textarea class="ntm-notes" id="ntmNotes" placeholder="Any context, intentions, or focus notes for this session…"></textarea>
+
     <div class="ntm-actions">
       <button class="btn" onclick="ntmStartAnyway()">Start anyway</button>
       <button class="btn btn-primary" id="ntmStartBtn" onclick="ntmStartWithTasks()" disabled>Start focus</button>
