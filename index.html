@@ -602,11 +602,22 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 }
 .ntm-input:focus { border-color: var(--accent2); }
 .ntm-add-btn {
-  flex-shrink: 0; padding: 0 14px; background: var(--accent); color: #f5ede0;
-  border: none; border-radius: 8px; font-family: 'Nunito', sans-serif;
-  font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.15s;
+  width: 100%; padding: 10px 16px;
+  background: transparent;
+  color: var(--accent2);
+  border: 1.5px dashed rgba(124,92,58,0.35);
+  border-radius: 9px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.02em;
+  transition: all 0.15s;
 }
-.ntm-add-btn:hover { background: var(--accent2); }
+.ntm-add-btn:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent2);
+  border-style: solid;
+  color: var(--accent);
+}
 .ntm-task-list {
   display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
   max-height: 200px; overflow-y: auto;
@@ -640,8 +651,15 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .ntm-notes:focus { border-color: var(--accent2); }
 .ntm-notes::placeholder { color: var(--muted); }
 .ntm-actions {
-  display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px;
-  border-top: 1px solid var(--border); margin-top: 4px;
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding-top: 16px; margin-top: 8px;
+  position: relative;
+}
+.ntm-actions::before {
+  content: '';
+  position: absolute; top: 0; left: -28px; right: -28px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border2) 20%, var(--border2) 80%, transparent);
 }
 .ntm-hint {
   font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 14px;
@@ -4269,7 +4287,7 @@ saveTasks    = function() { sbSaveTasks(); };
       <textarea class="ntm-notes" id="ntmNotes" placeholder="Any context or details…"></textarea>
     </div>
 
-    <button class="ntm-add-btn" style="width:100%;margin-bottom:16px;" onclick="ntmAddTask()">+ Add task</button>
+    <button class="ntm-add-btn" style="margin-bottom:16px;" onclick="ntmAddTask()">+ Add task</button>
 
     <div class="ntm-task-list" id="ntmTaskList"></div>
 
