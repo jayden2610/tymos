@@ -2098,6 +2098,17 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
         </div>
         <input class="settings-number-input" id="sLongBreakInterval" type="number" min="1" max="10" value="4">
       </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Desktop Notifications</div>
+          <div class="settings-row-sub">Pop up a system notification when a session or break ends</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="sDesktopNotif">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
     </div>
 
     <div class="settings-divider"></div>
@@ -2263,9 +2274,11 @@ function tick() {
         }
       }
       notify('Session complete — take a break!');
+      desktopNotify('Session complete — take a break!');
       enterBreak();
     } else {
       notify('Break over — back to work.');
+      desktopNotify('Break over — back to work.');
       enterWork();
     }
     saveStats(); saveTodayStats(); saveDailyLog(); updateStats();
@@ -2875,6 +2888,12 @@ const notify = msg => {
   setTimeout(() => n.classList.remove('show'), 2800);
 };
 
+const desktopNotify = msg => {
+  if (!loadSettings().desktopNotif) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try { new Notification('Tymos', { body: msg, icon: 'favicon.svg' }); } catch(e) {}
+};
+
 // ── TASKS ──
 let tasks = [];
 let nextId = 1, editingId = null, selectedPri = 'high', expandedId = null;
@@ -3249,7 +3268,7 @@ const LS_SETTINGS = 'tymos_settings';
 const defaultSettings = {
   pomoDur: 25, shortBreak: 5, longBreak: 15,
   autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
-  autoCheck: false, moveBottom: true
+  autoCheck: false, moveBottom: true, desktopNotif: true
 };
 
 function loadSettings() {
@@ -3274,6 +3293,7 @@ function openSettings() {
   document.getElementById('sLongBreakInterval').value = s.longBreakInterval;
   document.getElementById('sAutoCheck').checked     = s.autoCheck;
   document.getElementById('sMoveBottom').checked    = s.moveBottom;
+  document.getElementById('sDesktopNotif').checked  = s.desktopNotif;
   const sOverlay = document.getElementById('settingsOverlay');
   sOverlay.classList.add('open');
   sOverlay.setAttribute('aria-hidden', 'false');
@@ -3298,7 +3318,11 @@ function saveSettings() {
     longBreakInterval: Math.max(1, parseInt(document.getElementById('sLongBreakInterval').value) || 4),
     autoCheck:         document.getElementById('sAutoCheck').checked,
     moveBottom:        document.getElementById('sMoveBottom').checked,
+    desktopNotif:      document.getElementById('sDesktopNotif').checked,
   };
+  if (s.desktopNotif && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
   localStorage.setItem(LS_SETTINGS, JSON.stringify(s));
   applySettings(s);
   syncQuickTimeInputs(s);
@@ -3331,6 +3355,17 @@ function syncQuickTimeInputs(s) {
   const s = loadSettings();
   applySettings(s);
   syncQuickTimeInputs(s);
+  // Browsers require a user gesture before prompting for notification permission —
+  // ask on the first click/keypress if the setting is on and permission is undecided.
+  if (s.desktopNotif && 'Notification' in window && Notification.permission === 'default') {
+    const requestOnGesture = () => {
+      document.removeEventListener('click', requestOnGesture);
+      document.removeEventListener('keydown', requestOnGesture);
+      if (Notification.permission === 'default') Notification.requestPermission();
+    };
+    document.addEventListener('click', requestOnGesture, { once: true });
+    document.addEventListener('keydown', requestOnGesture, { once: true });
+  }
 })();
 
 // ── SPOTIFY INTEGRATION ──
