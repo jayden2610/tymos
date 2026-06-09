@@ -2176,6 +2176,7 @@ function playChime() {
 // ── TIMER ──
 let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
 let running = false, isBreak = false, interval = null;
+let timerStartTs = null, remainingAtStart = 0;
 
 const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
@@ -2239,16 +2240,25 @@ function toggleTimer() {
       openNoTasksModal(); return;
     }
     running = true;
+    timerStartTs = Date.now();
+    remainingAtStart = remaining;
     document.getElementById('startBtn').textContent = 'Pause';
     interval = setInterval(tick, 1000);
   }
 }
 
 function tick() {
+  const elapsed = Math.floor((Date.now() - timerStartTs) / 1000);
+  const prevRemaining = remaining;
+  remaining = Math.max(0, remainingAtStart - elapsed);
+  const secsPassed = prevRemaining - remaining; // actual wall-clock seconds elapsed
+
   if (remaining <= 0) {
     clearInterval(interval); running = false;
     playChime();
     if (!isBreak) {
+      // Record the final focus seconds for this session
+      if (secsPassed > 0) { totalFocusSecs += secsPassed; todayFocusSecs += secsPassed; }
       todaySessions++;
       if (workSecs >= 600) {
         sessionsComplete++; // candle only for sessions >= 10 min
@@ -2284,8 +2294,8 @@ function tick() {
     saveStats(); saveTodayStats(); saveDailyLog(); updateStats();
     return;
   }
-  remaining--;
-  if (!isBreak) { totalFocusSecs++; todayFocusSecs++; }
+
+  if (!isBreak) { totalFocusSecs += secsPassed; todayFocusSecs += secsPassed; }
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   updateRing();
   if (remaining % 60 === 0) { updateStats(); saveStats(); saveTodayStats(); }
