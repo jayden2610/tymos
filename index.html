@@ -2898,6 +2898,26 @@ const notify = msg => {
   setTimeout(() => n.classList.remove('show'), 2800);
 };
 
+const LS_SETTINGS = 'tymos_settings';
+
+const defaultSettings = {
+  pomoDur: 25, shortBreak: 5, longBreak: 15,
+  autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
+  autoCheck: false, moveBottom: true, desktopNotif: true
+};
+
+function loadSettings() {
+  try { return { ...defaultSettings, ...JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}') }; }
+  catch(e) { return { ...defaultSettings }; }
+}
+
+function applySettings(s) {
+  workSecs = s.pomoDur * 60;
+  if (!running) { totalSecs = workSecs; remaining = workSecs; }
+  document.getElementById('timerDisplay').textContent = fmt(remaining);
+  updateRing();
+}
+
 const desktopNotify = msg => {
   if (!loadSettings().desktopNotif) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -3273,26 +3293,6 @@ function saveTask() {
 }
 
 // ── SETTINGS ──
-const LS_SETTINGS = 'tymos_settings';
-
-const defaultSettings = {
-  pomoDur: 25, shortBreak: 5, longBreak: 15,
-  autoBreak: false, autoPomodoro: false, longBreakInterval: 4,
-  autoCheck: false, moveBottom: true, desktopNotif: true
-};
-
-function loadSettings() {
-  try { return { ...defaultSettings, ...JSON.parse(localStorage.getItem(LS_SETTINGS) || '{}') }; }
-  catch(e) { return { ...defaultSettings }; }
-}
-
-function applySettings(s) {
-  workSecs = s.pomoDur * 60;
-  if (!running) { totalSecs = workSecs; remaining = workSecs; }
-  document.getElementById('timerDisplay').textContent = fmt(remaining);
-  updateRing();
-}
-
 function openSettings() {
   const s = loadSettings();
   document.getElementById('sPomoDur').value         = s.pomoDur;
