@@ -80,25 +80,47 @@ body {
 .main {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: 360px 4px 1fr;
-  overflow: hidden;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px 28px;
+  overflow-y: auto;
 }
 
-.divider {
-  background: var(--border2);
-  position: relative;
-  cursor: col-resize;
-  user-select: none;
-  transition: background 0.15s;
-  z-index: 10;
+.divider { display: none; }
+
+.left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-.divider::after {
-  content: '';
-  position: absolute;
-  inset: 0 -4px;
-  cursor: col-resize;
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
 }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* ── TODAY CARD ── */
+.today-card { padding: 16px 20px; flex-shrink: 0; }
+.today-card .stats-today-label { text-align: left; margin: 0 0 10px; }
+.today-card .stats-today-label::after { display: none; }
+.today-card .stats-row { justify-content: flex-start; }
+
+/* ── DURATIONS CARD ── */
+.durations-card {
+  display: flex;
+  padding: 14px 8px;
+}
+.durations-card .quick-time-row { width: 100%; }
 
 /* ── TIMER ── */
 .timer-panel {
@@ -106,9 +128,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 20px 20px;
+  padding: 24px 20px;
   gap: 14px;
-  background: var(--surface);
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -251,18 +272,19 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 /* ── TASK PANEL ── */
 .task-panel {
   display: flex; flex-direction: column; overflow: hidden;
+  flex: 1;
+  min-height: 0;
   background: rgba(240, 233, 220, 0.55);
   backdrop-filter: blur(40px) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) saturate(1.4);
-  border-left: 1px solid rgba(255,255,255,0.45);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), -8px 0 32px rgba(0,0,0,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 4px 24px rgba(0,0,0,0.08);
 }
 .task-panel-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 24px 14px; border-bottom: 1px solid var(--border);
+  padding: 22px 28px 18px; border-bottom: 1px solid var(--border);
   background: transparent; flex-shrink: 0;
 }
-.panel-title { font-family: 'Lora', serif; font-size: 14px; font-weight: 500; color: var(--text); }
+.panel-title { font-family: 'Lora', serif; font-size: 20px; font-weight: 500; color: var(--text); }
 .add-task-btn {
   display: flex; align-items: center; gap: 6px;
   font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600;
@@ -382,8 +404,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 .qac-candle-icon { display: block; flex-shrink: 0; }
 
 .task-list {
-  flex: 1; overflow-y: auto; padding: 12px 16px;
-  display: flex; flex-direction: column; gap: 6px;
+  flex: 1; overflow-y: auto; padding: 18px 28px;
+  display: flex; flex-direction: column; gap: 8px;
 }
 .task-list::-webkit-scrollbar { width: 4px; }
 .task-list::-webkit-scrollbar-track { background: transparent; }
@@ -1523,7 +1545,8 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
 </div>
 <div id="focusView">
 <div class="main">
-  <div class="timer-panel">
+  <div class="left-col">
+  <div class="card timer-panel">
     <div class="candle-wrap">
       <div class="candle-sublabel" id="timerSub">Focus</div>
       <svg id="candleSvg" width="80" height="140" viewBox="0 0 110 190">
@@ -1546,58 +1569,6 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button class="btn" onclick="resetTimer()">Reset</button>
       <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
       <button class="btn" onclick="skipPhase()">Skip</button>
-    </div>
-
-    <!-- Quick time editor -->
-    <div class="quick-time-row" title="Edit durations — changes apply when timer is not running">
-      <div class="qte-group">
-        <span class="qte-label">Focus</span>
-        <input class="qte-input" id="qtePomo" type="number" min="1" max="120" value="25"
-               onchange="quickTimeSave()" oninput="quickTimeSave()">
-      </div>
-      <div class="qte-divider"></div>
-      <div class="qte-group">
-        <span class="qte-label">Short Break</span>
-        <input class="qte-input" id="qteShort" type="number" min="1" max="60" value="5"
-               onchange="quickTimeSave()" oninput="quickTimeSave()">
-      </div>
-      <div class="qte-divider"></div>
-      <div class="qte-group">
-        <span class="qte-label">Long Break</span>
-        <input class="qte-input" id="qteLong" type="number" min="1" max="120" value="15"
-               onchange="quickTimeSave()" oninput="quickTimeSave()">
-      </div>
-    </div>
-
-    <span class="stats-today-label">Today</span>
-    <div class="stats-row">
-      <div class="stat-pill">
-        <span class="stat-pill-icon">
-          <svg width="13" height="22" viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs><radialGradient id="glowStat" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs>
-            <ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/>
-            <rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/>
-            <rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/>
-            <ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/>
-            <line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/>
-            <ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowStat)"/>
-            <path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/>
-            <ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/>
-          </svg>
-        </span>
-        <span class="stat-val" id="statSessions">0</span>
-        <span class="stat-lbl">sessions</span>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-pill-icon">⏱</span>
-        <span class="stat-val" id="statTime">0m</span>
-        <span class="stat-lbl">focus</span>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-pill-icon">✓</span>
-        <span class="stat-val" id="statTasks">0</span>
-        <span class="stat-lbl">done</span>
-      </div>
     </div>
 
     <!-- Candle shelf — signed-in only -->
@@ -1627,8 +1598,33 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
       <button onclick="clearActiveCard()" style="background:none;border:none;color:var(--accent2);opacity:0.6;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;" title="Clear active card">✕</button>
     </div>
 
-    <!-- Spotify Player -->
-    <div class="spotify-bar" id="spotifyBar">
+  </div>
+
+  <!-- Quick time editor -->
+  <div class="card durations-card">
+    <div class="quick-time-row" title="Edit durations — changes apply when timer is not running">
+      <div class="qte-group">
+        <span class="qte-label">Focus</span>
+        <input class="qte-input" id="qtePomo" type="number" min="1" max="120" value="25"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+      <div class="qte-divider"></div>
+      <div class="qte-group">
+        <span class="qte-label">Short Break</span>
+        <input class="qte-input" id="qteShort" type="number" min="1" max="60" value="5"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+      <div class="qte-divider"></div>
+      <div class="qte-group">
+        <span class="qte-label">Long Break</span>
+        <input class="qte-input" id="qteLong" type="number" min="1" max="120" value="15"
+               onchange="quickTimeSave()" oninput="quickTimeSave()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Spotify Player -->
+  <div class="card spotify-bar" id="spotifyBar">
       <!-- Connect state -->
       <button class="spotify-connect" id="spotifyConnectBtn" onclick="spotifyLogin()">
         <svg class="spotify-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1668,19 +1664,52 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
           <button class="sp-disconnect" onclick="spDisconnect()">Disconnect</button>
         </div>
       </div>
-    </div>
   </div>
+  </div><!-- /left-col -->
 
-  <div class="divider" id="resizeHandle"></div>
+  <div class="right-col">
+    <div class="card today-card">
+      <span class="stats-today-label">Today</span>
+      <div class="stats-row">
+        <div class="stat-pill">
+          <span class="stat-pill-icon">
+            <svg width="13" height="22" viewBox="0 0 20 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><radialGradient id="glowStat" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.5"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient></defs>
+              <ellipse cx="10" cy="34.5" rx="6" ry="1.5" fill="#5e3d1e" opacity="0.5"/>
+              <rect x="3" y="33" width="14" height="2" rx="1" fill="#7c5c3a"/>
+              <rect x="3" y="15" width="14" height="18" rx="2" fill="#ede5d3" stroke="#c4b08a" stroke-width="0.8"/>
+              <ellipse cx="10" cy="15" rx="7" ry="2" fill="#e0d1b8"/>
+              <line x1="10" y1="13" x2="10" y2="9" stroke="#2a1a08" stroke-width="1.2" stroke-linecap="round"/>
+              <ellipse cx="10" cy="5" rx="6" ry="6" fill="url(#glowStat)"/>
+              <path d="M10,9 C7.5,6 7.5,2 10,-0.5 C12.5,2 12.5,6 10,9Z" fill="#e28a0c"/>
+              <ellipse cx="10" cy="3.5" rx="1.3" ry="2.8" fill="#f5e070" opacity="0.95"/>
+            </svg>
+          </span>
+          <span class="stat-val" id="statSessions">0</span>
+          <span class="stat-lbl">sessions</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-pill-icon">⏱</span>
+          <span class="stat-val" id="statTime">0m</span>
+          <span class="stat-lbl">focus</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-pill-icon">✓</span>
+          <span class="stat-val" id="statTasks">0</span>
+          <span class="stat-lbl">done</span>
+        </div>
+      </div>
+    </div>
 
-  <div class="task-panel">
-    <div class="task-panel-header">
-      <span class="panel-title">Tasks</span>
+    <div class="card task-panel">
+      <div class="task-panel-header">
+        <span class="panel-title">Tasks</span>
+      </div>
+      <div class="task-list" id="taskList">
+        <!-- quick-add row injected by renderQuickAdd() -->
+      </div>
     </div>
-    <div class="task-list" id="taskList">
-      <!-- quick-add row injected by renderQuickAdd() -->
-    </div>
-  </div>
+  </div><!-- /right-col -->
 </div>
 </div><!-- /#focusView -->
 
