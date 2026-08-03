@@ -16,7 +16,6 @@ Tymos pairs a Pomodoro-style timer with a simple task list. Each focus session b
 - **Task cards** — priority levels, sub-tasks, notes, estimated sessions
 - **Candle system** — candle burns as you work; earns a spot on your shelf when done
 - **Stats** — daily focus log, streak tracking, session history
-- **Spotify integration** — connect and control music without leaving the app
 - **Persistence** — tasks and stats saved locally (+ Supabase sync when signed in)
 - **Keyboard-first** — Space to start/pause, full keyboard nav
 - **Mobile responsive**
