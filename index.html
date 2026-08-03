@@ -548,6 +548,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   color: var(--muted); font-family: 'DM Mono', monospace;
 }
 .notes-header i { font-size: 13px; }
+.notes-section { cursor: pointer; }
 .task-notes {
   margin: 0 18px 14px; padding: 10px 14px;
   background: rgba(255,252,244,0.6); border-radius: 8px;
@@ -3044,7 +3045,7 @@ function taskCardHTML(t) {
     </div>
     <div class="task-sections open">
       <div class="notes-section">
-        <div class="notes-header"><i class="ti ti-notes" aria-hidden="true"></i> notes</div>
+        <div class="notes-header" onclick="event.stopPropagation(); openModal(${t.id})"><i class="ti ti-notes" aria-hidden="true"></i> notes</div>
         <div class="task-notes" onclick="event.stopPropagation(); openModal(${t.id})">${esc(t.notes||'')}</div>
       </div>
     </div>

@@ -875,12 +875,18 @@ try {
   console.warn('Supabase init failed — running in local-only mode.', e.message);
 }
 
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function updateAuthUI(user) {
   const btn = document.getElementById('authBtn');
   if (user) {
     const initial = (user.email || 'U')[0].toUpperCase();
     btn.className = 'auth-btn signed-in';
-    btn.innerHTML = `<span class="auth-avatar">${esc(initial)}</span>${esc(name)}`;
+    btn.innerHTML = `<span class="auth-avatar">${esc(initial)}</span>${esc(user.email || '')}`;
     btn.onclick = authSignOut;
   } else {
     btn.className = 'auth-btn';
