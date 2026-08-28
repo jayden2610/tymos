@@ -20,7 +20,7 @@ if (!scriptBlocks.length) fail('no inline <script> block found');
 const js = scriptBlocks.join('\n;\n');
 console.log(`\n[1] Inline script: ${scriptBlocks.length} block(s), ${js.split('\n').length} lines`);
 
-// ── 2. syntax check (compile only, never run — avoids hitting Supabase/Spotify) ──
+// ── 2. syntax check (compile only, never run — avoids hitting Supabase) ──
 console.log('\n[2] Syntax check');
 try {
   new vm.Script(js, { filename: 'index.html#inline' });

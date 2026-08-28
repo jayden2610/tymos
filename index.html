@@ -419,6 +419,8 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
 }
 .task-card:hover { border-color: var(--border2); box-shadow: var(--shadow2); }
 .task-card.active { border-color: var(--accent3); box-shadow: 0 4px 20px rgba(124,92,58,0.18); }
+.task-card:focus { outline: none; }
+.task-card:focus-visible { box-shadow: 0 0 0 2px var(--accent3), var(--shadow2); }
 .task-card.done { opacity: 0.5; }
 
 .task-card-header {
@@ -596,6 +598,7 @@ body.break-mode #candleFlame ellipse           { fill: #a8d0e0; }
   display: flex; align-items: center; justify-content: center;
   z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
+.modal-overlay[hidden] { display: none; }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
 
 .modal {
@@ -1456,7 +1459,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible {
     </div>
     <div class="controls">
       <button class="btn" onclick="resetTimer()">Reset</button>
-      <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
+      <button type="button" class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
       <button class="btn" onclick="skipPhase()">Skip</button>
     </div>
 
@@ -2053,6 +2056,7 @@ function playChime() {
 let workSecs = 25*60, totalSecs = 25*60, remaining = 25*60;
 let running = false, isBreak = false, interval = null;
 let timerStartTs = null, remainingAtStart = 0;
+let sessionUntouched = true;
 
 const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
@@ -2106,21 +2110,27 @@ function updateRing() {
   }
 }
 
+function startRunning() {
+  closeNoTasksModal();
+  running = true;
+  sessionUntouched = false;
+  timerStartTs = Date.now();
+  remainingAtStart = remaining;
+  document.getElementById('startBtn').textContent = 'Pause';
+  interval = setInterval(tick, 1000);
+}
+
 function toggleTimer() {
   if (running) {
     clearInterval(interval); running = false;
     document.getElementById('startBtn').textContent = 'Resume';
-  } else {
-    // If no tasks exist on the first start (not a resume, not a break), prompt first
-    if (!isBreak && tasks.length === 0 && remaining === workSecs) {
-      openNoTasksModal(); return;
-    }
-    running = true;
-    timerStartTs = Date.now();
-    remainingAtStart = remaining;
-    document.getElementById('startBtn').textContent = 'Pause';
-    interval = setInterval(tick, 1000);
+    return;
   }
+  if (!isBreak && tasks.length === 0 && sessionUntouched) {
+    openNoTasksModal();
+    return;
+  }
+  startRunning();
 }
 
 function tick() {
@@ -2197,6 +2207,7 @@ function enterWork() {
 
 function resetTimer() {
   clearInterval(interval); running = false; isBreak = false;
+  sessionUntouched = true;
   remaining = workSecs; totalSecs = workSecs;
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.getElementById('timerSub').textContent = 'Focus';
@@ -2809,6 +2820,7 @@ let pendingDeleteTask = null, pendingDeleteSection = null, pendingInlineAdd = nu
 // ── QUICK ADD STATE ──
 let qaExpanded = false;
 let qaPri = 'high';
+let selectedTaskId = null;
 
 function renderQuickAdd() {
   const list = document.getElementById('taskList');
@@ -2823,9 +2835,8 @@ function renderQuickAdd() {
     wrap.innerHTML = `
       <div class="quick-add-row" id="qaIdleRow" onclick="qaFocus()">
         <input id="qaIdleInput" placeholder="Add a task…"
-          onfocus="qaFocus()"
           onkeydown="qaIdleKeydown(event)">
-        <span class="quick-add-idle-hint" onclick="document.getElementById('qaInput').focus()">↵ to add</span>
+        <span class="quick-add-idle-hint" onclick="document.getElementById('qaIdleInput').focus()">Ctrl+↵ to add</span>
       </div>`;
   } else {
     wrap.innerHTML = `
@@ -2866,7 +2877,7 @@ function renderQuickAdd() {
           </div>
           <div class="qac-footer-right">
             <button class="btn-ghost" onclick="qaCancel()">Esc</button>
-            <button class="btn-save" onclick="qaCommit()">Add ↵</button>
+            <button class="btn-save" onclick="qaCommit()">Add Ctrl+↵</button>
           </div>
         </div>
       </div>`;
@@ -2884,12 +2895,27 @@ function qaFocus() {
   if (t) { t.value = val; t.focus(); }
 }
 
+function qaCommitFromIdle() {
+  const el = document.getElementById('qaIdleInput');
+  const title = el ? el.value.trim() : '';
+  if (!title) { qaFocus(); return; }
+  tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes: '', sections: [], estimatedPomodoros: null });
+  saveTasks(); qaReset(); renderTasks();
+  closeNoTasksModal();
+}
+
 function qaIdleKeydown(e) {
-  if (e.key === 'Enter' && e.target.value.trim()) { qaFocus(); }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.target.value.trim()) qaCommitFromIdle();
+    else qaFocus();
+  }
   if (e.key === 'Escape') { e.target.value = ''; e.target.blur(); }
 }
 
 function qaTitleKeydown(e) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) return;
   if (e.key === 'Enter') { e.preventDefault(); qaCommit(); }
   if (e.key === 'Escape') { e.preventDefault(); qaCancel(); }
   if (e.key === 'Tab' && !e.shiftKey) {
@@ -2963,6 +2989,7 @@ function qaCommit() {
 
   tasks.push({ id: nextId++, title, priority: qaPri, done: false, notes, sections: [], estimatedPomodoros });
   saveTasks(); qaReset(); renderTasks();
+  closeNoTasksModal();
 }
 
 function qaCancel() { qaReset(); renderQuickAdd(); }
@@ -2988,6 +3015,7 @@ function renderTasks() {
       empty.textContent = 'No tasks yet — add one above.';
       list.appendChild(empty);
     }
+    selectedTaskId = null;
     return;
   }
   // remove empty state if present
@@ -3011,6 +3039,7 @@ function renderTasks() {
     frag.appendChild(div);
   });
   list.appendChild(frag);
+  restoreTaskSelection();
 }
 
 function taskCardHTML(t) {
@@ -3018,7 +3047,7 @@ function taskCardHTML(t) {
 
   const isFocused = activeTaskIds.has(t.id);
   return `
-  <div class="task-card${t.done?' done':''}${isFocused?' is-active-task':''}" id="task-${t.id}">
+  <div class="task-card${t.done?' done':''}${isFocused?' is-active-task':''}" id="task-${t.id}" tabindex="-1">
     <div class="task-card-header">
       <div class="task-priority-bar pri-${t.priority}"></div>
       <div class="task-card-body">
@@ -3052,6 +3081,79 @@ function taskCardHTML(t) {
   </div>`;
 }
 
+
+function qaSubmit() {
+  if (qaExpanded) { qaCommit(); return; }
+  qaCommitFromIdle();
+}
+
+function visibleTaskCards() {
+  return [...document.querySelectorAll('#taskList .task-card')];
+}
+
+function restoreTaskSelection() {
+  if (selectedTaskId != null && !tasks.some(t => t.id === selectedTaskId)) selectedTaskId = null;
+  visibleTaskCards().forEach(el => {
+    const id = Number(el.id.slice(5));
+    const match = id === selectedTaskId;
+    el.classList.toggle('active', match);
+    el.tabIndex = match ? 0 : -1;
+  });
+}
+
+function selectTaskCard(id) {
+  selectedTaskId = id;
+  restoreTaskSelection();
+  const el = document.getElementById('task-' + id);
+  if (!el) return;
+  el.focus();
+  el.scrollIntoView({ block: 'nearest' });
+}
+
+function overlayBlocksTaskNav() {
+  return ['noTasksOverlay', 'modalOverlay', 'settingsOverlay'].some(id =>
+    document.getElementById(id)?.classList.contains('open')
+  );
+}
+
+function handleTaskArrowNav(e) {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  if (overlayBlocksTaskNav()) return;
+  const tag = e.target.tagName;
+  if (tag === 'TEXTAREA') return;
+  if (tag === 'INPUT' && e.target.type === 'number') return;
+
+  const cards = visibleTaskCards();
+  const inAdd = e.target.id === 'qaIdleInput' || e.target.id === 'qaTitleInput';
+  if (!cards.length) return;
+
+  const ids = cards.map(c => Number(c.id.slice(5)));
+  let idx = selectedTaskId != null ? ids.indexOf(selectedTaskId) : -1;
+  const focusedCard = e.target.closest?.('.task-card');
+  if (idx < 0 && focusedCard) idx = ids.indexOf(Number(focusedCard.id.slice(5)));
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (inAdd || idx < 0) selectTaskCard(ids[0]);
+    else if (idx < ids.length - 1) selectTaskCard(ids[idx + 1]);
+    return;
+  }
+
+  e.preventDefault();
+  if (inAdd) return;
+  if (idx <= 0) {
+    selectedTaskId = null;
+    restoreTaskSelection();
+    const add = document.getElementById('qaIdleInput') || document.getElementById('qaTitleInput');
+    if (add) {
+      add.scrollIntoView({ block: 'nearest' });
+      add.focus();
+    }
+    return;
+  }
+  selectTaskCard(ids[idx - 1]);
+}
 
 function deleteTaskClick(id) {
   if (pendingDeleteTask === id) {
@@ -3251,6 +3353,18 @@ function syncQuickTimeInputs(s) {
 
 document.addEventListener('keydown', e => {
   if(e.key==='Escape') { closeModal(); closeAuthDropdown(); closeNoTasksModal(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    if (document.getElementById('noTasksOverlay')?.classList.contains('open')) {
+      ntmAddTask();
+      return;
+    }
+    if (document.getElementById('modalOverlay')?.classList.contains('open')) return;
+    if (document.getElementById('settingsOverlay')?.classList.contains('open')) return;
+    qaSubmit();
+    return;
+  }
+  handleTaskArrowNav(e);
   if(e.key===' ' && !['INPUT','TEXTAREA','BUTTON'].includes(e.target.tagName) && !e.target.isContentEditable) {
     e.preventDefault(); toggleTimer();
   }
@@ -3267,6 +3381,7 @@ function openNoTasksModal() {
   ntmResetForm();
   renderNtmList();
   const overlay = document.getElementById('noTasksOverlay');
+  overlay.hidden = false;
   overlay.classList.add('open');
   overlay.setAttribute('aria-hidden', 'false');
   setTimeout(() => document.getElementById('ntmInput').focus(), 120);
@@ -3274,10 +3389,13 @@ function openNoTasksModal() {
 
 function closeNoTasksModal() {
   const overlay = document.getElementById('noTasksOverlay');
+  if (!overlay) return;
   overlay.classList.remove('open');
+  overlay.hidden = true;
   overlay.setAttribute('aria-hidden', 'true');
   ntmPendingTasks = [];
-  document.getElementById('ntmTaskList').innerHTML = '';
+  const list = document.getElementById('ntmTaskList');
+  if (list) list.innerHTML = '';
   ntmResetForm();
 }
 
@@ -3350,17 +3468,11 @@ function ntmStartWithTasks() {
     tasks.push({ id: nextId++, title: t.title, priority: t.priority, done: false, notes: t.notes, sections: [], estimatedPomodoros: t.estimatedPomodoros });
   });
   saveTasks(); renderTasks();
-  closeNoTasksModal();
-  running = true;
-  document.getElementById('startBtn').textContent = 'Pause';
-  interval = setInterval(tick, 1000);
+  startRunning();
 }
 
 function ntmStartAnyway() {
-  closeNoTasksModal();
-  running = true;
-  document.getElementById('startBtn').textContent = 'Pause';
-  interval = setInterval(tick, 1000);
+  startRunning();
 }
 
 // ── SUPABASE AUTH + SYNC ──
@@ -3761,7 +3873,7 @@ saveTasks    = function() { sbSaveTasks(); };
 </div>
 
 <!-- ── NO-TASKS MODAL ── -->
-<div class="modal-overlay" id="noTasksOverlay" onclick="if(event.target===this)closeNoTasksModal()" aria-hidden="true">
+<div class="modal-overlay" id="noTasksOverlay" hidden onclick="if(event.target===this)closeNoTasksModal()" aria-hidden="true">
   <div class="modal" style="max-width:440px;" role="dialog" aria-labelledby="ntmTitle">
     <div class="modal-title" id="ntmTitle">Before you start…</div>
     <p class="ntm-prompt">What do you want to achieve this session?</p>
@@ -3769,7 +3881,7 @@ saveTasks    = function() { sbSaveTasks(); };
     <div class="form-field">
       <label class="form-label">Task Name</label>
       <input class="form-input" id="ntmInput" placeholder="What needs to get done?"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();ntmAddTask();}">
+        onkeydown="if(event.key==='Enter'&&!event.ctrlKey&&!event.metaKey){event.preventDefault();ntmAddTask();}">
     </div>
     <div class="form-field">
       <label class="form-label">Priority</label>

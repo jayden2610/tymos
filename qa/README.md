@@ -28,16 +28,18 @@ npm run qa:runtime    # Playwright — drives the live DOM
 - Every `getElementById('x')` has a matching element (static or runtime-injected).
 
 ### Stage 2 — `runtime-check.mjs` (Playwright/Chromium)
-External hosts (Supabase, Spotify, fonts, CDNs) are **blocked** so the run is
+External hosts (Supabase, fonts, CDNs) are **blocked** so the run is
 hermetic and offline — the app must degrade gracefully.
 - No uncaught exceptions / non-network console errors on load.
 - Core functions are wired (`typeof === 'function'`).
-- **Timer state machine**: start, `tick()` decrement, reset.
+- **Timer state machine**: empty Start opens the overlay, Start anyway stamps
+  `timerStartTs`, `tick()` decrements, reset restores `sessionUntouched`.
 - **Break/work** phase toggle + `body.break-mode` class.
-- **Task lifecycle**: quick-add → render card → mark done → confirm-delete.
+- **Task lifecycle**: idle Enter commits, overlay closes, then Start runs;
+  expanded quick-add → render card → mark done → confirm-delete.
 - **Settings/stats** persistence round-trip (localStorage).
 - **Candle shelf** renders without throwing.
-- **Spotify PKCE** verifier + challenge generation (crypto, runs offline).
+- **Focus duration** spinbutton updates `workSecs`.
 
 ## CI
 `.github/workflows/qa.yml` runs both stages on every push to `master`, every PR,

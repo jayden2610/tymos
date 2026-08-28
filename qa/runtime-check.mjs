@@ -37,7 +37,7 @@ else pass('no uncaught JS exceptions on load');
 
 // console errors from blocked external resources are expected; flag only non-network ones.
 const realConsole = consoleErrors.filter(t =>
-  !/Failed to load|net::ERR|Refused to|CSP|Content Security|ERR_FAILED|supabase|spotify|fonts|cdn|favicon/i.test(t));
+  !/Failed to load|net::ERR|Refused to|CSP|Content Security|ERR_FAILED|supabase|fonts|cdn|favicon/i.test(t));
 if (realConsole.length) realConsole.forEach(t => fail(`console error: ${t}`));
 else pass('no non-network console errors');
 
@@ -52,23 +52,26 @@ for (const fn of ['toggleTimer', 'tick', 'resetTimer', 'skipPhase', 'enterBreak'
 }
 
 console.log('\n[3] Timer state machine');
-// reset to a known state
-await G(`(()=>{ running=false; clearInterval(interval); isBreak=false; })`);
+await G(`(()=>{ resetTimer(); tasks.length = 0; sessionUntouched = true; })`);
 const initialRemaining = await G('remaining');
 pass(`initial remaining = ${initialRemaining}s`);
 
-// toggleTimer should start it
-await page.evaluate(`toggleTimer()`);
-eq('running after toggleTimer()', await G('running'), true);
+await page.locator('#startBtn').click();
+eq('empty Start opens overlay', await G(`document.getElementById('noTasksOverlay').classList.contains('open')`), true);
+eq('running stays false behind overlay', await G('running'), false);
 
-// tick should decrement remaining by 1
+await G(`ntmStartAnyway()`);
+eq('Start anyway sets running', await G('running'), true);
+eq('Start anyway stamps timerStartTs', await G('timerStartTs !== null'), true);
+eq('overlay closed after Start anyway', await G(`document.getElementById('noTasksOverlay').classList.contains('open')`), false);
+
 const before = await G('remaining');
-await page.evaluate(`tick()`);
-eq('tick() decrements remaining', await G('remaining'), before - 1);
+await G(`timerStartTs = Date.now() - 1000; tick()`);
+eq('tick() decrements remaining after 1s', await G('remaining'), before - 1);
 
-// reset should stop and restore
 await page.evaluate(`resetTimer()`);
 eq('running after resetTimer()', await G('running'), false);
+eq('sessionUntouched after reset', await G('sessionUntouched'), true);
 
 console.log('\n[4] Break/work phase toggle');
 await page.evaluate(`enterBreak()`);
@@ -78,10 +81,24 @@ await page.evaluate(`enterWork()`);
 eq('isBreak after enterWork()', await G('isBreak'), false);
 
 console.log('\n[5] Task lifecycle (create → render → done → delete)');
+await G(`(()=>{ resetTimer(); tasks.length = 0; sessionUntouched = true; })`);
+await page.locator('#startBtn').click();
+eq('overlay open before idle add', await G(`document.getElementById('noTasksOverlay').classList.contains('open')`), true);
+await G(`(()=>{ document.getElementById('qaIdleInput').value = 'QA idle enter'; qaCommitFromIdle(); })()`);
+eq('idle commit adds a task behind overlay', await G('tasks.length'), 1);
+eq('idle commit closes overlay', await G(`document.getElementById('noTasksOverlay').classList.contains('open')`), false);
+eq('idle commit does not auto-start', await G('running'), false);
+await G(`toggleTimer()`);
+eq('Start after a task runs the timer', await G('running'), true);
+await G(`resetTimer()`);
+
+await G(`(()=>{ tasks.length = 0; sessionUntouched = true; renderTasks(); })()`);
+await G(`(()=>{ document.getElementById('qaIdleInput').value = 'QA from idle field'; qaCommitFromIdle(); })()`);
+eq('idle field commit without overlay', await G(`tasks.some(t => t.title === 'QA from idle field')`), true);
+
 const startCount = await G('tasks.length');
-// drive quick-add through the real DOM path: expand card, fill input, set priority, commit
 await page.evaluate(`(()=>{
-  qaFocus();                                   // expands card, injects #qaTitleInput
+  qaFocus();
   document.getElementById('qaTitleInput').value = 'QA test task';
   qaPri = 'high';
   qaCommit();
@@ -113,9 +130,35 @@ console.log('\n[7] Stats / candle shelf render without throwing');
 const statsOk = await G(`(()=>{ try{ updateStats(); renderCandleShelf && renderCandleShelf(); return true; }catch(e){ return e.message; } })()`);
 eq('updateStats + renderCandleShelf', statsOk, true);
 
-console.log('\n[8] Spotify PKCE crypto helpers (offline-safe)');
-const verifierOk = await G(`(async()=>{ try{ const v=await spGenerateVerifier(); const c=await spGenerateChallenge(v); return (typeof v==='string'&&v.length>20&&typeof c==='string'&&c.length>20); }catch(e){ return e.message; } })()`);
-eq('PKCE verifier+challenge generate', verifierOk, true);
+console.log('\n[8] Focus duration spinbuttons');
+await G(`resetTimer()`);
+await G(`(()=>{ document.getElementById('qtePomo').value = '50'; quickTimeSave(); })()`);
+eq('focus spinbutton 50 sets workSecs', await G('workSecs'), 50 * 60);
+
+console.log('\n[9] Arrow nav and Ctrl+Enter add');
+await G(`(()=>{
+  resetTimer();
+  tasks = [
+    { id: 1, title: 'Alpha', priority: 'high', done: false, notes: '', sections: [] },
+    { id: 2, title: 'Beta', priority: 'medium', done: false, notes: '', sections: [] },
+  ];
+  nextId = 3; selectedTaskId = null; renderTasks();
+})()`);
+await page.locator('#qaIdleInput').focus();
+await page.keyboard.press('ArrowDown');
+eq('ArrowDown from add field selects first task', await G('selectedTaskId'), 1);
+eq('first card has active class', await G(`document.getElementById('task-1').classList.contains('active')`), true);
+await page.keyboard.press('ArrowDown');
+eq('ArrowDown moves to second task', await G('selectedTaskId'), 2);
+await page.keyboard.press('ArrowUp');
+eq('ArrowUp moves back to first task', await G('selectedTaskId'), 1);
+await page.keyboard.press('ArrowUp');
+eq('ArrowUp from first returns to add field', await G('selectedTaskId'), null);
+eq('add field focused after ArrowUp', await G(`document.activeElement && document.activeElement.id === 'qaIdleInput'`), true);
+
+await page.locator('#qaIdleInput').fill('Ctrl enter task');
+await page.keyboard.press('Control+Enter');
+eq('Ctrl+Enter adds the idle task', await G(`tasks.some(t => t.title === 'Ctrl enter task')`), true);
 
 await browser.close();
 
