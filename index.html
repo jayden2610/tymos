@@ -3693,6 +3693,9 @@ async function sbLoadAll() {
     nextId = tasksRow ? (tasksRow.next_id || 1) : 1;
     renderTasks();
     updateActiveTaskStrip();
+    // Hermes seed handoff: re-apply if a fresh seed arrived (or repair a
+    // seed whose cloud save lost the race with this load). No-op otherwise.
+    if (typeof checkTymosSeed === 'function') { try { await checkTymosSeed(new URLSearchParams(location.search).has('seed')); } catch (e) {} }
 
     setSyncStatus('Synced');
   } catch(e) {
@@ -3913,6 +3916,79 @@ saveTasks    = function() { sbSaveTasks(); };
     </div>
   </div>
 </div>
+<script>
+// ── HERMES SEED HANDOFF (?seed) ──
+// Reads tymos-seed.json (written by scripts/sync-hermes-to-tymos.py) and
+// replaces the task list. Runs inside YOUR browser session, so the normal
+// saveTasks() path handles Supabase sync automatically when signed in.
+// Idempotent: tymos_seed_applied_at marker; a trailing ✓ means the seed was
+// confirmed present after a cloud load (repairs a save/load race once without
+// ever clobbering your later manual edits). ?seed=1 forces re-apply.
+function seedTasksFrom(seed) {
+  const incoming = seed.blocks.slice(0, 9).map((b, i) => ({
+    id: i + 1,
+    title: b.minutes ? `${b.title} \u2014 ${b.minutes}m` : b.title,
+    priority: 'high', done: false,
+    notes: [
+      seed.source ? `Source: ${seed.source}` : null,
+      b.objective ? `Objective: ${b.objective}` : null,
+      b.outcome ? `Outcome: ${b.outcome}` : null,
+      b.next ? `Next: ${b.next}` : null,
+      b.notNow ? `Not now: ${b.notNow}` : null
+    ].filter(Boolean).join('\n'),
+    sections: [], estimatedPomodoros: 1
+  }));
+  tasks = incoming;
+  nextId = incoming.length + 1;
+  activeTaskIds = new Set([incoming[0].id]);
+  selectedTaskId = incoming[0].id;
+  expandedId = null;
+  saveTasks(); renderTasks(); updateActiveTaskStrip();
+  const mins = parseInt(seed.blocks[0] && seed.blocks[0].minutes, 10);
+  if (mins >= 1 && mins <= 120) {
+    const s = { ...loadSettings(), pomoDur: mins };
+    localStorage.setItem('tymos_settings', JSON.stringify(s));
+    applySettings(s); syncQuickTimeInputs(s);
+  }
+  // Belt-and-suspenders local copy (saveTasks covers Supabase when signed in)
+  localStorage.setItem('tymos_tasks', JSON.stringify(incoming));
+  localStorage.setItem('tymos_next_id', String(nextId));
+  localStorage.setItem('tymos_active_task', JSON.stringify([incoming[0].id]));
+}
+async function checkTymosSeed(force) {
+  try {
+    const res = await fetch('tymos-seed.json', { cache: 'no-store' });
+    if (!res.ok) return false;
+    const seed = await res.json();
+    if (!seed || !Array.isArray(seed.blocks) || !seed.blocks.length || !seed.updatedAt) return false;
+    const marker = localStorage.getItem('tymos_seed_applied_at');
+    if (force || (marker !== seed.updatedAt && marker !== seed.updatedAt + '\u2713')) {
+      seedTasksFrom(seed);
+      localStorage.setItem('tymos_seed_applied_at', seed.updatedAt);
+      return true;
+    }
+    if (marker === seed.updatedAt) {
+      // Seed applied earlier but a cloud load may have landed first with stale
+      // tasks — repair once, then mark confirmed so manual edits survive.
+      const want = seed.blocks.slice(0, 9).map((b) => b.minutes ? `${b.title} \u2014 ${b.minutes}m` : b.title);
+      const have = tasks.map((t) => t.title);
+      if (JSON.stringify(want) !== JSON.stringify(have)) {
+        seedTasksFrom(seed);
+        localStorage.setItem('tymos_seed_applied_at', seed.updatedAt + '\u2713');
+        return true;
+      }
+      localStorage.setItem('tymos_seed_applied_at', seed.updatedAt + '\u2713');
+    }
+    return false;
+  } catch (e) { console.warn('seed import skipped:', e && e.message); return false; }
+}
+(function () {
+  const force = new URLSearchParams(location.search).has('seed');
+  checkTymosSeed(force).then((applied) => {
+    if (applied && force) history.replaceState(null, '', location.pathname);
+  });
+})();
+</script>
 </body>
 </html>
 

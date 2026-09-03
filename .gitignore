@@ -19,3 +19,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local handoff (generated daily by scripts/sync-hermes-to-tymos.py — personal
+# tasks; never commit, or the live site would seed them for every visitor)
+tymos-seed.json
