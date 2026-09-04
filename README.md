@@ -29,6 +29,16 @@ python -m http.server 8080
 # open http://localhost:8080
 ```
 
+### Windows floating pill
+
+Companion always-on-top overlay (countdown + focused task). From PowerShell:
+
+```powershell
+.\pill\run-windows.ps1
+```
+
+Details and troubleshooting: [`pill/README.md`](pill/README.md).
+
 ## Deploy
 
 Push to `master` → GitHub Pages auto-deploys in ~30 seconds.

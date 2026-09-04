@@ -1,0 +1,23 @@
+<Application
+    x:Class="TymosPill.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TymosPill">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <SolidColorBrush x:Key="PillBg" Color="#F0E9DC"/>
+      <SolidColorBrush x:Key="PillBreakBg" Color="#E8EEF1"/>
+      <SolidColorBrush x:Key="PillText" Color="#2E1F0D"/>
+      <SolidColorBrush x:Key="PillText2" Color="#6B5340"/>
+      <SolidColorBrush x:Key="PillMuted" Color="#A08B75"/>
+      <SolidColorBrush x:Key="PillAccent" Color="#A07850"/>
+      <SolidColorBrush x:Key="PillBreakAccent" Color="#5A8CA0"/>
+      <SolidColorBrush x:Key="PillBorder" Color="#38785F41"/>
+      <SolidColorBrush x:Key="PillDivider" Color="#38785F41"/>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

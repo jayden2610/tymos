@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tymos floating pill — visual mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0e9dc;
+  --surface: #ece4d5;
+  --surface2: #e4dac8;
+  --border: rgba(120, 95, 65, 0.14);
+  --border2: rgba(120, 95, 65, 0.22);
+  --text: #2e1f0d;
+  --text2: #6b5340;
+  --muted: #a08b75;
+  --accent: #7c5c3a;
+  --accent2: #a07850;
+  --accent-bg: rgba(124, 92, 58, 0.08);
+  --ring-break: #5a8ca0;
+  --shadow: 0 2px 12px rgba(80, 50, 20, 0.10);
+  --shadow2: 0 4px 24px rgba(80, 50, 20, 0.14);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #2a241c;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px 24px 48px;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f0e9dc;
+  margin-bottom: 6px;
+}
+
+.lede {
+  font-size: 13px;
+  color: #b5a28c;
+  margin-bottom: 28px;
+  max-width: 640px;
+  line-height: 1.45;
+}
+
+.grid {
+  display: grid;
+  gap: 28px;
+}
+
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.scene-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b5a28c;
+  margin-bottom: 10px;
+}
+
+.desktop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, rgba(124, 92, 58, 0.18), transparent 42%),
+    linear-gradient(25deg, #3d3428 0%, #1f1a14 55%, #2c251c 100%);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.desktop::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(240, 233, 220, 0.06);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(240, 233, 220, 0.06), transparent 50%),
+    linear-gradient(180deg, rgba(240, 233, 220, 0.03), transparent 40%);
+  pointer-events: none;
+}
+
+.wallpaper-mark {
+  position: absolute;
+  top: 36px;
+  left: 40px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(240, 233, 220, 0.35);
+  letter-spacing: 0.02em;
+}
+
+.pill {
+  position: absolute;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(420px, calc(100% - 48px));
+  padding: 10px 18px 10px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow2);
+  color: var(--text);
+}
+
+.pill.bottom-right {
+  left: auto;
+  right: 28px;
+  transform: none;
+}
+
+.pill.break {
+  background: #e8eef1;
+  border-color: rgba(90, 140, 160, 0.28);
+}
+
+.pill.paused {
+  opacity: 0.72;
+}
+
+.pill.hidden-state {
+  display: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent2);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.pill.break .dot {
+  background: var(--ring-break);
+  box-shadow: 0 0 0 3px rgba(90, 140, 160, 0.18);
+}
+
+.pill.paused .dot {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.time {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  flex-shrink: 0;
+  min-width: 4.2em;
+}
+
+.pill.break .time { color: #3a5a68; }
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border2);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.phase {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.pill.break .phase { color: var(--ring-break); }
+
+.row-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.variant-card {
+  background: rgba(240, 233, 220, 0.06);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.variant-card .scene-label { margin-bottom: 12px; }
+
+.pill.inline {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+}
+
+.notes {
+  margin-top: 32px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: rgba(240, 233, 220, 0.06);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  color: #cbb9a4;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.notes strong { color: #f0e9dc; font-weight: 600; }
+</style>
+</head>
+<body>
+  <h1>Tymos floating pill</h1>
+  <p class="lede">
+    Companion overlay mock. Countdown + task title only. Brand tokens from the web app.
+    Approved placement is bottom-center (Placement A).
+  </p>
+
+  <div class="grid">
+    <div>
+      <div class="scene-label">Placement A — bottom center (approved)</div>
+      <div class="desktop" id="scene-center">
+        <div class="wallpaper-mark">Desktop</div>
+        <div class="pill" aria-label="Focus session pill">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="time">24:32</span>
+          <span class="divider" aria-hidden="true"></span>
+          <span class="title">Ship floating pill</span>
+          <span class="phase">Focus</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="scene-label">Placement B — bottom right (rejected)</div>
+      <div class="desktop" id="scene-right" style="opacity: 0.45;">
+        <div class="wallpaper-mark">Desktop</div>
+        <div class="pill bottom-right" aria-label="Focus session pill">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="time">24:32</span>
+          <span class="divider" aria-hidden="true"></span>
+          <span class="title">Ship floating pill</span>
+          <span class="phase">Focus</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene-label" style="margin-top: 32px;">State variants</div>
+  <div class="row-variants">
+    <div class="variant-card">
+      <div class="scene-label">Running</div>
+      <div class="pill inline">
+        <span class="dot"></span>
+        <span class="time">24:32</span>
+        <span class="divider"></span>
+        <span class="title">Ship floating pill</span>
+        <span class="phase">Focus</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Break</div>
+      <div class="pill inline break">
+        <span class="dot"></span>
+        <span class="time">04:58</span>
+        <span class="divider"></span>
+        <span class="title">Ship floating pill</span>
+        <span class="phase">Break</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Paused (dimmed)</div>
+      <div class="pill inline paused">
+        <span class="dot"></span>
+        <span class="time">18:05</span>
+        <span class="divider"></span>
+        <span class="title">Ship floating pill</span>
+        <span class="phase">Paused</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Long title truncated</div>
+      <div class="pill inline" style="width: 320px;">
+        <span class="dot"></span>
+        <span class="time">12:07</span>
+        <span class="divider"></span>
+        <span class="title">Rewrite the kanban sync path and document the Hermes seed handoff for Monday</span>
+        <span class="phase">Focus</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Idle / hidden</div>
+      <div style="height: 40px; display: flex; align-items: center; color: #8a7a68; font-size: 12px; font-family: 'DM Mono', monospace;">
+        (no pill — running=false)
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>Approved.</strong>
+    Placement A bottom-center. Countdown + title + phase chip only for v1. No controls on the pill.
+  </div>
+</body>
+</html>
