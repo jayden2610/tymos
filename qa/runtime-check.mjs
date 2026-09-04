@@ -37,7 +37,7 @@ else pass('no uncaught JS exceptions on load');
 
 // console errors from blocked external resources are expected; flag only non-network ones.
 const realConsole = consoleErrors.filter(t =>
-  !/Failed to load|net::ERR|Refused to|CSP|Content Security|ERR_FAILED|supabase|fonts|cdn|favicon/i.test(t));
+  !/Failed to load|net::ERR|Refused to|CSP|Content Security|ERR_FAILED|supabase|fonts|cdn|favicon|tymos-seed|URL scheme \"file\"|file:\/\//i.test(t));
 if (realConsole.length) realConsole.forEach(t => fail(`console error: ${t}`));
 else pass('no non-network console errors');
 

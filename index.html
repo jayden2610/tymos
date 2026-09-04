@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://ovojwsfocmwclfyiefve.supabase.co wss://ovojwsfocmwclfyiefve.supabase.co https://accounts.supabase.co; frame-src https://accounts.supabase.co https://ovojwsfocmwclfyiefve.supabase.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' http://127.0.0.1:17865 https://ovojwsfocmwclfyiefve.supabase.co wss://ovojwsfocmwclfyiefve.supabase.co https://accounts.supabase.co; frame-src https://accounts.supabase.co https://ovojwsfocmwclfyiefve.supabase.co; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Tymos</title>
@@ -2110,6 +2110,33 @@ function updateRing() {
   }
 }
 
+const PILL_STATE_URL = 'http://127.0.0.1:17865/v1/state';
+
+function activeTaskTitle() {
+  const focused = tasks.filter(x => activeTaskIds.has(x.id));
+  return focused.map(x => x.title).join(', ');
+}
+
+function emitLiveState() {
+  const body = JSON.stringify({
+    running,
+    remainingSecs: remaining,
+    totalSecs,
+    isBreak,
+    taskTitle: activeTaskTitle(),
+    updatedAt: Date.now(),
+  });
+  try {
+    fetch(PILL_STATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+      mode: 'cors',
+    }).catch(() => {});
+  } catch (_) {}
+}
+
 function startRunning() {
   closeNoTasksModal();
   running = true;
@@ -2118,12 +2145,14 @@ function startRunning() {
   remainingAtStart = remaining;
   document.getElementById('startBtn').textContent = 'Pause';
   interval = setInterval(tick, 1000);
+  emitLiveState();
 }
 
 function toggleTimer() {
   if (running) {
     clearInterval(interval); running = false;
     document.getElementById('startBtn').textContent = 'Resume';
+    emitLiveState();
     return;
   }
   if (!isBreak && tasks.length === 0 && sessionUntouched) {
@@ -2178,12 +2207,14 @@ function tick() {
       enterWork();
     }
     saveStats(); saveTodayStats(); saveDailyLog(); updateStats();
+    emitLiveState();
     return;
   }
 
   if (!isBreak) { totalFocusSecs += secsPassed; todayFocusSecs += secsPassed; }
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   updateRing();
+  emitLiveState();
   if (remaining % 60 === 0) { updateStats(); saveStats(); saveTodayStats(); }
 }
 
@@ -2195,6 +2226,7 @@ function enterBreak() {
   document.getElementById('startBtn').textContent = 'Start Break';
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.body.classList.add('break-mode'); updateRing();
+  emitLiveState();
 }
 
 function enterWork() {
@@ -2203,6 +2235,7 @@ function enterWork() {
   document.getElementById('startBtn').textContent = 'Start';
   document.getElementById('timerDisplay').textContent = fmt(remaining);
   document.body.classList.remove('break-mode'); updateRing();
+  emitLiveState();
 }
 
 function resetTimer() {
@@ -2213,9 +2246,15 @@ function resetTimer() {
   document.getElementById('timerSub').textContent = 'Focus';
   document.getElementById('startBtn').textContent = 'Start';
   document.body.classList.remove('break-mode'); updateRing();
+  emitLiveState();
 }
 
-function skipPhase() { clearInterval(interval); running = false; isBreak ? enterWork() : enterBreak(); }
+function skipPhase() {
+  clearInterval(interval);
+  running = false;
+  isBreak ? enterWork() : enterBreak();
+  emitLiveState();
+}
 
 // ── LOCALSTORAGE ──
 const LS_TASKS   = 'tymos_tasks';
@@ -3192,6 +3231,7 @@ function updateActiveTaskStrip() {
   } else {
     strip.classList.remove('visible');
   }
+  if (running) emitLiveState();
 }
 
 function toggleDone(id) {
