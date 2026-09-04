@@ -9,6 +9,9 @@ node_modules/
 # Build artifacts
 dist/
 build/
+pill/winui/**/bin/
+pill/winui/**/obj/
+pill/winui/**/.vs/
 
 # OS files
 .DS_Store
