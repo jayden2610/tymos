@@ -39,7 +39,7 @@ Demo chrome with sample state (no bridge):
 dotnet run -- --demo
 ```
 
-Default placement is bottom-center, always on top. Drag the pill to move it. When `running` is false the pill hides.
+Approved placement is bottom-center (Placement A), always on top. Drag the pill to move it. When `running` is false the pill hides.
 
 ## Run bridge on Linux / CI
 

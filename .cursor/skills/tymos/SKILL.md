@@ -43,7 +43,7 @@ The companion pill reads live session state from `http://127.0.0.1:17865/v1/stat
 curl -s http://127.0.0.1:17865/v1/state
 ```
 
-Expect `running: true`, `remainingSecs` counting down, and `taskTitle` matching the focused task (or empty if none focused). On Windows with the WinUI shell running, the always-on-top pill should be visible bottom-center.
+Expect `running: true`, `remainingSecs` counting down, and `taskTitle` matching the focused task (or empty if none focused). On Windows with the WinUI shell running, the always-on-top pill should be visible at the approved bottom-center placement.
 
 If POST fails silently, the web timer still runs. Fix the listener, then Start or wait one tick.
 

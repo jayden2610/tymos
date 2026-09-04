@@ -76,6 +76,7 @@ public sealed partial class MainWindow : Window
         var work = display.WorkArea;
         const int width = 440;
         const int height = 88;
+        // Placement A (approved): bottom-center of the primary work area.
         var x = work.X + (work.Width - width) / 2;
         var y = work.Y + work.Height - height - 28;
         _appWindow.MoveAndResize(new RectInt32(x, y, width, height));
