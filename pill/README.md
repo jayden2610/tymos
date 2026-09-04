@@ -1,12 +1,70 @@
 # Tymos floating pill
 
-Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill mirrors countdown + task title.
+Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill mirrors countdown + task title at **bottom-center**.
 
-## Layout
+## Quick start (Windows)
 
-- `mock/` — HTML visual mock for look and placement approval
-- `winui/TymosPill/` — WinUI 3 + C# always-on-top shell + localhost state server
-- `bridge-dev/server.py` — same HTTP contract for non-Windows verification
+**Need once**
+1. [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+2. Python 3 (already common on Windows; used only for the local web server)
+
+**Run everything**
+
+From the repo root in PowerShell:
+
+```powershell
+.\pill\run-windows.ps1
+```
+
+That script:
+1. Starts Tymos on `http://localhost:8080` in a new window
+2. Builds and launches the WinUI pill (listens on `http://127.0.0.1:17865`)
+3. Opens Chrome to the app
+
+Then click **Start** in Tymos. The pill should appear bottom-center with the countdown and focused task.
+
+**Pill UI only (no bridge / no web)**
+
+```powershell
+.\pill\run-windows.ps1 -Demo
+```
+
+**Stop**
+
+Close the pill window. Close the “Tymos web” PowerShell window (or Ctrl+C there).
+
+## If `dotnet` is missing
+
+```powershell
+winget install Microsoft.DotNet.SDK.8
+```
+
+Restart the terminal, then rerun `.\pill\run-windows.ps1`.
+
+## Manual steps (same thing, no script)
+
+```powershell
+# terminal 1 — web app
+python -m http.server 8080
+
+# terminal 2 — pill
+cd pill\winui\TymosPill
+dotnet restore
+dotnet run -c Release -r win-x64
+```
+
+Open `http://localhost:8080`, focus a task, press Start.
+
+## Linux / CI bridge only
+
+WinUI will not build here. Use the same HTTP contract:
+
+```bash
+python3 -m http.server 8080
+python3 pill/bridge-dev/server.py
+# Start a session in the browser, then:
+curl -s http://127.0.0.1:17865/v1/state
+```
 
 ## LiveSessionState
 
@@ -25,34 +83,13 @@ Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill 
 
 CORS allows `http://localhost:8080` and `http://127.0.0.1:8080` only.
 
-## Run (Windows)
+## Layout
 
-```powershell
-cd pill/winui/TymosPill
-dotnet build
-dotnet run
-```
-
-Demo chrome with sample state (no bridge):
-
-```powershell
-dotnet run -- --demo
-```
-
-Approved placement is bottom-center (Placement A), always on top. Drag the pill to move it. When `running` is false the pill hides.
-
-## Run bridge on Linux / CI
-
-```bash
-python3 pill/bridge-dev/server.py
-```
-
-Serve the web app on port 8080, start a focus session, then:
-
-```bash
-curl -s http://127.0.0.1:17865/v1/state
-```
+- `mock/` — visual mock (Placement A approved)
+- `winui/TymosPill/` — WinUI 3 shell + state server
+- `bridge-dev/server.py` — non-Windows stand-in for the state server
+- `run-windows.ps1` — one-command local setup
 
 ## Agent path
 
-See `.cursor/skills/tymos/SKILL.md`. Before Start, ensure the pill (or `bridge-dev/server.py`) is listening on `:17865`. After Start, `GET /v1/state` should show `running: true` and the task title.
+See `.cursor/skills/tymos/SKILL.md`. Ensure the pill (or bridge-dev) is listening on `:17865` before Start. After Start, `GET /v1/state` should show `running: true`.
