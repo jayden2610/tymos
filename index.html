@@ -3997,6 +3997,7 @@ function seedTasksFrom(seed) {
 }
 async function checkTymosSeed(force) {
   try {
+    if (location.protocol === 'file:') return false;
     const res = await fetch('tymos-seed.json', { cache: 'no-store' });
     if (!res.ok) return false;
     const seed = await res.json();
@@ -4031,5 +4032,4 @@ async function checkTymosSeed(force) {
 </script>
 </body>
 </html>
-
 
