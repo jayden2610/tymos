@@ -158,42 +158,39 @@ public sealed partial class MainWindow : Window
         // Apply DWM chrome LAST: presenter switches reset DWM frame attributes,
         // so setting border-color/corners before this point gets silently lost.
         var launchArgs = Environment.GetCommandLineArgs();
-        // Opt-in experiments (--alpha CRASHES WASDK 1.6 during the first commit —
-        // see pill/TRANSPARENCY-NOTES.md before touching these).
-        var useAlpha = launchArgs.Any(a => string.Equals(a, "--alpha", StringComparison.OrdinalIgnoreCase));
-        var noBrush = launchArgs.Any(a => string.Equals(a, "--no-brush", StringComparison.OrdinalIgnoreCase));
+        // Per-pixel alpha is on by default via PillTransparentBackdrop (the
+        // WinUIEx blur-behind recipe). --no-alpha falls back to the legacy
+        // opaque direct-brush path; --no-clear skips the GDI alpha-0 base fill.
+        var noAlpha = launchArgs.Any(a => string.Equals(a, "--no-alpha", StringComparison.OrdinalIgnoreCase));
         var noClear = launchArgs.Any(a => string.Equals(a, "--no-clear", StringComparison.OrdinalIgnoreCase));
-        Log.Write($"flags: alpha={useAlpha} noBrush={noBrush} noClear={noClear}");
+        Log.Write($"flags: noAlpha={noAlpha} noClear={noClear}");
 
         try
         {
             NativeWindow.ApplyHudChrome(_hwnd);
-            if (useAlpha)
-            {
-                NativeWindow.EnablePerPixelAlpha(_hwnd);
-            }
-            Log.Write($"dwm chrome applied (alpha={useAlpha})");
+            Log.Write("dwm chrome applied");
         }
         catch (Exception ex)
         {
             Log.Write($"dwm chrome failed: {ex.GetType().Name}: {ex.Message}");
         }
 
-        // Direct interop backdrop: the XAML Window implements
-        // ICompositionSupportsSystemBackdrop; assigning a fully transparent
-        // Windows.UI brush swaps the opaque default window background for the
-        // surface's own alpha. Safe by itself, but without the DWM alpha path
-        // (blur-behind, which currently crashes) the unpainted area still
-        // composites as opaque black — the band around the capsule.
         try
         {
-            if (!noBrush)
+            if (!noAlpha)
             {
+                TransparentBackdrop.EnsureWindowsDispatcherQueue();
+                SystemBackdrop = new PillTransparentBackdrop(_hwnd);
+                Log.Write("pill transparent backdrop (blur-behind) assigned");
+            }
+            else
+            {
+                // Legacy escape hatch: opaque compositing, no per-pixel alpha.
                 TransparentBackdrop.EnsureWindowsDispatcherQueue();
                 var support = this.As<Microsoft.UI.Composition.ICompositionSupportsSystemBackdrop>();
                 support.SystemBackdrop = new Windows.UI.Composition.Compositor()
                     .CreateColorBrush(Windows.UI.Color.FromArgb(0, 255, 255, 255));
-                Log.Write("transparent backdrop brush assigned directly");
+                Log.Write("legacy opaque backdrop brush assigned directly");
             }
             if (!noClear)
             {

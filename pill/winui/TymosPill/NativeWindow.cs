@@ -277,36 +277,6 @@ internal static class NativeWindow
             SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow);
     }
 
-    [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateRectRgn(int x1, int y1, int x2, int y2);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Margins
-    {
-        public int Left;
-        public int Right;
-        public int Top;
-        public int Bottom;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct DwmBlurBehind
-    {
-        public uint Flags;
-        public bool Enable;
-        public IntPtr BlurRegion;
-        public bool TransitionOnMaximized;
-    }
-
-    private const uint DwmBbEnable = 0x00000001;
-    private const uint DwmBbBlurRegion = 0x00000002;
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref Margins margins);
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmEnableBlurBehindWindow(IntPtr hwnd, ref DwmBlurBehind blurBehind);
-
     [DllImport("user32.dll")]
     private static extern IntPtr GetDC(IntPtr hWnd);
 
@@ -327,10 +297,11 @@ internal static class NativeWindow
 
     /// <summary>
     /// Clears the window's GDI redirection surface to black. GDI 32bpp fills
-    /// leave the alpha byte at 0, so combined with EnablePerPixelAlpha the base
-    /// layer composites as transparent. Without this, the surface carries the
-    /// opaque class-background brush — the dark band that used to surround the
-    /// capsule. Call after every resize (resizes re-expose the surface).
+    /// leave the alpha byte at 0, so combined with the per-pixel-alpha path
+    /// (PillTransparentBackdrop's blur-behind) the base layer composites as
+    /// transparent. Without this, the surface carries the opaque class-background
+    /// brush — the dark band that used to surround the capsule. Call after every
+    /// resize (resizes re-expose the surface).
     /// </summary>
     internal static void ClearWindowBackground(IntPtr hwnd)
     {
@@ -348,30 +319,5 @@ internal static class NativeWindow
         {
             ReleaseDC(hwnd, hdc);
         }
-    }
-
-    /// <summary>
-    /// Switches the window onto DWM's per-pixel-alpha path: blur-behind with an
-    /// EMPTY region means "alpha-composite this window, blur nothing".
-    ///
-    /// KNOWN BROKEN on Windows App SDK 1.6 / Win11 24H2: this call crashes the
-    /// process during the first compositor commit (combase 0x80131523,
-    /// InvalidOperationException). Opt-in via --alpha only; see
-    /// pill/TRANSPARENCY-NOTES.md for the full investigation and next steps.
-    /// </summary>
-    internal static void EnablePerPixelAlpha(IntPtr hwnd)
-    {
-        if (hwnd == IntPtr.Zero) return;
-        var margins = new Margins();
-        DwmExtendFrameIntoClientArea(hwnd, ref margins);
-        var emptyRegion = CreateRectRgn(-2, -2, -1, -1);
-        var blur = new DwmBlurBehind
-        {
-            Flags = DwmBbEnable | DwmBbBlurRegion,
-            Enable = true,
-            BlurRegion = emptyRegion,
-            TransitionOnMaximized = false,
-        };
-        DwmEnableBlurBehindWindow(hwnd, ref blur);
     }
 }
