@@ -74,6 +74,36 @@ internal static class NativeWindow
         SetWindowPos(hwnd, HwndTopmost, x, y, width, height, SwpNoActivate | SwpShowWindow);
     }
 
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    internal static void ApplyHudChrome(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero) return;
+        // DWMWA_WINDOW_CORNER_PREFERENCE = 33 (2 = round)
+        var round = 2;
+        DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int));
+        // DWMWA_BORDER_COLOR = 34 (0xFFFFFFFE = none)
+        var none = unchecked((int)0xFFFFFFFE);
+        DwmSetWindowAttribute(hwnd, 34, ref none, sizeof(int));
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    internal static double GetScale(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero) return 1.0;
+        var dpi = GetDpiForWindow(hwnd);
+        return dpi > 0 ? dpi / 96.0 : 1.0;
+    }
+
+    internal static void ResizeHud(IntPtr hwnd, int width, int height)
+    {
+        SetWindowPos(hwnd, HwndTopmost, 0, 0, width, height,
+            SwpNoMove | SwpNoActivate | SwpShowWindow);
+    }
+
     [DllImport("user32.dll")]
     private static extern bool SetWindowPos(
         IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);

@@ -7,15 +7,12 @@
   <Grid x:Name="Root" Background="{StaticResource PillGlass}">
     <Border
         x:Name="PillChrome"
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center"
-        Padding="8,7,16,7"
-        CornerRadius="999"
-        Background="{StaticResource PillGlass}"
-        BorderBrush="{StaticResource PillHairline}"
-        BorderThickness="1">
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Background="Transparent"
+        BorderThickness="0">
 
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="12,8,16,8">
         <Grid Width="28" Height="28" VerticalAlignment="Center">
           <Ellipse
               x:Name="RingTrack"

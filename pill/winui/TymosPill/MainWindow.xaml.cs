@@ -87,6 +87,8 @@ public sealed partial class MainWindow : Window
         _appWindow.Title = "Tymos";
         _appWindow.IsShownInSwitchers = false;
 
+        NativeWindow.ApplyHudChrome(_hwnd);
+
         try
         {
             // Borderless overlapped presenter: CompactOverlay always draws a caption
@@ -128,14 +130,12 @@ public sealed partial class MainWindow : Window
     private void PlaceOnLargestDisplay()
     {
         if (_appWindow is null) return;
-        NativeWindow.MoveToLargestBottomCenter(_hwnd, 360, 68, 24);
-        PinTopmost();
+        FitWindowToPill();
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         timer.Tick += (_, _) =>
         {
             timer.Stop();
-            NativeWindow.MoveToLargestBottomCenter(_hwnd, 360, 68, 24);
-            PinTopmost();
+            FitWindowToPill();
         };
         timer.Start();
     }
@@ -185,7 +185,6 @@ public sealed partial class MainWindow : Window
         }
         TitleText.Visibility = Visibility.Visible;
         TitleText.Text = title;
-        PillChrome.Padding = new Thickness(8, 7, 16, 7);
 
         SetRing(state.RemainingRatio());
 
@@ -206,6 +205,22 @@ public sealed partial class MainWindow : Window
         TitleText.Foreground = titleColor;
 
         PillChrome.Opacity = !state.Running && _demoMode ? 0.72 : 1;
+
+        // The window is the pill: refit to content once text settles.
+        DispatcherQueue.TryEnqueue(FitWindowToPill);
+    }
+
+    private void FitWindowToPill()
+    {
+        if (_appWindow is null) return;
+        PillChrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        // DesiredSize is in DIPs; SetWindowPos wants physical pixels.
+        var scale = NativeWindow.GetScale(_hwnd);
+        var w = (int)Math.Ceiling(PillChrome.DesiredSize.Width * scale) + 2;
+        var h = (int)Math.Ceiling(PillChrome.DesiredSize.Height * scale) + 2;
+        NativeWindow.ResizeHud(_hwnd, w, h);
+        NativeWindow.MoveToLargestBottomCenter(_hwnd, w, h, 24);
+        PinTopmost();
     }
 
     private void SetRing(double remaining)
