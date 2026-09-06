@@ -413,10 +413,11 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
     </div>
 
     <div class="variant-card">
-      <div class="scene-label">No focused task</div>
+      <div class="scene-label">No focused task — phase label instead</div>
       <div class="pill inline running">
         <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/></svg><span class="core"></span></span>
         <span class="time">24:32</span>
+        <span class="title">Focus session</span>
         <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
       </div>
     </div>
@@ -426,6 +427,7 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
     <h2>v2 changes over v1</h2>
     <ul>
       <li><strong>Shrink-to-orb on idle</strong> — after 10s without interaction the capsule collapses to the 28px orb; hover restores it. Wispr's shrink-to-dot, translated to Tymos.</li>
+      <li><strong>No task, still labeled</strong> — with no focused task the pill falls back to the phase word ("Focus session" / "Break"), so the time is never unexplained.</li>
       <li><strong>Flattened glass</strong> — one fill, one hairline, one inset highlight. The double gradient and ambient glow are gone; glow now means "running".</li>
       <li><strong>Hover-revealed actions</strong> — pause/skip grow out of the right edge on hover (Flow Bar's grow-from-orb), hidden at rest so the pill stays read-only.</li>
       <li><strong>Urgency</strong> — final 10% shifts the ring to ember and quickens the core pulse. Break ignores urgency.</li>
