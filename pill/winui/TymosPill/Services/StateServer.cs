@@ -1,15 +1,28 @@
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using TymosPill.Models;
 
 namespace TymosPill.Services;
 
-/// <summary>Loopback HTTP bridge for LiveSessionState from web Tymos.</summary>
+/// <summary>
+/// Loopback HTTP bridge for LiveSessionState from web Tymos.
+///
+/// Raw TcpListener instead of HttpListener: http.sys requires a URL ACL
+/// (netsh http add urlacl) for prefixes like http://127.0.0.1:17865/ when the
+/// process is not elevated — without one Start() throws AccessDenied and the
+/// pill silently freezes on its sample state. A loopback TcpListener needs no
+/// reservation, so the bridge works for any user with zero setup.
+/// </summary>
 public sealed class StateServer : IDisposable
 {
     public const int Port = 17865;
     public static string BaseUrl => $"http://127.0.0.1:{Port}";
+
+    private const int MaxHeaderBytes = 16 * 1024;
+    private const int MaxBodyBytes = 64 * 1024;
+    private static readonly TimeSpan ReadTimeout = TimeSpan.FromSeconds(10);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,7 +35,7 @@ public sealed class StateServer : IDisposable
         "http://127.0.0.1:8080",
     };
 
-    private readonly HttpListener _listener = new();
+    private readonly TcpListener _listener = new(IPAddress.Loopback, Port);
     private readonly object _gate = new();
     private LiveSessionState _state = LiveSessionState.SampleRunning;
     private CancellationTokenSource? _cts;
@@ -38,7 +51,6 @@ public sealed class StateServer : IDisposable
     public void Start()
     {
         if (_loop != null) return;
-        _listener.Prefixes.Add($"{BaseUrl}/");
         _listener.Start();
         _cts = new CancellationTokenSource();
         _loop = Task.Run(() => AcceptLoop(_cts.Token));
@@ -48,7 +60,6 @@ public sealed class StateServer : IDisposable
     {
         try { _cts?.Cancel(); } catch { /* ignore */ }
         try { _listener.Stop(); } catch { /* ignore */ }
-        try { _listener.Close(); } catch { /* ignore */ }
         _cts?.Dispose();
     }
 
@@ -56,76 +67,166 @@ public sealed class StateServer : IDisposable
     {
         while (!ct.IsCancellationRequested)
         {
-            HttpListenerContext ctx;
+            TcpClient client;
             try
             {
-                ctx = await _listener.GetContextAsync().WaitAsync(ct);
+                client = await _listener.AcceptTcpClientAsync(ct);
             }
             catch (OperationCanceledException)
             {
                 break;
             }
-            catch (HttpListenerException)
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+            catch (SocketException)
             {
                 break;
             }
 
-            _ = Task.Run(() => Handle(ctx), CancellationToken.None);
+            _ = Task.Run(() => HandleClient(client), CancellationToken.None);
         }
     }
 
-    private async Task Handle(HttpListenerContext ctx)
+    private async Task HandleClient(TcpClient client)
     {
         try
         {
-            var req = ctx.Request;
-            var res = ctx.Response;
-            ApplyCors(req, res);
-
-            if (req.HttpMethod == "OPTIONS")
+            using (client)
+            using (var stream = client.GetStream())
             {
-                res.StatusCode = 204;
-                res.Close();
-                return;
+                var req = await ReadRequestAsync(stream);
+                if (req is not null)
+                {
+                    await Handle(req, stream);
+                }
             }
+        }
+        catch
+        {
+            // Client hung up or timed out mid-request; drop the connection.
+        }
+    }
 
-            var path = req.Url?.AbsolutePath?.TrimEnd('/') ?? "";
-            if (!string.Equals(path, "/v1/state", StringComparison.OrdinalIgnoreCase))
+    private sealed record Request(string Method, string Path, string? Origin, string Body);
+
+    private static async Task<Request?> ReadRequestAsync(NetworkStream stream)
+    {
+        var buffer = new byte[MaxHeaderBytes];
+        var received = 0;
+        var headerEnd = -1;
+        while (received < buffer.Length)
+        {
+            int read;
+            try
             {
-                res.StatusCode = 404;
-                await WriteText(res, "not found");
-                return;
+                read = await stream.ReadAsync(buffer.AsMemory(received, buffer.Length - received))
+                    .AsTask().WaitAsync(ReadTimeout);
             }
-
-            if (req.HttpMethod == "GET")
+            catch (TimeoutException)
             {
+                return null;
+            }
+            if (read == 0) return null;
+
+            var scanFrom = Math.Max(0, received - 3);
+            received += read;
+            for (var i = scanFrom; i <= received - 4; i++)
+            {
+                if (buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n')
+                {
+                    headerEnd = i;
+                    break;
+                }
+            }
+            if (headerEnd >= 0) break;
+        }
+        if (headerEnd < 0) return null;
+
+        var head = Encoding.ASCII.GetString(buffer, 0, headerEnd);
+        var lines = head.Split("\r\n");
+        var requestLine = lines[0].Split(' ');
+        if (requestLine.Length < 2) return null;
+        var method = requestLine[0].ToUpperInvariant();
+        var rawPath = requestLine[1];
+        var path = rawPath.StartsWith('/') ? rawPath : "/" + rawPath;
+
+        string? origin = null;
+        var contentLength = 0;
+        foreach (var line in lines.Skip(1))
+        {
+            var sep = line.IndexOf(':');
+            if (sep <= 0) continue;
+            var name = line[..sep].Trim();
+            var value = line[(sep + 1)..].Trim();
+            if (string.Equals(name, "Origin", StringComparison.OrdinalIgnoreCase)) origin = value;
+            else if (string.Equals(name, "Content-Length", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = int.TryParse(value, out contentLength);
+            }
+        }
+
+        contentLength = Math.Clamp(contentLength, 0, MaxBodyBytes);
+        var body = new byte[contentLength];
+        var bodyStart = headerEnd + 4;
+        var have = Math.Min(contentLength, received - bodyStart);
+        if (have > 0) Array.Copy(buffer, bodyStart, body, 0, have);
+        while (have < contentLength)
+        {
+            int read;
+            try
+            {
+                read = await stream.ReadAsync(body.AsMemory(have, contentLength - have))
+                    .AsTask().WaitAsync(ReadTimeout);
+            }
+            catch (TimeoutException)
+            {
+                return null;
+            }
+            if (read == 0) return null;
+            have += read;
+        }
+
+        return new Request(method, path.TrimEnd('/'), origin, Encoding.UTF8.GetString(body));
+    }
+
+    private async Task Handle(Request req, NetworkStream stream)
+    {
+        if (!string.Equals(req.Path, "/v1/state", StringComparison.OrdinalIgnoreCase))
+        {
+            await WriteResponse(stream, 404, "not found", req.Origin);
+            return;
+        }
+
+        switch (req.Method)
+        {
+            case "OPTIONS":
+                await WriteResponse(stream, 204, "", req.Origin);
+                return;
+
+            case "GET":
                 var snap = Current;
-                res.StatusCode = 200;
-                res.ContentType = "application/json; charset=utf-8";
-                await WriteBytes(res, JsonSerializer.SerializeToUtf8Bytes(snap, JsonOptions));
+                await WriteResponse(
+                    stream, 200, JsonSerializer.Serialize(snap, JsonOptions), req.Origin,
+                    "application/json; charset=utf-8");
                 return;
-            }
 
-            if (req.HttpMethod == "POST")
-            {
-                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
-                var body = await reader.ReadToEndAsync();
+            case "POST":
                 LiveSessionState? parsed;
                 try
                 {
-                    parsed = JsonSerializer.Deserialize<LiveSessionState>(body, JsonOptions);
+                    parsed = JsonSerializer.Deserialize<LiveSessionState>(req.Body, JsonOptions);
                 }
                 catch (JsonException)
                 {
-                    res.StatusCode = 400;
-                    await WriteText(res, "invalid json");
+                    await WriteResponse(stream, 400, "invalid json", req.Origin);
                     return;
                 }
 
                 if (parsed is null)
                 {
-                    res.StatusCode = 400;
-                    await WriteText(res, "empty body");
+                    await WriteResponse(stream, 400, "empty body", req.Origin);
                     return;
                 }
 
@@ -141,44 +242,13 @@ public sealed class StateServer : IDisposable
                 lock (_gate) _state = parsed;
                 StateChanged?.Invoke(Clone(parsed));
 
-                res.StatusCode = 204;
-                res.Close();
+                await WriteResponse(stream, 204, "", req.Origin);
                 return;
-            }
 
-            res.StatusCode = 405;
-            await WriteText(res, "method not allowed");
+            default:
+                await WriteResponse(stream, 405, "method not allowed", req.Origin);
+                return;
         }
-        catch
-        {
-            try { ctx.Response.Abort(); } catch { /* ignore */ }
-        }
-    }
-
-    private static void ApplyCors(HttpListenerRequest req, HttpListenerResponse res)
-    {
-        var origin = req.Headers["Origin"];
-        if (!string.IsNullOrEmpty(origin) && AllowedOrigins.Contains(origin))
-        {
-            res.Headers["Access-Control-Allow-Origin"] = origin;
-            res.Headers["Vary"] = "Origin";
-            res.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
-            res.Headers["Access-Control-Allow-Headers"] = "Content-Type";
-        }
-    }
-
-    private static async Task WriteText(HttpListenerResponse res, string text)
-    {
-        var bytes = Encoding.UTF8.GetBytes(text);
-        res.ContentType = "text/plain; charset=utf-8";
-        await WriteBytes(res, bytes);
-    }
-
-    private static async Task WriteBytes(HttpListenerResponse res, byte[] bytes)
-    {
-        res.ContentLength64 = bytes.Length;
-        await res.OutputStream.WriteAsync(bytes);
-        res.Close();
     }
 
     private static LiveSessionState Clone(LiveSessionState s) => new()
@@ -189,5 +259,46 @@ public sealed class StateServer : IDisposable
         IsBreak = s.IsBreak,
         TaskTitle = s.TaskTitle,
         UpdatedAt = s.UpdatedAt,
+    };
+
+    private static async Task WriteResponse(
+        NetworkStream stream,
+        int statusCode,
+        string body,
+        string? origin,
+        string? contentType = null)
+    {
+        var sb = new StringBuilder();
+        sb.Append("HTTP/1.1 ").Append(statusCode).Append(' ').Append(Reason(statusCode)).Append("\r\n");
+        if (origin is not null && AllowedOrigins.Contains(origin))
+        {
+            sb.Append("Access-Control-Allow-Origin: ").Append(origin).Append("\r\n");
+            sb.Append("Vary: Origin\r\n");
+            sb.Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
+            sb.Append("Access-Control-Allow-Headers: Content-Type\r\n");
+        }
+        if (body.Length > 0)
+        {
+            if (contentType is not null) sb.Append("Content-Type: ").Append(contentType).Append("\r\n");
+            sb.Append("Content-Length: ").Append(Encoding.UTF8.GetByteCount(body)).Append("\r\n");
+        }
+        sb.Append("Connection: close\r\n\r\n");
+
+        await stream.WriteAsync(Encoding.ASCII.GetBytes(sb.ToString()));
+        if (body.Length > 0)
+        {
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(body));
+        }
+        await stream.FlushAsync();
+    }
+
+    private static string Reason(int code) => code switch
+    {
+        200 => "OK",
+        204 => "No Content",
+        400 => "Bad Request",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+        _ => "OK",
     };
 }

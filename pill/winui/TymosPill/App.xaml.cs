@@ -13,7 +13,15 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new MainWindow();
-        _window.Activate();
+        try
+        {
+            _window = new MainWindow();
+            _window.Activate();
+        }
+        catch (Exception ex)
+        {
+            Log.Write($"OnLaunched failed: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            throw;
+        }
     }
 }

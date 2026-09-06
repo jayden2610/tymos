@@ -2,6 +2,12 @@
 
 Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill is a dark glass HUD at **bottom-center**: depleting ring + countdown, plus the focused task title when one is set.
 
+> **Capsule / transparency status:** the pill body is a capsule (mock's
+> `border-radius: 999px` + 1px hairline), but true see-through corners are
+> blocked by a WinUI 3 compositor limitation — a dark band still surrounds the
+> pill. Full investigation, dead ends, and next steps:
+> [TRANSPARENCY-NOTES.md](TRANSPARENCY-NOTES.md).
+
 ## Quick start (Windows)
 
 **Need once**
@@ -88,6 +94,8 @@ CORS allows `http://localhost:8080` and `http://127.0.0.1:8080` only.
 - `mock/` — visual spec (orb-first glass HUD, Placement A)
 - `winui/TymosPill/` — WinUI 3 shell + state server
 - `bridge-dev/server.py` — non-Windows stand-in for the state server
+- `findings/` — evidence screenshots for the transparency investigation
+- `TRANSPARENCY-NOTES.md` — what works / what's inert / what crashes, and next steps
 - `run-windows.ps1` — one-command local setup
 
 ## Troubleshooting (Windows)
@@ -95,6 +103,8 @@ CORS allows `http://localhost:8080` and `http://127.0.0.1:8080` only.
 - `ExpandPriContent` / missing `AppxPackage` DLL: keep `<EnableMsixTooling>true</EnableMsixTooling>` in the csproj (unpackaged apps still need it for `dotnet build`).
 - `app.manifest` must use root element `<assembly>`, not `<manifest>`.
 - Prefer `dotnet run -c Release -p:Platform=x64` (the helper script does this). A bare `-r win-x64` without Platform can fail the XAML pass on some SDKs.
+- Bridge not listening on `:17865`? Check `%TEMP%\tymos-pill.log` — the state server logs startup there. (Older builds used `HttpListener`, which needs a `netsh http add urlacl` reservation when non-elevated; the current `TcpListener` build needs nothing.)
+- Pill process dies right after launch: check `%TEMP%\tymos-pill.log` — and make sure you did not pass `--alpha` (known crash, see TRANSPARENCY-NOTES.md).
 
 ## Agent path
 
