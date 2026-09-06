@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tymos floating pill — v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --text: #f3eadc;
+  --title: rgba(243, 234, 220, 0.62);
+  --track: rgba(243, 234, 220, 0.14);
+  --ring: #c9a87a;
+  --ring-urgent: #d97b5f;
+  --glass: rgba(38, 30, 22, 0.88);
+  --hairline: rgba(243, 234, 220, 0.14);
+  --glow: rgba(201, 168, 122, 0.20);
+  --break-ring: #7eafc0;
+  --break-glass: rgba(22, 34, 41, 0.88);
+  --break-hair: rgba(200, 228, 236, 0.14);
+  --break-title: rgba(210, 230, 236, 0.62);
+  --ease: cubic-bezier(0.32, 0.72, 0.32, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #16120e;
+  color: #f3eadc;
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+}
+
+h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+
+.lede {
+  font-size: 13px;
+  color: #b5a28c;
+  margin-bottom: 28px;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.grid { display: grid; gap: 28px; }
+
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.scene-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b5a28c;
+  margin-bottom: 10px;
+}
+
+.desktop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, rgba(124, 92, 58, 0.18), transparent 42%),
+    linear-gradient(25deg, #3d3428 0%, #1f1a14 55%, #2c251c 100%);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.desktop.light-desk {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.35), transparent 40%),
+    linear-gradient(25deg, #d8d2c6 0%, #b8b0a3 55%, #cfc7b8 100%);
+}
+
+/* ── Pill v2 ─────────────────────────────────── */
+.pill {
+  --_ring: var(--ring);
+  --_glass: var(--glass);
+  --_hair: var(--hairline);
+  --_glow: rgba(0, 0, 0, 0);
+  --_w: 208px;
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: var(--_w);
+  max-width: calc(100% - 48px);
+  padding: 7px 14px 7px 8px;
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--_glass);
+  border: 1px solid var(--_hair);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    0 0 18px var(--_glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  transition:
+    width 320ms var(--ease),
+    background 320ms var(--ease),
+    border-color 320ms var(--ease),
+    box-shadow 320ms var(--ease),
+    opacity 200ms var(--ease);
+  cursor: default;
+}
+
+.pill.break {
+  --_ring: var(--break-ring);
+  --_glass: var(--break-glass);
+  --_hair: var(--break-hair);
+}
+
+/* running = glow alive */
+.pill.running { --_glow: var(--glow); }
+.pill.break.running { --_glow: rgba(126, 175, 192, 0.20); }
+
+/* final 10% urgency */
+.pill.urgent { --_ring: var(--ring-urgent); --_glow: rgba(217, 123, 95, 0.26); }
+.pill.break.urgent { --_ring: var(--break-ring); }
+
+/* urgency pulse on the core only */
+.pill.urgent .core { animation: urgent 1s ease-in-out infinite; }
+
+@keyframes urgent {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .core { animation: none !important; }
+}
+
+/* paused = frozen candle: ring stops (set inline), core dim, ring grayed */
+.pill.paused { --_ring: rgba(150, 138, 122, 0.75); }
+.pill.paused .core { opacity: 0.25; animation: none; }
+
+/* idle-shrink: orb only */
+.pill.idle {
+  --_w: 44px;
+  padding: 7px;
+  gap: 0;
+}
+.pill.idle .time, .pill.idle .title { opacity: 0; width: 0; margin: 0; pointer-events: none; }
+
+.time {
+  font-family: 'DM Mono', monospace;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  flex-shrink: 0;
+  line-height: 1;
+  white-space: nowrap;
+  transition: opacity 200ms var(--ease);
+}
+
+.title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: 1.2;
+  flex: 1;
+  transition: opacity 200ms var(--ease);
+}
+
+/* time + title share the expand/collapse */
+.pill .time, .pill .title {
+  transition: opacity 200ms var(--ease), flex 320ms var(--ease);
+}
+
+/* hover affordance: actions grow from the right, never printed by default */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: max-width 260ms var(--ease), opacity 180ms var(--ease), margin-left 260ms var(--ease);
+  margin-left: 0;
+}
+
+.pill:hover .actions {
+  max-width: 64px;
+  opacity: 1;
+  margin-left: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actions { transition: none; }
+}
+
+.action {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(243, 234, 220, 0.08);
+  color: var(--title);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.action:hover { background: rgba(243, 234, 220, 0.16); color: var(--text); }
+
+/* ── Orb ─────────────────────────────────────── */
+.orb { position: relative; width: 28px; height: 28px; flex-shrink: 0; }
+
+.orb svg { width: 28px; height: 28px; display: block; }
+
+.track { fill: none; stroke: var(--track); stroke-width: 2.25; }
+
+.fill {
+  fill: none;
+  stroke: var(--_ring);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 14px 14px;
+  transition: stroke 320ms var(--ease), stroke-dashoffset 1s linear;
+}
+
+.core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--_ring);
+  box-shadow: 0 0 8px var(--_ring);
+  transition: background 320ms var(--ease);
+  animation: live 1.8s ease-in-out infinite;
+}
+
+@keyframes live {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+.pill.paused .fill { transition: stroke 320ms var(--ease); }
+
+/* ── Demo layout ─────────────────────────────── */
+.row-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.variant-card {
+  background: rgba(240, 233, 220, 0.05);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.variant-card .scene-label { margin-bottom: 12px; }
+
+.pill.inline { position: static; transform: none; width: auto; min-width: 44px; }
+.pill.inline.idle { width: 44px; }
+
+.notes {
+  margin-top: 36px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: rgba(240, 233, 220, 0.05);
+  border: 1px solid rgba(240, 233, 220, 0.08);
+  color: #cbb9a4;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.notes h2 {
+  font-weight: 700;
+  color: #f0e9dc;
+  margin: 18px 0 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+}
+
+.notes h2:first-child { margin-top: 0; }
+.notes strong { color: #f0e9dc; font-weight: 600; }
+.notes ul { padding-left: 18px; margin: 6px 0; }
+.notes li { margin: 4px 0; }
+
+.hint { font-size: 12px; color: #8a7a68; margin-top: 10px; font-family: 'DM Mono', monospace; }
+
+/* ── Click-to-expand mini-panel ──────────────── */
+.hub {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hub .pill { position: static; transform: none; }
+
+.panel {
+  width: 300px;
+  max-width: calc(100% - 48px);
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  opacity: 0;
+  transform: translateY(8px) scale(0.97);
+  transform-origin: bottom center;
+  pointer-events: none;
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.hub.open .panel { opacity: 1; transform: none; pointer-events: auto; }
+
+.panel-task {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.panel-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--title);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.panel-strip {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(243, 234, 220, 0.16);
+}
+
+.dot.done { background: var(--ring); box-shadow: 0 0 6px rgba(201, 168, 122, 0.4); }
+.dot.now { background: var(--ring); opacity: 0.55; animation: live 1.8s ease-in-out infinite; }
+
+.panel-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.panel-ends {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--title);
+}
+
+.panel-actions { display: flex; gap: 6px; }
+
+.panel-actions .action {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.panel-actions .action.wide {
+  width: auto;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Timeline scrubber showcase ──────────────── */
+.scrub {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(320px, calc(100% - 48px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(240, 233, 220, 0.5);
+}
+
+.scrub input[type="range"] {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(240, 233, 220, 0.18);
+  outline: none;
+}
+
+.scrub input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #c9a87a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(201, 168, 122, 0.5);
+}
+
+.scrub .scrub-phase { min-width: 5.5em; text-transform: uppercase; letter-spacing: 0.1em; }
+
+</style>
+</head>
+<body>
+  <h1>Tymos floating pill — v2</h1>
+  <p class="lede">
+    v1 lessons + Wispr's idle choreography: one flat glass surface, glow only when running,
+    shrink-to-orb on idle, hover-revealed actions, frozen-candle paused state, urgency shift
+    in the final 10%.
+  </p>
+
+  <div class="grid">
+    <div>
+      <div class="scene-label">Placement A — bottom center, running</div>
+      <div class="desktop" id="demo-desktop">
+        <div class="pill running" id="demo-pill">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" id="demo-ring" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
+          <span class="time" id="demo-time">24:32</span>
+          <span class="title">Ship floating pill</span>
+          <span class="actions">
+            <button class="action" title="Pause">❚❚</button>
+            <button class="action" title="Skip">▸▸</button>
+          </span>
+        </div>
+      </div>
+      <p class="hint">Hover the pill for actions · leave it be for 10s to idle-shrink (demo: 5s)</p>
+    </div>
+
+    <div>
+      <div class="scene-label">Idle — shrunk to orb</div>
+      <div class="desktop">
+        <div class="pill running idle">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
+          <span class="time">24:32</span>
+          <span class="title">Ship floating pill</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="scene-label">Click → expand mini-panel</div>
+      <div class="desktop">
+        <div class="hub" id="hub">
+          <div class="panel">
+            <div class="panel-task">Ship floating pill</div>
+            <div class="panel-meta">Tymos · session 3 of 5</div>
+            <div class="panel-strip" aria-label="3 of 5 sessions done">
+              <span class="dot done"></span><span class="dot done"></span><span class="dot done"></span><span class="dot now"></span><span class="dot"></span>
+            </div>
+            <div class="panel-foot">
+              <span class="panel-ends">ends 14:32</span>
+              <span class="panel-actions">
+                <button class="action" title="Pause">❚❚</button>
+                <button class="action" title="Skip">▸▸</button>
+                <button class="action wide" title="Add 5 minutes">+5</button>
+                <button class="action wide" title="End early">End</button>
+              </span>
+            </div>
+          </div>
+          <div class="pill inline running" id="hub-pill" style="cursor: pointer;">
+            <span class="orb" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <circle class="track" cx="14" cy="14" r="11"/>
+                <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+              </svg>
+              <span class="core"></span>
+            </span>
+            <span class="time">24:32</span>
+            <span class="title">Ship floating pill</span>
+            <span class="actions">
+              <button class="action" title="Pause">❚❚</button>
+              <button class="action" title="Skip">▸▸</button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Click the pill to expand / collapse</p>
+    </div>
+
+    <div>
+      <div class="scene-label">Timeline scrubber — a full session in seconds</div>
+      <div class="desktop">
+        <div class="pill running" id="scrub-pill">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" id="scrub-ring" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
+          <span class="time" id="scrub-time">25:00</span>
+          <span class="title" id="scrub-title">Focus session</span>
+        </div>
+        <div class="scrub">
+          <span id="scrub-readout">00:00</span>
+          <input type="range" id="scrub-slider" min="0" max="1800" value="0" step="10" aria-label="Session timeline">
+          <span>30:00</span>
+        </div>
+      </div>
+      <p class="hint">Drag: 25 min focus → 5 min break. Urgent flips in the last 10%.</p>
+    </div>
+  </div>
+
+  <div class="scene-label" style="margin-top: 32px;">State variants</div>
+  <div class="row-variants">
+    <div class="variant-card">
+      <div class="scene-label">Running</div>
+      <div class="pill inline running">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/></svg><span class="core"></span></span>
+        <span class="time">24:32</span>
+        <span class="title">Ship floating pill</span>
+        <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Mid-session (ring burned)</div>
+      <div class="pill inline running">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="35.6"/></svg><span class="core"></span></span>
+        <span class="time">12:07</span>
+        <span class="title">Ship floating pill</span>
+        <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Urgent — final 10%</div>
+      <div class="pill inline running urgent">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="62.2"/></svg><span class="core"></span></span>
+        <span class="time">02:28</span>
+        <span class="title">Ship floating pill</span>
+        <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Break</div>
+      <div class="pill inline break running">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="0.46"/></svg><span class="core"></span></span>
+        <span class="time">04:58</span>
+        <span class="title">Ship floating pill</span>
+        <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Paused — frozen candle</div>
+      <div class="pill inline paused">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="18.4"/></svg><span class="core"></span></span>
+        <span class="time">18:05</span>
+        <span class="title">Ship floating pill</span>
+        <span class="actions"><button class="action" title="Resume">▶</button></span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">No focused task — phase label instead</div>
+      <div class="pill inline running">
+        <span class="orb"><svg viewBox="0 0 28 28"><circle class="track" cx="14" cy="14" r="11"/><circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/></svg><span class="core"></span></span>
+        <span class="time">24:32</span>
+        <span class="title">Focus session</span>
+        <span class="actions"><button class="action" title="Pause">❚❚</button><button class="action" title="Skip">▸▸</button></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>v2 changes over v1</h2>
+    <ul>
+      <li><strong>Shrink-to-orb on idle</strong> — after 10s without interaction the capsule collapses to the 28px orb; hover restores it. Wispr's shrink-to-dot, translated to Tymos.</li>
+      <li><strong>No task, still labeled</strong> — with no focused task the pill falls back to the phase word ("Focus session" / "Break"), so the time is never unexplained.</li>
+      <li><strong>Flattened glass</strong> — one fill, one hairline, one inset highlight. The double gradient and ambient glow are gone; glow now means "running".</li>
+      <li><strong>Hover-revealed actions</strong> — pause/skip grow out of the right edge on hover (Flow Bar's grow-from-orb), hidden at rest so the pill stays read-only.</li>
+      <li><strong>Urgency</strong> — final 10% shifts the ring to ember and quickens the core pulse. Break ignores urgency.</li>
+      <li><strong>Frozen candle pause</strong> — ring freezes at its burned position and grays; core dims instead of the whole pill going translucent.</li>
+      <li><strong>Choreography</strong> — expand/collapse and state swaps run on a single 320ms ease; reduced-motion kills all loops.</li>
+    </ul>
+  </div>
+
+<script>
+  const pill = document.getElementById('demo-pill');
+  const IDLE_MS = 5000; // demo value; production: 10000
+  let idleTimer;
+
+  function wake() {
+    pill.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => pill.classList.add('idle'), IDLE_MS);
+  }
+
+  ['mousemove', 'focusin'].forEach(ev => pill.addEventListener(ev, wake));
+  pill.addEventListener('mouseleave', wake);
+  wake();
+
+  // click-to-expand mini-panel
+  const hub = document.getElementById('hub');
+  const hubPill = document.getElementById('hub-pill');
+  hubPill.addEventListener('click', (e) => {
+    if (e.target.closest('.action')) return;
+    hub.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!hub.contains(e.target)) hub.classList.remove('open');
+  });
+
+  // timeline scrubber: 25 min focus + 5 min break
+  const slider = document.getElementById('scrub-slider');
+  const sPill = document.getElementById('scrub-pill');
+  const sRing = document.getElementById('scrub-ring');
+  const sTime = document.getElementById('scrub-time');
+  const sTitle = document.getElementById('scrub-title');
+  const sReadout = document.getElementById('scrub-readout');
+  const FOCUS = 25 * 60, BREAK = 5 * 60, TOTAL = FOCUS + BREAK;
+  const CIRC = 69.115;
+
+  function fmt(s) {
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.round(s) % 60).padStart(2, '0');
+  }
+
+  function scrub() {
+    const t = +slider.value;
+    sReadout.textContent = fmt(t);
+    if (t < FOCUS) {
+      const left = FOCUS - t;
+      sPill.classList.remove('break');
+      sPill.classList.add('running');
+      sTitle.textContent = 'Focus session';
+      sTime.textContent = fmt(left);
+      const frac = left / FOCUS;
+      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+      sPill.classList.toggle('urgent', frac <= 0.10);
+    } else {
+      const left = TOTAL - t;
+      sPill.classList.add('break');
+      sPill.classList.remove('urgent');
+      sTitle.textContent = 'Break';
+      sTime.textContent = fmt(left);
+      const frac = left / BREAK;
+      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+    }
+  }
+
+  slider.addEventListener('input', scrub);
+  scrub();
+
+  // live demo: tick down and cross into urgent
+  let secs = 24 * 60 + 32;
+  const ring = document.getElementById('demo-ring');
+  const time = document.getElementById('demo-time');
+  const total = 25 * 60;
+  setInterval(() => {
+    secs = Math.max(0, secs - 1);
+    const m = String(Math.floor(secs / 60)).padStart(2, '0');
+    const s = String(secs % 60).padStart(2, '0');
+    time.textContent = m + ':' + s;
+    ring.style.strokeDashoffset = (69.115 * (1 - secs / total)).toFixed(2);
+    if (secs / total <= 0.10) pill.classList.add('urgent');
+  }, 1000);
+</script>
+</body>
+</html>

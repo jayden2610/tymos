@@ -28,10 +28,12 @@ public sealed partial class MainWindow : Window
     private readonly SolidColorBrush _breakRing = new(Windows.UI.Color.FromArgb(255, 126, 175, 192));
 
     private AppWindow? _appWindow;
+    private IntPtr _hwnd;
     private bool _dragging;
     private PointInt32 _dragStartScreen;
     private PointInt32 _windowStartPos;
     private bool _demoMode;
+    private bool _placed;
 
     public MainWindow()
     {
@@ -41,6 +43,7 @@ public sealed partial class MainWindow : Window
         PillChrome.PointerMoved += Pill_PointerMoved;
         PillChrome.PointerReleased += Pill_PointerReleased;
         PillChrome.PointerCaptureLost += Pill_PointerCaptureLost;
+        Activated += OnActivated;
         ConfigureWindow();
         Closed += (_, _) => _server.Dispose();
 
@@ -63,43 +66,91 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnActivated(object sender, WindowActivatedEventArgs args)
+    {
+        if (!_placed)
+        {
+            PlaceOnLargestDisplay();
+            _placed = true;
+        }
+        PinTopmost();
+    }
+
     private void ConfigureWindow()
     {
-        var hwnd = WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+        _hwnd = WindowNative.GetWindowHandle(this);
+        var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
         _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         _appWindow.Title = "Tymos";
         _appWindow.IsShownInSwitchers = false;
 
-        if (_appWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsAlwaysOnTop = true;
-            presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-            presenter.SetBorderAndTitleBar(false, false);
-        }
-
-        var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
-        var work = display.WorkArea;
-        const int width = 360;
-        const int height = 68;
-        // Placement A (approved): bottom-center of the primary work area.
-        var x = work.X + (work.Width - width) / 2;
-        var y = work.Y + work.Height - height - 24;
-        _appWindow.MoveAndResize(new RectInt32(x, y, width, height));
-
         try
         {
-            // Transparent hit-outside chrome: content draws the pill.
-            SystemBackdrop = null;
+            _appWindow.SetPresenter(AppWindowPresenterKind.CompactOverlay);
         }
         catch
         {
-            // Older runtimes may lack backdrop APIs; solid is fine.
+            ApplyOverlappedChrome();
         }
+
+        if (_appWindow.Presenter is OverlappedPresenter)
+        {
+            ApplyOverlappedChrome();
+        }
+
+        try
+        {
+            SystemBackdrop = null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SystemBackdrop: {ex.Message}");
+        }
+    }
+
+    private void ApplyOverlappedChrome()
+    {
+        if (_appWindow?.Presenter is not OverlappedPresenter presenter) return;
+        presenter.IsAlwaysOnTop = true;
+        presenter.IsResizable = false;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        presenter.SetBorderAndTitleBar(false, false);
+    }
+
+    private void PlaceOnLargestDisplay()
+    {
+        if (_appWindow is null) return;
+        NativeWindow.MoveToLargestBottomCenter(_hwnd, 360, 68, 24);
+        PinTopmost();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            NativeWindow.MoveToLargestBottomCenter(_hwnd, 360, 68, 24);
+            PinTopmost();
+        };
+        timer.Start();
+    }
+
+    private void PinTopmost()
+    {
+        if (_appWindow is null) return;
+        if (_appWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.IsAlwaysOnTop = true;
+        }
+        try
+        {
+            _appWindow.MoveInZOrderAtTop();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MoveInZOrderAtTop: {ex.Message}");
+        }
+        NativeWindow.PinTopmost(_hwnd);
     }
 
     private void OnStateFromBridge(LiveSessionState state)
@@ -112,10 +163,13 @@ public sealed partial class MainWindow : Window
         if (!state.Running && !_demoMode)
         {
             PillChrome.Visibility = Visibility.Collapsed;
+            _appWindow?.Hide();
             return;
         }
 
         PillChrome.Visibility = Visibility.Visible;
+        _appWindow?.Show();
+        PinTopmost();
         TimeText.Text = state.FormatTime();
 
         var title = state.TaskTitle?.Trim() ?? "";
@@ -204,7 +258,6 @@ public sealed partial class MainWindow : Window
             SweepDirection = SweepDirection.Clockwise,
             IsLargeArc = angle > 180,
             RotationAngle = 0,
-            IsStroked = true,
         });
 
         var geometry = new PathGeometry();
