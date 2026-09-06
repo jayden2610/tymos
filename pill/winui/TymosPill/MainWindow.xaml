@@ -4,13 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Tymos">
 
-  <Grid x:Name="Root" Background="{StaticResource PillGlass}">
+  <!-- Root paints NOTHING: where XAML paints nothing the compositor must show
+       the desktop, so the chrome capsule is the only visible shape. -->
+  <Grid x:Name="Root" Background="{x:Null}">
     <Border
         x:Name="PillChrome"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="Transparent"
-        BorderThickness="0">
+        BorderThickness="1">
 
       <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="12,8,16,8">
         <Grid Width="28" Height="28" VerticalAlignment="Center">

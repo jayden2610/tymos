@@ -19,14 +19,31 @@ Minimal focus timer — Pomodoro + tasks + burning candle that earns its shelf.
 - [x] [P1] core: Timer presets + task cards (priority, subtasks, notes, est. sessions)
 - [x] [P1] candle: Burn animation + shelf persistence (localStorage + Supabase sync)
 - [x] [P1] polish: Keyboard-first (Space to start/pause), mobile responsive, stats/streaks
+- [x] [P1] pill: bridge actually listens (TcpListener, no URL ACL) + capsule body — 2026-09-07
+- [ ] [P2] pill: see-through capsule corners (WinUI 3 transparency — blocked, see pill/TRANSPARENCY-NOTES.md)
 - [ ] [P2] polish: Tiny a11y pass on timer controls (focus rings, aria)
 - [ ] [P3] idea: Weekly focus report export (if requested)
+
+## Constraints
+- Pill is a WinUI 3 / DComp window, not HTML — no CSS. XAML `CornerRadius` shapes
+  painted content only; see-through window corners need a per-pixel alpha path
+  that WASDK 1.6 does not expose (color-key, region, and blur-behind are
+  inert/crashy — full matrix in `pill/TRANSPARENCY-NOTES.md`).
+- Loopback servers in this repo must bind raw sockets (`TcpListener`), never
+  `HttpListener` — http.sys needs a URL ACL for non-elevated processes.
+- Keep the web app vanilla/static (no build); the pill is the only compiled piece.
 
 ## Milestones
 - [x] Live on GitHub Pages | 2026-07-01
 - [x] Candle + stats shipped | 2026-07-15
 - [ ] A11y polish | 2026-09-20
+- [ ] Pill capsule corners (blocked on WinUI transparency) | TBD
 
 ## Notes / Log
 - Run locally: python -m http.server 8080. Push to master auto-deploys.
 - Shipped — in maintenance mode. No active build pressure.
+- 2026-09-07: pill session — killed frozen-pill bug (bridge never listened:
+  HttpListener URL ACL), rewrote StateServer on TcpListener (verified e2e with
+  a real session via Playwright), capsule body + hairline shipped. Transparency
+  (see-through corners) investigated to a hard constraint; findings + next
+  steps in pill/TRANSPARENCY-NOTES.md.

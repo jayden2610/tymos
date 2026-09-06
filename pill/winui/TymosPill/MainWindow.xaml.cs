@@ -1,15 +1,65 @@
+using System.Runtime.InteropServices;
 using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using TymosPill.Models;
 using TymosPill.Services;
 using Windows.Foundation;
 using Windows.Graphics;
+using WinRT;
 using WinRT.Interop;
 
 namespace TymosPill;
+
+/// <summary>
+/// Fully transparent window backdrop: the XAML surface's own alpha is what
+/// shows (capsule chrome opaque, everything else punched through to the
+/// desktop). The DWM blur-behind window call in NativeWindow is what actually
+/// enables the per-pixel alpha path; this brush just replaces the default
+/// opaque window background.
+/// </summary>
+/// <summary>
+/// Hosts the Windows.System DispatcherQueue bootstrap the UWP composition
+/// compositor requires (see ConfigureWindow — the brush seam needs it).
+/// </summary>
+public static class TransparentBackdrop
+{
+    private static IntPtr _dispatcherQueueController;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DispatcherQueueOptions
+    {
+        public int Size;
+        public int ThreadType;     // 2 = DQTYPE_THREAD_CURRENT
+        public int ApartmentType;  // 2 = DQTAT_COM_STA
+    }
+
+    /// <summary>The UWP compositor refuses to start without a Windows.System
+    /// DispatcherQueue, and the WinUI queue doesn't count. The CreateOnCurrentThread
+    /// projection API is missing from the SDK, so call the CoreMessaging entry
+    /// point directly (same trick WinUIEx uses).</summary>
+    [DllImport("CoreMessaging.dll")]
+    private static extern int CreateDispatcherQueueController(
+        DispatcherQueueOptions options, out IntPtr controller);
+
+    internal static void EnsureWindowsDispatcherQueue()
+    {
+        if (Windows.System.DispatcherQueue.GetForCurrentThread() is not null) return;
+        if (_dispatcherQueueController != IntPtr.Zero) return;
+        var options = new DispatcherQueueOptions
+        {
+            Size = Marshal.SizeOf<DispatcherQueueOptions>(),
+            ThreadType = 2,
+            ApartmentType = 2,
+        };
+        var hr = CreateDispatcherQueueController(options, out _dispatcherQueueController);
+        Log.Write($"CreateDispatcherQueueController hr=0x{hr:X8}");
+    }
+}
 
 public sealed partial class MainWindow : Window
 {
@@ -87,8 +137,6 @@ public sealed partial class MainWindow : Window
         _appWindow.Title = "Tymos";
         _appWindow.IsShownInSwitchers = false;
 
-        NativeWindow.ApplyHudChrome(_hwnd);
-
         try
         {
             // Borderless overlapped presenter: CompactOverlay always draws a caption
@@ -107,13 +155,54 @@ public sealed partial class MainWindow : Window
             ApplyOverlappedChrome();
         }
 
+        // Apply DWM chrome LAST: presenter switches reset DWM frame attributes,
+        // so setting border-color/corners before this point gets silently lost.
+        var launchArgs = Environment.GetCommandLineArgs();
+        // Opt-in experiments (--alpha CRASHES WASDK 1.6 during the first commit —
+        // see pill/TRANSPARENCY-NOTES.md before touching these).
+        var useAlpha = launchArgs.Any(a => string.Equals(a, "--alpha", StringComparison.OrdinalIgnoreCase));
+        var noBrush = launchArgs.Any(a => string.Equals(a, "--no-brush", StringComparison.OrdinalIgnoreCase));
+        var noClear = launchArgs.Any(a => string.Equals(a, "--no-clear", StringComparison.OrdinalIgnoreCase));
+        Log.Write($"flags: alpha={useAlpha} noBrush={noBrush} noClear={noClear}");
+
         try
         {
-            SystemBackdrop = null;
+            NativeWindow.ApplyHudChrome(_hwnd);
+            if (useAlpha)
+            {
+                NativeWindow.EnablePerPixelAlpha(_hwnd);
+            }
+            Log.Write($"dwm chrome applied (alpha={useAlpha})");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"SystemBackdrop: {ex.Message}");
+            Log.Write($"dwm chrome failed: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        // Direct interop backdrop: the XAML Window implements
+        // ICompositionSupportsSystemBackdrop; assigning a fully transparent
+        // Windows.UI brush swaps the opaque default window background for the
+        // surface's own alpha. Safe by itself, but without the DWM alpha path
+        // (blur-behind, which currently crashes) the unpainted area still
+        // composites as opaque black — the band around the capsule.
+        try
+        {
+            if (!noBrush)
+            {
+                TransparentBackdrop.EnsureWindowsDispatcherQueue();
+                var support = this.As<Microsoft.UI.Composition.ICompositionSupportsSystemBackdrop>();
+                support.SystemBackdrop = new Windows.UI.Composition.Compositor()
+                    .CreateColorBrush(Windows.UI.Color.FromArgb(0, 255, 255, 255));
+                Log.Write("transparent backdrop brush assigned directly");
+            }
+            if (!noClear)
+            {
+                NativeWindow.ClearWindowBackground(_hwnd);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Write($"backdrop assign failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -156,6 +245,9 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"MoveInZOrderAtTop: {ex.Message}");
         }
         NativeWindow.PinTopmost(_hwnd);
+        // Styling / showing the window resets DWM frame attributes, so the
+        // no-border setting is refreshed on every pin.
+        NativeWindow.RefreshHudBorder(_hwnd);
     }
 
     private void OnStateFromBridge(LiveSessionState state)
@@ -214,11 +306,14 @@ public sealed partial class MainWindow : Window
     {
         if (_appWindow is null) return;
         PillChrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        // Full capsule, matching the mock's border-radius: 999px.
+        PillChrome.CornerRadius = new CornerRadius(PillChrome.DesiredSize.Height / 2);
         // DesiredSize is in DIPs; SetWindowPos wants physical pixels.
         var scale = NativeWindow.GetScale(_hwnd);
         var w = (int)Math.Ceiling(PillChrome.DesiredSize.Width * scale) + 2;
         var h = (int)Math.Ceiling(PillChrome.DesiredSize.Height * scale) + 2;
         NativeWindow.ResizeHud(_hwnd, w, h);
+        NativeWindow.ClearWindowBackground(_hwnd);
         NativeWindow.MoveToLargestBottomCenter(_hwnd, w, h, 24);
         PinTopmost();
     }
