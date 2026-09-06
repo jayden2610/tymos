@@ -3,41 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tymos floating pill — visual mock</title>
+<title>Tymos floating pill — redesign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f0e9dc;
-  --surface: #ece4d5;
-  --surface2: #e4dac8;
-  --border: rgba(120, 95, 65, 0.14);
-  --border2: rgba(120, 95, 65, 0.22);
-  --text: #2e1f0d;
-  --text2: #6b5340;
-  --muted: #a08b75;
-  --accent: #7c5c3a;
-  --accent2: #a07850;
-  --accent-bg: rgba(124, 92, 58, 0.08);
-  --ring-break: #5a8ca0;
-  --shadow: 0 2px 12px rgba(80, 50, 20, 0.10);
-  --shadow2: 0 4px 24px rgba(80, 50, 20, 0.14);
+  --text: #f3eadc;
+  --title: rgba(243, 234, 220, 0.62);
+  --track: rgba(243, 234, 220, 0.14);
+  --ring: #c9a87a;
+  --core: #c9a87a;
+  --glass-top: rgba(58, 48, 38, 0.90);
+  --glass-bot: rgba(24, 18, 14, 0.86);
+  --hairline: rgba(243, 234, 220, 0.16);
+  --glow: rgba(201, 168, 122, 0.22);
+  --break-ring: #7eafc0;
+  --break-top: rgba(32, 48, 56, 0.90);
+  --break-bot: rgba(14, 22, 28, 0.86);
+  --break-hair: rgba(200, 228, 236, 0.16);
+  --break-glow: rgba(126, 175, 192, 0.22);
+  --break-title: rgba(210, 230, 236, 0.62);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Nunito', sans-serif;
-  background: #2a241c;
-  color: var(--text);
+  background: #16120e;
+  color: #f3eadc;
   min-height: 100vh;
-  padding: 32px 24px 48px;
+  padding: 32px 24px 64px;
 }
 
 h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #f0e9dc;
   margin-bottom: 6px;
 }
 
@@ -45,8 +45,8 @@ h1 {
   font-size: 13px;
   color: #b5a28c;
   margin-bottom: 28px;
-  max-width: 640px;
-  line-height: 1.45;
+  max-width: 720px;
+  line-height: 1.5;
 }
 
 .grid {
@@ -81,6 +81,12 @@ h1 {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
+.desktop.light-desk {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.35), transparent 40%),
+    linear-gradient(25deg, #d8d2c6 0%, #b8b0a3 55%, #cfc7b8 100%);
+}
+
 .desktop::before {
   content: '';
   position: absolute;
@@ -93,32 +99,51 @@ h1 {
   pointer-events: none;
 }
 
+.light-desk::before {
+  border-color: rgba(40, 30, 20, 0.06);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.28), transparent 50%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 40%);
+}
+
 .wallpaper-mark {
   position: absolute;
   top: 36px;
   left: 40px;
-  font-family: 'Nunito', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: rgba(240, 233, 220, 0.35);
   letter-spacing: 0.02em;
 }
 
+.light-desk .wallpaper-mark { color: rgba(46, 31, 13, 0.35); }
+
+/* ── Pill ─────────────────────────────────────── */
 .pill {
+  --_ring: var(--ring);
+  --_glow: var(--glow);
+  --_title: var(--title);
+  --_hair: var(--hairline);
   position: absolute;
   left: 50%;
-  bottom: 36px;
+  bottom: 28px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: min(420px, calc(100% - 48px));
-  padding: 10px 18px 10px 14px;
+  gap: 10px;
+  max-width: min(340px, calc(100% - 48px));
+  padding: 7px 16px 7px 8px;
   border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow2);
   color: var(--text);
+  background:
+    linear-gradient(180deg, var(--glass-top), var(--glass-bot));
+  border: 1px solid var(--_hair);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    0 0 20px var(--_glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
 }
 
 .pill.bottom-right {
@@ -128,77 +153,102 @@ h1 {
 }
 
 .pill.break {
-  background: #e8eef1;
-  border-color: rgba(90, 140, 160, 0.28);
+  --_ring: var(--break-ring);
+  --_glow: var(--break-glow);
+  --_title: var(--break-title);
+  --_hair: var(--break-hair);
+  background: linear-gradient(180deg, var(--break-top), var(--break-bot));
 }
 
 .pill.paused {
   opacity: 0.72;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.pill.hidden-state {
-  display: none;
+.pill.paused .core { animation: none; opacity: 0.45; }
+.pill.paused .fill { opacity: 0.55; }
+
+.pill.hidden-state { display: none; }
+
+.pill.compact {
+  padding: 7px 14px 7px 8px;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent2);
+.orb {
+  position: relative;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.pill.break .dot {
-  background: var(--ring-break);
-  box-shadow: 0 0 0 3px rgba(90, 140, 160, 0.18);
+.orb svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
-.pill.paused .dot {
-  background: var(--muted);
-  box-shadow: none;
+.track {
+  fill: none;
+  stroke: var(--track);
+  stroke-width: 2.25;
+}
+
+.fill {
+  fill: none;
+  stroke: var(--_ring);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 14px 14px;
+}
+
+.core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--_ring);
+  box-shadow: 0 0 8px var(--_ring);
+  animation: live 1.8s ease-in-out infinite;
+}
+
+@keyframes live {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .core { animation: none; }
 }
 
 .time {
   font-family: 'DM Mono', monospace;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
   color: var(--text);
   flex-shrink: 0;
-  min-width: 4.2em;
+  line-height: 1;
 }
 
-.pill.break .time { color: #3a5a68; }
-
-.divider {
-  width: 1px;
-  height: 18px;
-  background: var(--border2);
-  flex-shrink: 0;
-}
+.pill.break .time { color: #e8f1f4; }
 
 .title {
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--text2);
+  color: var(--_title);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  line-height: 1.2;
 }
-
-.phase {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.pill.break .phase { color: var(--ring-break); }
 
 .row-variants {
   display: flex;
@@ -209,7 +259,7 @@ h1 {
 }
 
 .variant-card {
-  background: rgba(240, 233, 220, 0.06);
+  background: rgba(240, 233, 220, 0.05);
   border: 1px solid rgba(240, 233, 220, 0.08);
   border-radius: 12px;
   padding: 14px;
@@ -224,53 +274,150 @@ h1 {
   bottom: auto;
 }
 
+/* Wispr structural schematic (not a copy of their chrome) */
+.flow-schematic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.flow-side {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  color: #5b6570;
+  background: #eef1f4;
+}
+
+.flow-orb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 55%, #5b8cff 0%, #3d6be0 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 4px 14px rgba(61, 107, 224, 0.35);
+}
+
+.flow-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: #fff;
+  opacity: 0.92;
+}
+
 .notes {
-  margin-top: 32px;
-  padding: 16px 18px;
-  border-radius: 10px;
-  background: rgba(240, 233, 220, 0.06);
+  margin-top: 36px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: rgba(240, 233, 220, 0.05);
   border: 1px solid rgba(240, 233, 220, 0.08);
   color: #cbb9a4;
   font-size: 13px;
-  line-height: 1.5;
-  max-width: 720px;
+  line-height: 1.6;
+  max-width: 760px;
 }
 
+.notes h2 {
+  font-weight: 700;
+  color: #f0e9dc;
+  margin: 18px 0 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+}
+
+.notes h2:first-child { margin-top: 0; }
+
 .notes strong { color: #f0e9dc; font-weight: 600; }
+
+.notes ul { padding-left: 18px; margin: 6px 0; }
+.notes li { margin: 4px 0; }
+
+.old-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px 10px 14px;
+  border-radius: 999px;
+  background: #f0e9dc;
+  border: 1px solid rgba(120, 95, 65, 0.22);
+  box-shadow: 0 4px 24px rgba(80, 50, 20, 0.14);
+  color: #2e1f0d;
+}
+
+.old-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #a07850; box-shadow: 0 0 0 3px rgba(124, 92, 58, 0.08);
+}
+
+.old-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px; min-width: 4.2em;
+}
+
+.old-div { width: 1px; height: 18px; background: rgba(120, 95, 65, 0.22); }
+
+.old-title { font-size: 13px; font-weight: 600; color: #6b5340; }
+
+.old-phase {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #a08b75;
+}
 </style>
 </head>
 <body>
-  <h1>Tymos floating pill</h1>
+  <h1>Tymos floating pill — redesign</h1>
   <p class="lede">
-    Companion overlay mock. Countdown + task title only. Brand tokens from the web app.
-    Approved placement is bottom-center (Placement A).
+    Orb-first glass HUD, modeled on how Wispr Flow’s desktop Flow Bar actually works:
+    one living circle, a morphing capsule, status without labels. Time is our waveform.
+    The ring burns down like the candle.
   </p>
 
   <div class="grid">
     <div>
-      <div class="scene-label">Placement A — bottom center (approved)</div>
+      <div class="scene-label">Placement A — bottom center (kept)</div>
       <div class="desktop" id="scene-center">
         <div class="wallpaper-mark">Desktop</div>
-        <div class="pill" aria-label="Focus session pill">
-          <span class="dot" aria-hidden="true"></span>
+        <div class="pill" aria-label="Focus session 24 minutes 32 seconds remaining, Ship floating pill">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
           <span class="time">24:32</span>
-          <span class="divider" aria-hidden="true"></span>
           <span class="title">Ship floating pill</span>
-          <span class="phase">Focus</span>
         </div>
       </div>
     </div>
 
     <div>
-      <div class="scene-label">Placement B — bottom right (rejected)</div>
-      <div class="desktop" id="scene-right" style="opacity: 0.45;">
+      <div class="scene-label">On a light wallpaper — still readable</div>
+      <div class="desktop light-desk">
         <div class="wallpaper-mark">Desktop</div>
-        <div class="pill bottom-right" aria-label="Focus session pill">
-          <span class="dot" aria-hidden="true"></span>
+        <div class="pill" aria-label="Focus session 24 minutes 32 seconds remaining">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
           <span class="time">24:32</span>
-          <span class="divider" aria-hidden="true"></span>
           <span class="title">Ship floating pill</span>
-          <span class="phase">Focus</span>
         </div>
       </div>
     </div>
@@ -281,58 +428,162 @@ h1 {
     <div class="variant-card">
       <div class="scene-label">Running</div>
       <div class="pill inline">
-        <span class="dot"></span>
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+          </svg>
+          <span class="core"></span>
+        </span>
         <span class="time">24:32</span>
-        <span class="divider"></span>
         <span class="title">Ship floating pill</span>
-        <span class="phase">Focus</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">Mid-session (ring burned)</div>
+      <div class="pill inline">
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="35.6"/>
+          </svg>
+          <span class="core"></span>
+        </span>
+        <span class="time">12:07</span>
+        <span class="title">Ship floating pill</span>
       </div>
     </div>
 
     <div class="variant-card">
       <div class="scene-label">Break</div>
       <div class="pill inline break">
-        <span class="dot"></span>
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="0.46"/>
+          </svg>
+          <span class="core"></span>
+        </span>
         <span class="time">04:58</span>
-        <span class="divider"></span>
         <span class="title">Ship floating pill</span>
-        <span class="phase">Break</span>
       </div>
     </div>
 
     <div class="variant-card">
       <div class="scene-label">Paused (dimmed)</div>
       <div class="pill inline paused">
-        <span class="dot"></span>
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="18.4"/>
+          </svg>
+          <span class="core"></span>
+        </span>
         <span class="time">18:05</span>
-        <span class="divider"></span>
         <span class="title">Ship floating pill</span>
-        <span class="phase">Paused</span>
       </div>
     </div>
 
     <div class="variant-card">
       <div class="scene-label">Long title truncated</div>
-      <div class="pill inline" style="width: 320px;">
-        <span class="dot"></span>
+      <div class="pill inline" style="width: 300px;">
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="35.6"/>
+          </svg>
+          <span class="core"></span>
+        </span>
         <span class="time">12:07</span>
-        <span class="divider"></span>
         <span class="title">Rewrite the kanban sync path and document the Hermes seed handoff for Monday</span>
-        <span class="phase">Focus</span>
+      </div>
+    </div>
+
+    <div class="variant-card">
+      <div class="scene-label">No focused task — orb + time only</div>
+      <div class="pill inline compact">
+        <span class="orb">
+          <svg viewBox="0 0 28 28">
+            <circle class="track" cx="14" cy="14" r="11"/>
+            <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+          </svg>
+          <span class="core"></span>
+        </span>
+        <span class="time">24:32</span>
       </div>
     </div>
 
     <div class="variant-card">
       <div class="scene-label">Idle / hidden</div>
-      <div style="height: 40px; display: flex; align-items: center; color: #8a7a68; font-size: 12px; font-family: 'DM Mono', monospace;">
+      <div style="height: 42px; display: flex; align-items: center; color: #8a7a68; font-size: 12px; font-family: 'DM Mono', monospace;">
         (no pill — running=false)
       </div>
     </div>
   </div>
 
+  <div class="scene-label" style="margin-top: 36px;">What we took from Wispr Flow — and what we didn’t</div>
+  <div class="row-variants">
+    <div class="variant-card">
+      <div class="scene-label">Flow Bar structure (schematic)</div>
+      <div class="flow-schematic" aria-hidden="true">
+        <span class="flow-side">✕</span>
+        <span class="flow-orb">
+          <span class="flow-bar" style="height: 10px;"></span>
+          <span class="flow-bar" style="height: 18px;"></span>
+          <span class="flow-bar" style="height: 14px;"></span>
+          <span class="flow-bar" style="height: 20px;"></span>
+          <span class="flow-bar" style="height: 12px;"></span>
+        </span>
+        <span class="flow-side">■</span>
+      </div>
+    </div>
+    <div class="variant-card">
+      <div class="scene-label">Previous Tymos pill</div>
+      <div class="old-pill">
+        <span class="old-dot"></span>
+        <span class="old-time">24:32</span>
+        <span class="old-div"></span>
+        <span class="old-title">Ship floating pill</span>
+        <span class="old-phase">Focus</span>
+      </div>
+    </div>
+  </div>
+
   <div class="notes">
-    <strong>Approved.</strong>
-    Placement A bottom-center. Countdown + title + phase chip only for v1. No controls on the pill.
+    <h2>How the Flow Bar works</h2>
+    <p>
+      Wispr’s desktop overlay is a <strong>small floating bubble</strong>, not a toolbar.
+      A circular center (mic at rest, waveform while dictating) is the only thing you look at.
+      Cancel / Stop grow out of the sides only while a session is live. Status is color, motion,
+      and shape — they never print “RECORDING”. The bar docks to the bottom, left, or right edge
+      and reorients. Empty pixels around it click through. The hub is a white app window; the
+      bar is a separate HUD (natively dark/transparent). Their white bar is also the thing people
+      patch, because it flashbangs over dark desktops.
+    </p>
+
+    <h2>What we kept</h2>
+    <ul>
+      <li>Orb as the focal point — a 28px ring instead of their waveform.</li>
+      <li>Capsule that hugs the orb. No divider, no phase chip, no status dot.</li>
+      <li>Visual phase: gold ring + warm glass for focus, teal for break.</li>
+      <li>Hidden when idle. No controls on the pill (web Tymos still owns start/pause).</li>
+      <li>Bottom-center placement (already approved).</li>
+    </ul>
+
+    <h2>What we did better</h2>
+    <ul>
+      <li><strong>Dark warm glass</strong> so it sits on any wallpaper without a white flash. Tymos gold still reads as the brand.</li>
+      <li><strong>The ring is remaining time</strong> — it burns down like the candle, which a waveform can’t say.</li>
+      <li><strong>Time is the waveform.</strong> Five tabular characters, then a quiet title. Glanceable from across the desk.</li>
+      <li><strong>Collapses</strong> to orb + time when no task is focused — closer to Flow’s resting bubble.</li>
+      <li>Tighter chrome (~42px tall vs the old 88px window / cream badge).</li>
+    </ul>
+
+    <p style="margin-top: 14px;">
+      <strong>Still true.</strong>
+      Placement A bottom-center. Countdown + title only. No controls on the pill.
+    </p>
   </div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Tymos floating pill
 
-Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill mirrors countdown + task title at **bottom-center**.
+Companion always-on-top overlay for Windows. Web Tymos owns the timer. The pill is a dark glass HUD at **bottom-center**: depleting ring + countdown, plus the focused task title when one is set.
 
 ## Quick start (Windows)
 
@@ -85,7 +85,7 @@ CORS allows `http://localhost:8080` and `http://127.0.0.1:8080` only.
 
 ## Layout
 
-- `mock/` — visual mock (Placement A approved)
+- `mock/` — visual spec (orb-first glass HUD, Placement A)
 - `winui/TymosPill/` — WinUI 3 shell + state server
 - `bridge-dev/server.py` — non-Windows stand-in for the state server
 - `run-windows.ps1` — one-command local setup

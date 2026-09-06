@@ -45,4 +45,11 @@ public sealed class LiveSessionState
         if (!Running) return "Idle";
         return IsBreak ? "Break" : "Focus";
     }
+
+    /// <summary>Remaining fraction of the session, 0–1. Drives the depleting ring.</summary>
+    public double RemainingRatio()
+    {
+        if (TotalSecs <= 0) return 0;
+        return Math.Clamp((double)RemainingSecs / TotalSecs, 0, 1);
+    }
 }

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using TymosPill.Models;
 using TymosPill.Services;
+using Windows.Foundation;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -13,14 +14,18 @@ namespace TymosPill;
 public sealed partial class MainWindow : Window
 {
     private readonly StateServer _server = new();
-    private readonly SolidColorBrush _focusBg = new(Windows.UI.Color.FromArgb(255, 240, 233, 220));
-    private readonly SolidColorBrush _breakBg = new(Windows.UI.Color.FromArgb(255, 232, 238, 241));
-    private readonly SolidColorBrush _focusDot = new(Windows.UI.Color.FromArgb(255, 160, 120, 80));
-    private readonly SolidColorBrush _breakDot = new(Windows.UI.Color.FromArgb(255, 90, 140, 160));
-    private readonly SolidColorBrush _focusTime = new(Windows.UI.Color.FromArgb(255, 46, 31, 13));
-    private readonly SolidColorBrush _breakTime = new(Windows.UI.Color.FromArgb(255, 58, 90, 104));
-    private readonly SolidColorBrush _focusPhase = new(Windows.UI.Color.FromArgb(255, 160, 139, 117));
-    private readonly SolidColorBrush _breakPhase = new(Windows.UI.Color.FromArgb(255, 90, 140, 160));
+    private readonly SolidColorBrush _focusGlass = new(Windows.UI.Color.FromArgb(230, 28, 22, 16));
+    private readonly SolidColorBrush _breakGlass = new(Windows.UI.Color.FromArgb(230, 24, 28, 34));
+    private readonly SolidColorBrush _focusHairline = new(Windows.UI.Color.FromArgb(41, 243, 234, 220));
+    private readonly SolidColorBrush _breakHairline = new(Windows.UI.Color.FromArgb(41, 200, 228, 236));
+    private readonly SolidColorBrush _focusTime = new(Windows.UI.Color.FromArgb(255, 243, 234, 220));
+    private readonly SolidColorBrush _breakTime = new(Windows.UI.Color.FromArgb(255, 232, 241, 244));
+    private readonly SolidColorBrush _focusTitle = new(Windows.UI.Color.FromArgb(158, 243, 234, 220));
+    private readonly SolidColorBrush _breakTitle = new(Windows.UI.Color.FromArgb(158, 210, 230, 236));
+    private readonly SolidColorBrush _focusTrack = new(Windows.UI.Color.FromArgb(36, 243, 234, 220));
+    private readonly SolidColorBrush _breakTrack = new(Windows.UI.Color.FromArgb(36, 232, 241, 244));
+    private readonly SolidColorBrush _focusRing = new(Windows.UI.Color.FromArgb(255, 201, 168, 122));
+    private readonly SolidColorBrush _breakRing = new(Windows.UI.Color.FromArgb(255, 126, 175, 192));
 
     private AppWindow? _appWindow;
     private bool _dragging;
@@ -79,11 +84,11 @@ public sealed partial class MainWindow : Window
 
         var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
         var work = display.WorkArea;
-        const int width = 440;
-        const int height = 88;
+        const int width = 360;
+        const int height = 68;
         // Placement A (approved): bottom-center of the primary work area.
         var x = work.X + (work.Width - width) / 2;
-        var y = work.Y + work.Height - height - 28;
+        var y = work.Y + work.Height - height - 24;
         _appWindow.MoveAndResize(new RectInt32(x, y, width, height));
 
         try
@@ -112,25 +117,99 @@ public sealed partial class MainWindow : Window
 
         PillChrome.Visibility = Visibility.Visible;
         TimeText.Text = state.FormatTime();
-        TitleText.Text = string.IsNullOrWhiteSpace(state.TaskTitle)
-            ? "Focus session"
-            : state.TaskTitle;
-        PhaseText.Text = state.PhaseLabel().ToUpperInvariant();
 
-        if (state.IsBreak)
+        var title = state.TaskTitle?.Trim() ?? "";
+        if (string.IsNullOrEmpty(title))
         {
-            PillChrome.Background = _breakBg;
-            StatusDot.Fill = _breakDot;
-            TimeText.Foreground = _breakTime;
-            PhaseText.Foreground = _breakPhase;
+            // Collapse to orb + time, matching Flow's resting bubble when there's nothing to name.
+            TitleText.Visibility = Visibility.Collapsed;
+            TitleText.Text = "";
+            PillChrome.Padding = new Thickness(8, 7, 8, 7);
         }
         else
         {
-            PillChrome.Background = _focusBg;
-            StatusDot.Fill = _focusDot;
-            TimeText.Foreground = _focusTime;
-            PhaseText.Foreground = _focusPhase;
+            TitleText.Visibility = Visibility.Visible;
+            TitleText.Text = title;
+            PillChrome.Padding = new Thickness(8, 7, 16, 7);
         }
+
+        SetRing(state.RemainingRatio());
+
+        if (state.IsBreak)
+        {
+            PillChrome.Background = _breakGlass;
+            PillChrome.BorderBrush = _breakHairline;
+            RingTrack.Stroke = _breakTrack;
+            RingFill.Stroke = _breakRing;
+            CoreDot.Fill = _breakRing;
+            TimeText.Foreground = _breakTime;
+            TitleText.Foreground = _breakTitle;
+        }
+        else
+        {
+            PillChrome.Background = _focusGlass;
+            PillChrome.BorderBrush = _focusHairline;
+            RingTrack.Stroke = _focusTrack;
+            RingFill.Stroke = _focusRing;
+            CoreDot.Fill = _focusRing;
+            TimeText.Foreground = _focusTime;
+            TitleText.Foreground = _focusTitle;
+        }
+
+        PillChrome.Opacity = !state.Running && _demoMode ? 0.72 : 1;
+    }
+
+    private void SetRing(double remaining)
+    {
+        const double size = 28;
+        const double cx = size / 2;
+        const double cy = size / 2;
+        const double r = 11;
+        remaining = Math.Clamp(remaining, 0, 1);
+
+        if (remaining <= 0.001)
+        {
+            RingFill.Data = null;
+            RingFill.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        RingFill.Visibility = Visibility.Visible;
+
+        if (remaining >= 0.999)
+        {
+            RingFill.Data = new EllipseGeometry
+            {
+                Center = new Point(cx, cy),
+                RadiusX = r,
+                RadiusY = r,
+            };
+            return;
+        }
+
+        var angle = remaining * 360.0;
+        var rad = (angle - 90.0) * Math.PI / 180.0;
+        var end = new Point(cx + r * Math.Cos(rad), cy + r * Math.Sin(rad));
+
+        var figure = new PathFigure
+        {
+            StartPoint = new Point(cx, cy - r),
+            IsClosed = false,
+            IsFilled = false,
+        };
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = end,
+            Size = new Size(r, r),
+            SweepDirection = SweepDirection.Clockwise,
+            IsLargeArc = angle > 180,
+            RotationAngle = 0,
+            IsStroked = true,
+        });
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        RingFill.Data = geometry;
     }
 
     private void Pill_PointerPressed(object sender, PointerRoutedEventArgs e)
