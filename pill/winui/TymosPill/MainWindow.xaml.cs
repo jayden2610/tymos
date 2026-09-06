@@ -31,6 +31,11 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // XamlCompiler crashes on Border Pointer* attributes on this toolchain; wire in code instead.
+        PillChrome.PointerPressed += Pill_PointerPressed;
+        PillChrome.PointerMoved += Pill_PointerMoved;
+        PillChrome.PointerReleased += Pill_PointerReleased;
+        PillChrome.PointerCaptureLost += Pill_PointerCaptureLost;
         ConfigureWindow();
         Closed += (_, _) => _server.Dispose();
 

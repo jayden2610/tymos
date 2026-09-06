@@ -50,7 +50,7 @@ python -m http.server 8080
 # terminal 2 — pill
 cd pill\winui\TymosPill
 dotnet restore
-dotnet run -c Release -r win-x64
+dotnet run -c Release -p:Platform=x64 --no-launch-profile
 ```
 
 Open `http://localhost:8080`, focus a task, press Start.
@@ -89,6 +89,12 @@ CORS allows `http://localhost:8080` and `http://127.0.0.1:8080` only.
 - `winui/TymosPill/` — WinUI 3 shell + state server
 - `bridge-dev/server.py` — non-Windows stand-in for the state server
 - `run-windows.ps1` — one-command local setup
+
+## Troubleshooting (Windows)
+
+- `ExpandPriContent` / missing `AppxPackage` DLL: keep `<EnableMsixTooling>true</EnableMsixTooling>` in the csproj (unpackaged apps still need it for `dotnet build`).
+- `app.manifest` must use root element `<assembly>`, not `<manifest>`.
+- Prefer `dotnet run -c Release -p:Platform=x64` (the helper script does this). A bare `-r win-x64` without Platform can fail the XAML pass on some SDKs.
 
 ## Agent path
 

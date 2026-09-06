@@ -16,8 +16,8 @@
       <SolidColorBrush x:Key="PillMuted" Color="#A08B75"/>
       <SolidColorBrush x:Key="PillAccent" Color="#A07850"/>
       <SolidColorBrush x:Key="PillBreakAccent" Color="#5A8CA0"/>
-      <SolidColorBrush x:Key="PillBorder" Color="#38785F41"/>
-      <SolidColorBrush x:Key="PillDivider" Color="#38785F41"/>
+      <SolidColorBrush x:Key="PillBorder" Color="#785F41"/>
+      <SolidColorBrush x:Key="PillDivider" Color="#785F41"/>
     </ResourceDictionary>
   </Application.Resources>
 </Application>

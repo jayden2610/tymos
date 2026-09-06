@@ -2,24 +2,18 @@
     x:Class="TymosPill.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Tymos"
-    ExtendsContentIntoTitleBar="True">
+    Title="Tymos">
 
   <Grid x:Name="Root" Background="Transparent">
     <Border
         x:Name="PillChrome"
         HorizontalAlignment="Center"
-        VerticalAlignment="Bottom"
-        Margin="0,0,0,36"
+        VerticalAlignment="Center"
         Padding="14,10,18,10"
         CornerRadius="999"
         Background="{StaticResource PillBg}"
         BorderBrush="{StaticResource PillBorder}"
-        BorderThickness="1"
-        PointerPressed="Pill_PointerPressed"
-        PointerMoved="Pill_PointerMoved"
-        PointerReleased="Pill_PointerReleased"
-        PointerCaptureLost="Pill_PointerCaptureLost">
+        BorderThickness="1">
 
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <Ellipse
@@ -32,9 +26,8 @@
         <TextBlock
             x:Name="TimeText"
             Text="24:32"
-            FontFamily="Cascadia Mono, Consolas"
+            FontFamily="Consolas"
             FontSize="18"
-            FontWeight="Normal"
             Foreground="{StaticResource PillText}"
             VerticalAlignment="Center" />
 
@@ -47,7 +40,7 @@
         <TextBlock
             x:Name="TitleText"
             Text="Ship floating pill"
-            FontFamily="Segoe UI Variable, Segoe UI"
+            FontFamily="Segoe UI"
             FontSize="13"
             FontWeight="SemiBold"
             Foreground="{StaticResource PillText2}"
@@ -59,9 +52,8 @@
         <TextBlock
             x:Name="PhaseText"
             Text="FOCUS"
-            FontFamily="Cascadia Mono, Consolas"
+            FontFamily="Consolas"
             FontSize="9"
-            CharacterSpacing="140"
             Foreground="{StaticResource PillMuted}"
             VerticalAlignment="Center" />
       </StackPanel>

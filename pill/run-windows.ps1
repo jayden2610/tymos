@@ -70,7 +70,7 @@ try {
   dotnet restore $proj
   if ($LASTEXITCODE -ne 0) { throw 'dotnet restore failed' }
 
-  $runArgs = @('run', '-c', 'Release', '--project', $proj, '-r', 'win-x64', '--no-launch-profile')
+  $runArgs = @('run', '-c', 'Release', '--project', $proj, '-p:Platform=x64', '--no-launch-profile')
   if ($Demo) {
     Write-Host 'Launching pill in --demo mode (sample state, no bridge needed).'
     $runArgs += @('--', '--demo')
