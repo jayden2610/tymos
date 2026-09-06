@@ -26,12 +26,15 @@ public sealed partial class MainWindow : Window
     private readonly SolidColorBrush _breakTrack = new(Windows.UI.Color.FromArgb(36, 232, 241, 244));
     private readonly SolidColorBrush _focusRing = new(Windows.UI.Color.FromArgb(255, 201, 168, 122));
     private readonly SolidColorBrush _breakRing = new(Windows.UI.Color.FromArgb(255, 126, 175, 192));
+    private readonly SolidColorBrush _urgentRing = new(Windows.UI.Color.FromArgb(255, 217, 123, 95));
 
     private AppWindow? _appWindow;
+    private IntPtr _hwnd;
     private bool _dragging;
     private PointInt32 _dragStartScreen;
     private PointInt32 _windowStartPos;
     private bool _demoMode;
+    private bool _placed;
 
     public MainWindow()
     {
@@ -41,6 +44,7 @@ public sealed partial class MainWindow : Window
         PillChrome.PointerMoved += Pill_PointerMoved;
         PillChrome.PointerReleased += Pill_PointerReleased;
         PillChrome.PointerCaptureLost += Pill_PointerCaptureLost;
+        Activated += OnActivated;
         ConfigureWindow();
         Closed += (_, _) => _server.Dispose();
 
@@ -63,43 +67,95 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnActivated(object sender, WindowActivatedEventArgs args)
+    {
+        if (!_placed)
+        {
+            PlaceOnLargestDisplay();
+            _placed = true;
+        }
+        PinTopmost();
+    }
+
     private void ConfigureWindow()
     {
-        var hwnd = WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+        _hwnd = WindowNative.GetWindowHandle(this);
+        var windowId = Win32Interop.GetWindowIdFromWindow(_hwnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
 
         _appWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         _appWindow.Title = "Tymos";
         _appWindow.IsShownInSwitchers = false;
 
-        if (_appWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsAlwaysOnTop = true;
-            presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-            presenter.SetBorderAndTitleBar(false, false);
-        }
-
-        var display = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
-        var work = display.WorkArea;
-        const int width = 360;
-        const int height = 68;
-        // Placement A (approved): bottom-center of the primary work area.
-        var x = work.X + (work.Width - width) / 2;
-        var y = work.Y + work.Height - height - 24;
-        _appWindow.MoveAndResize(new RectInt32(x, y, width, height));
+        NativeWindow.ApplyHudChrome(_hwnd);
 
         try
         {
-            // Transparent hit-outside chrome: content draws the pill.
-            SystemBackdrop = null;
+            // Borderless overlapped presenter: CompactOverlay always draws a caption
+            // close button, which flashbangs over the pill. Overlapped + SetBorderAndTitleBar(false, false)
+            // gives us a chromeless, always-on-top HUD instead.
+            ApplyOverlappedChrome();
         }
         catch
         {
-            // Older runtimes may lack backdrop APIs; solid is fine.
+            try { _appWindow.SetPresenter(AppWindowPresenterKind.CompactOverlay); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Presenter: {ex.Message}"); }
         }
+
+        if (_appWindow.Presenter is OverlappedPresenter)
+        {
+            ApplyOverlappedChrome();
+        }
+
+        try
+        {
+            SystemBackdrop = null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SystemBackdrop: {ex.Message}");
+        }
+    }
+
+    private void ApplyOverlappedChrome()
+    {
+        if (_appWindow?.Presenter is not OverlappedPresenter presenter) return;
+        presenter.IsAlwaysOnTop = true;
+        presenter.IsResizable = false;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        presenter.SetBorderAndTitleBar(false, false);
+    }
+
+    private void PlaceOnLargestDisplay()
+    {
+        if (_appWindow is null) return;
+        FitWindowToPill();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            FitWindowToPill();
+        };
+        timer.Start();
+    }
+
+    private void PinTopmost()
+    {
+        if (_appWindow is null) return;
+        if (_appWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.IsAlwaysOnTop = true;
+        }
+        try
+        {
+            _appWindow.MoveInZOrderAtTop();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MoveInZOrderAtTop: {ex.Message}");
+        }
+        NativeWindow.PinTopmost(_hwnd);
     }
 
     private void OnStateFromBridge(LiveSessionState state)
@@ -112,51 +168,59 @@ public sealed partial class MainWindow : Window
         if (!state.Running && !_demoMode)
         {
             PillChrome.Visibility = Visibility.Collapsed;
+            _appWindow?.Hide();
             return;
         }
 
         PillChrome.Visibility = Visibility.Visible;
+        _appWindow?.Show();
+        PinTopmost();
         TimeText.Text = state.FormatTime();
 
         var title = state.TaskTitle?.Trim() ?? "";
         if (string.IsNullOrEmpty(title))
         {
-            // Collapse to orb + time, matching Flow's resting bubble when there's nothing to name.
-            TitleText.Visibility = Visibility.Collapsed;
-            TitleText.Text = "";
-            PillChrome.Padding = new Thickness(8, 7, 8, 7);
+            // v2: phase label so the countdown is never unexplained.
+            title = state.IsBreak ? "Break" : "Focus session";
         }
-        else
-        {
-            TitleText.Visibility = Visibility.Visible;
-            TitleText.Text = title;
-            PillChrome.Padding = new Thickness(8, 7, 16, 7);
-        }
+        TitleText.Visibility = Visibility.Visible;
+        TitleText.Text = title;
 
         SetRing(state.RemainingRatio());
 
-        if (state.IsBreak)
-        {
-            PillChrome.Background = _breakGlass;
-            PillChrome.BorderBrush = _breakHairline;
-            RingTrack.Stroke = _breakTrack;
-            RingFill.Stroke = _breakRing;
-            CoreDot.Fill = _breakRing;
-            TimeText.Foreground = _breakTime;
-            TitleText.Foreground = _breakTitle;
-        }
-        else
-        {
-            PillChrome.Background = _focusGlass;
-            PillChrome.BorderBrush = _focusHairline;
-            RingTrack.Stroke = _focusTrack;
-            RingFill.Stroke = _focusRing;
-            CoreDot.Fill = _focusRing;
-            TimeText.Foreground = _focusTime;
-            TitleText.Foreground = _focusTitle;
-        }
+        var urgent = !state.IsBreak && state.RemainingRatio() <= 0.10;
+        var ring = state.IsBreak ? _breakRing : (urgent ? _urgentRing : _focusRing);
+        var glass = state.IsBreak ? _breakGlass : _focusGlass;
+        var hairline = state.IsBreak ? _breakHairline : _focusHairline;
+        var track = state.IsBreak ? _breakTrack : _focusTrack;
+        var timeColor = state.IsBreak ? _breakTime : _focusTime;
+        var titleColor = state.IsBreak ? _breakTitle : _focusTitle;
+
+        PillChrome.Background = glass;
+        PillChrome.BorderBrush = hairline;
+        RingTrack.Stroke = track;
+        RingFill.Stroke = ring;
+        CoreDot.Fill = ring;
+        TimeText.Foreground = timeColor;
+        TitleText.Foreground = titleColor;
 
         PillChrome.Opacity = !state.Running && _demoMode ? 0.72 : 1;
+
+        // The window is the pill: refit to content once text settles.
+        DispatcherQueue.TryEnqueue(FitWindowToPill);
+    }
+
+    private void FitWindowToPill()
+    {
+        if (_appWindow is null) return;
+        PillChrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        // DesiredSize is in DIPs; SetWindowPos wants physical pixels.
+        var scale = NativeWindow.GetScale(_hwnd);
+        var w = (int)Math.Ceiling(PillChrome.DesiredSize.Width * scale) + 2;
+        var h = (int)Math.Ceiling(PillChrome.DesiredSize.Height * scale) + 2;
+        NativeWindow.ResizeHud(_hwnd, w, h);
+        NativeWindow.MoveToLargestBottomCenter(_hwnd, w, h, 24);
+        PinTopmost();
     }
 
     private void SetRing(double remaining)
@@ -204,7 +268,6 @@ public sealed partial class MainWindow : Window
             SweepDirection = SweepDirection.Clockwise,
             IsLargeArc = angle > 180,
             RotationAngle = 0,
-            IsStroked = true,
         });
 
         var geometry = new PathGeometry();
