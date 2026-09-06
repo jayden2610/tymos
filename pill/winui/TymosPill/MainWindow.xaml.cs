@@ -89,11 +89,15 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            _appWindow.SetPresenter(AppWindowPresenterKind.CompactOverlay);
+            // Borderless overlapped presenter: CompactOverlay always draws a caption
+            // close button, which flashbangs over the pill. Overlapped + SetBorderAndTitleBar(false, false)
+            // gives us a chromeless, always-on-top HUD instead.
+            ApplyOverlappedChrome();
         }
         catch
         {
-            ApplyOverlappedChrome();
+            try { _appWindow.SetPresenter(AppWindowPresenterKind.CompactOverlay); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Presenter: {ex.Message}"); }
         }
 
         if (_appWindow.Presenter is OverlappedPresenter)
