@@ -31,7 +31,7 @@ python -m http.server 8080
 
 ### Windows floating pill
 
-Companion always-on-top overlay (countdown + focused task). From PowerShell:
+Companion always-on-top overlay (dark glass HUD with countdown + focused task). From PowerShell:
 
 ```powershell
 .\pill\run-windows.ps1

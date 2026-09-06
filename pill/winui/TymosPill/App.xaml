@@ -9,15 +9,18 @@
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
       </ResourceDictionary.MergedDictionaries>
 
-      <SolidColorBrush x:Key="PillBg" Color="#F0E9DC"/>
-      <SolidColorBrush x:Key="PillBreakBg" Color="#E8EEF1"/>
-      <SolidColorBrush x:Key="PillText" Color="#2E1F0D"/>
-      <SolidColorBrush x:Key="PillText2" Color="#6B5340"/>
-      <SolidColorBrush x:Key="PillMuted" Color="#A08B75"/>
-      <SolidColorBrush x:Key="PillAccent" Color="#A07850"/>
-      <SolidColorBrush x:Key="PillBreakAccent" Color="#5A8CA0"/>
-      <SolidColorBrush x:Key="PillBorder" Color="#785F41"/>
-      <SolidColorBrush x:Key="PillDivider" Color="#785F41"/>
+      <SolidColorBrush x:Key="PillGlass" Color="#E61C1610"/>
+      <SolidColorBrush x:Key="PillBreakGlass" Color="#E6181C22"/>
+      <SolidColorBrush x:Key="PillHairline" Color="#29F3EADC"/>
+      <SolidColorBrush x:Key="PillBreakHairline" Color="#29C8E4EC"/>
+      <SolidColorBrush x:Key="PillTime" Color="#F3EADC"/>
+      <SolidColorBrush x:Key="PillBreakTime" Color="#E8F1F4"/>
+      <SolidColorBrush x:Key="PillTitle" Color="#9EF3EADC"/>
+      <SolidColorBrush x:Key="PillBreakTitle" Color="#9ED2E6EC"/>
+      <SolidColorBrush x:Key="PillTrack" Color="#24F3EADC"/>
+      <SolidColorBrush x:Key="PillBreakTrack" Color="#24E8F1F4"/>
+      <SolidColorBrush x:Key="PillRing" Color="#C9A87A"/>
+      <SolidColorBrush x:Key="PillBreakRing" Color="#7EAFC0"/>
     </ResourceDictionary>
   </Application.Resources>
 </Application>

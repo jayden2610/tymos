@@ -9,32 +9,48 @@
         x:Name="PillChrome"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
-        Padding="14,10,18,10"
+        Padding="8,7,16,7"
         CornerRadius="999"
-        Background="{StaticResource PillBg}"
-        BorderBrush="{StaticResource PillBorder}"
+        Background="{StaticResource PillGlass}"
+        BorderBrush="{StaticResource PillHairline}"
         BorderThickness="1">
 
-      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Ellipse
-            x:Name="StatusDot"
-            Width="8"
-            Height="8"
-            Fill="{StaticResource PillAccent}"
-            VerticalAlignment="Center" />
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <Grid Width="28" Height="28" VerticalAlignment="Center">
+          <Ellipse
+              x:Name="RingTrack"
+              Width="24"
+              Height="24"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Fill="Transparent"
+              Stroke="{StaticResource PillTrack}"
+              StrokeThickness="2.25" />
+          <Path
+              x:Name="RingFill"
+              Width="28"
+              Height="28"
+              Stretch="None"
+              Fill="Transparent"
+              Stroke="{StaticResource PillRing}"
+              StrokeThickness="2.25"
+              StrokeStartLineCap="Round"
+              StrokeEndLineCap="Round" />
+          <Ellipse
+              x:Name="CoreDot"
+              Width="7"
+              Height="7"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Fill="{StaticResource PillRing}" />
+        </Grid>
 
         <TextBlock
             x:Name="TimeText"
             Text="24:32"
             FontFamily="Consolas"
-            FontSize="18"
-            Foreground="{StaticResource PillText}"
-            VerticalAlignment="Center" />
-
-        <Rectangle
-            Width="1"
-            Height="18"
-            Fill="{StaticResource PillDivider}"
+            FontSize="17"
+            Foreground="{StaticResource PillTime}"
             VerticalAlignment="Center" />
 
         <TextBlock
@@ -43,18 +59,10 @@
             FontFamily="Segoe UI"
             FontSize="13"
             FontWeight="SemiBold"
-            Foreground="{StaticResource PillText2}"
-            MaxWidth="220"
+            Foreground="{StaticResource PillTitle}"
+            MaxWidth="200"
             TextTrimming="CharacterEllipsis"
             TextWrapping="NoWrap"
-            VerticalAlignment="Center" />
-
-        <TextBlock
-            x:Name="PhaseText"
-            Text="FOCUS"
-            FontFamily="Consolas"
-            FontSize="9"
-            Foreground="{StaticResource PillMuted}"
             VerticalAlignment="Center" />
       </StackPanel>
     </Border>
