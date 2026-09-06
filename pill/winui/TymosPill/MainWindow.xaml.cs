@@ -26,6 +26,7 @@ public sealed partial class MainWindow : Window
     private readonly SolidColorBrush _breakTrack = new(Windows.UI.Color.FromArgb(36, 232, 241, 244));
     private readonly SolidColorBrush _focusRing = new(Windows.UI.Color.FromArgb(255, 201, 168, 122));
     private readonly SolidColorBrush _breakRing = new(Windows.UI.Color.FromArgb(255, 126, 175, 192));
+    private readonly SolidColorBrush _urgentRing = new(Windows.UI.Color.FromArgb(255, 217, 123, 95));
 
     private AppWindow? _appWindow;
     private IntPtr _hwnd;
@@ -175,40 +176,30 @@ public sealed partial class MainWindow : Window
         var title = state.TaskTitle?.Trim() ?? "";
         if (string.IsNullOrEmpty(title))
         {
-            // Collapse to orb + time, matching Flow's resting bubble when there's nothing to name.
-            TitleText.Visibility = Visibility.Collapsed;
-            TitleText.Text = "";
-            PillChrome.Padding = new Thickness(8, 7, 8, 7);
+            // v2: phase label so the countdown is never unexplained.
+            title = state.IsBreak ? "Break" : "Focus session";
         }
-        else
-        {
-            TitleText.Visibility = Visibility.Visible;
-            TitleText.Text = title;
-            PillChrome.Padding = new Thickness(8, 7, 16, 7);
-        }
+        TitleText.Visibility = Visibility.Visible;
+        TitleText.Text = title;
+        PillChrome.Padding = new Thickness(8, 7, 16, 7);
 
         SetRing(state.RemainingRatio());
 
-        if (state.IsBreak)
-        {
-            PillChrome.Background = _breakGlass;
-            PillChrome.BorderBrush = _breakHairline;
-            RingTrack.Stroke = _breakTrack;
-            RingFill.Stroke = _breakRing;
-            CoreDot.Fill = _breakRing;
-            TimeText.Foreground = _breakTime;
-            TitleText.Foreground = _breakTitle;
-        }
-        else
-        {
-            PillChrome.Background = _focusGlass;
-            PillChrome.BorderBrush = _focusHairline;
-            RingTrack.Stroke = _focusTrack;
-            RingFill.Stroke = _focusRing;
-            CoreDot.Fill = _focusRing;
-            TimeText.Foreground = _focusTime;
-            TitleText.Foreground = _focusTitle;
-        }
+        var urgent = !state.IsBreak && state.RemainingRatio() <= 0.10;
+        var ring = state.IsBreak ? _breakRing : (urgent ? _urgentRing : _focusRing);
+        var glass = state.IsBreak ? _breakGlass : _focusGlass;
+        var hairline = state.IsBreak ? _breakHairline : _focusHairline;
+        var track = state.IsBreak ? _breakTrack : _focusTrack;
+        var timeColor = state.IsBreak ? _breakTime : _focusTime;
+        var titleColor = state.IsBreak ? _breakTitle : _focusTitle;
+
+        PillChrome.Background = glass;
+        PillChrome.BorderBrush = hairline;
+        RingTrack.Stroke = track;
+        RingFill.Stroke = ring;
+        CoreDot.Fill = ring;
+        TimeText.Foreground = timeColor;
+        TitleText.Foreground = titleColor;
 
         PillChrome.Opacity = !state.Running && _demoMode ? 0.72 : 1;
     }
