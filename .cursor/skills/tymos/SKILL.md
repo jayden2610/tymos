@@ -1,13 +1,47 @@
 ---
 name: tymos
-description: Drive Tymos on localhost. Add and select tasks, start the timer, and ensure the Windows floating pill (or bridge-dev) mirrors the session. Use when Jayden says /tymos, run Tymos, add Tymos tasks, or work the local task list.
+description: >-
+  Run Tymos locally and the Windows floating pill companion. Add/select tasks,
+  start the timer, and verify the always-on-top pill mirrors the session.
+  Use when Jayden says /tymos, run Tymos, Tymos pill, floating pill, start the
+  pill, or work the local Tymos task list.
 ---
 
 # Tymos
 
-Operate the local Tymos app at `http://localhost:8080/`. Repo root is the workspace (vanilla static files. No build).
+Operate the local Tymos app at `http://localhost:8080/`. Repo root is the workspace (vanilla static files. No build). Clone: `https://github.com/jayden2610/tymos`.
 
 Do not use GitHub Pages unless Jayden asks. Do not create tasks on the live signed-in account.
+
+## Induce floating pill (Windows)
+
+Goal path: user asks agent → agent runs Tymos + pill → Start a focused task → always-on-top pill shows countdown + title.
+
+From the **repo root** (after `git clone` / `git pull`):
+
+```powershell
+.\pill\run-windows.ps1
+```
+
+That starts the web server on `:8080`, builds/launches WinUI TymosPill (bridge on `http://127.0.0.1:17865`), and opens the browser.
+
+**Need once on a fresh machine:** [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). If missing: `winget install Microsoft.DotNet.SDK.8`, then reopen the terminal.
+
+**Demo pill only** (sample state, no web needed):
+
+```powershell
+.\pill\run-windows.ps1 -Demo
+```
+
+**Manual WinUI** (if the script is wrong for the shell):
+
+```powershell
+python -m http.server 8080
+cd pill\winui\TymosPill
+dotnet run -c Release -p:Platform=x64 --no-launch-profile
+```
+
+Then open `http://localhost:8080/`, focus a task, press Start.
 
 ## Browser
 
@@ -15,9 +49,9 @@ Use `user-browsermcp` only (real Chrome). Never `cursor-ide-browser`. Discover s
 
 If navigate fails with no extension connection: tell Jayden to click the Browser MCP toolbar icon, then Connect on that tab. Retry. Cursor MCP auth is not the same as the tab Connect.
 
-## Server
+## Server (web only)
 
-If `http://localhost:8080/` is down, from the tymos repo:
+If `http://localhost:8080/` is down and you are not using `run-windows.ps1`:
 
 ```
 python -m http.server 8080
@@ -29,13 +63,13 @@ Hard-refresh after local code changes.
 
 ## Floating pill bridge
 
-The companion pill reads live session state from `http://127.0.0.1:17865/v1/state`.
+The companion pill reads live session state from `http://127.0.0.1:17865/v1/state`. Web Tymos owns the timer. The pill only mirrors it.
 
 **Before Start**, ensure a listener is up:
 
-1. Prefer the WinUI pill on Windows (`pill/winui/TymosPill`, `dotnet run`).
+1. Prefer the WinUI pill on Windows (`.\pill\run-windows.ps1` or `dotnet run` as above).
 2. On Linux/CI or when WinUI is unavailable: `python3 pill/bridge-dev/server.py` in the background.
-3. Confirm with `curl -s http://127.0.0.1:17865/v1/state` (JSON body).
+3. Confirm with `curl -s http://127.0.0.1:17865/v1/state` (JSON body). Only one listener may bind `:17865`.
 
 **After Start**, verify the bridge:
 
@@ -43,9 +77,11 @@ The companion pill reads live session state from `http://127.0.0.1:17865/v1/stat
 curl -s http://127.0.0.1:17865/v1/state
 ```
 
-Expect `running: true`, `remainingSecs` counting down, and `taskTitle` matching the focused task (or empty if none focused). On Windows with the WinUI shell running, the always-on-top pill should be visible at the approved bottom-center placement.
+Expect `running: true`, `remainingSecs` counting down, and `taskTitle` matching the focused task (or empty if none focused). On Windows with the WinUI shell running, the always-on-top pill should be visible at bottom-center (Placement A).
 
 If POST fails silently, the web timer still runs. Fix the listener, then Start or wait one tick.
+
+**Pause.** Bridge should show `running: false`. The WinUI chrome hides when not running (except `--demo`).
 
 ## Tasks
 
@@ -67,3 +103,4 @@ The add field is `#qaIdleInput` (placeholder "Add a task…"). Task cards are `#
 - Drive `https://jayden2610.github.io/tymos/` for task writes.
 - Export cookies.
 - Kill the background server unless asked.
+- Run WinUI and `bridge-dev` at the same time (port clash on `:17865`).
