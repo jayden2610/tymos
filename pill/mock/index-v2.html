@@ -309,6 +309,138 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
 .notes li { margin: 4px 0; }
 
 .hint { font-size: 12px; color: #8a7a68; margin-top: 10px; font-family: 'DM Mono', monospace; }
+
+/* ── Click-to-expand mini-panel ──────────────── */
+.hub {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hub .pill { position: static; transform: none; }
+
+.panel {
+  width: 300px;
+  max-width: calc(100% - 48px);
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  opacity: 0;
+  transform: translateY(8px) scale(0.97);
+  transform-origin: bottom center;
+  pointer-events: none;
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.hub.open .panel { opacity: 1; transform: none; pointer-events: auto; }
+
+.panel-task {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.panel-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--title);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.panel-strip {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(243, 234, 220, 0.16);
+}
+
+.dot.done { background: var(--ring); box-shadow: 0 0 6px rgba(201, 168, 122, 0.4); }
+.dot.now { background: var(--ring); opacity: 0.55; animation: live 1.8s ease-in-out infinite; }
+
+.panel-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.panel-ends {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--title);
+}
+
+.panel-actions { display: flex; gap: 6px; }
+
+.panel-actions .action {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.panel-actions .action.wide {
+  width: auto;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Timeline scrubber showcase ──────────────── */
+.scrub {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(320px, calc(100% - 48px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(240, 233, 220, 0.5);
+}
+
+.scrub input[type="range"] {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(240, 233, 220, 0.18);
+  outline: none;
+}
+
+.scrub input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #c9a87a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(201, 168, 122, 0.5);
+}
+
+.scrub .scrub-phase { min-width: 5.5em; text-transform: uppercase; letter-spacing: 0.1em; }
+
 </style>
 </head>
 <body>
@@ -357,6 +489,71 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
           <span class="title">Ship floating pill</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="scene-label">Click → expand mini-panel</div>
+      <div class="desktop">
+        <div class="hub" id="hub">
+          <div class="panel">
+            <div class="panel-task">Ship floating pill</div>
+            <div class="panel-meta">Tymos · session 3 of 5</div>
+            <div class="panel-strip" aria-label="3 of 5 sessions done">
+              <span class="dot done"></span><span class="dot done"></span><span class="dot done"></span><span class="dot now"></span><span class="dot"></span>
+            </div>
+            <div class="panel-foot">
+              <span class="panel-ends">ends 14:32</span>
+              <span class="panel-actions">
+                <button class="action" title="Pause">❚❚</button>
+                <button class="action" title="Skip">▸▸</button>
+                <button class="action wide" title="Add 5 minutes">+5</button>
+                <button class="action wide" title="End early">End</button>
+              </span>
+            </div>
+          </div>
+          <div class="pill inline running" id="hub-pill" style="cursor: pointer;">
+            <span class="orb" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <circle class="track" cx="14" cy="14" r="11"/>
+                <circle class="fill" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+              </svg>
+              <span class="core"></span>
+            </span>
+            <span class="time">24:32</span>
+            <span class="title">Ship floating pill</span>
+            <span class="actions">
+              <button class="action" title="Pause">❚❚</button>
+              <button class="action" title="Skip">▸▸</button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Click the pill to expand / collapse</p>
+    </div>
+
+    <div>
+      <div class="scene-label">Timeline scrubber — a full session in seconds</div>
+      <div class="desktop">
+        <div class="pill running" id="scrub-pill">
+          <span class="orb" aria-hidden="true">
+            <svg viewBox="0 0 28 28">
+              <circle class="track" cx="14" cy="14" r="11"/>
+              <circle class="fill" id="scrub-ring" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
+            </svg>
+            <span class="core"></span>
+          </span>
+          <span class="time" id="scrub-time">25:00</span>
+          <span class="title" id="scrub-title">Focus session</span>
+        </div>
+        <div class="scrub">
+          <span id="scrub-readout">00:00</span>
+          <input type="range" id="scrub-slider" min="0" max="1800" value="0" step="10" aria-label="Session timeline">
+          <span>30:00</span>
+        </div>
+      </div>
+      <p class="hint">Drag: 25 min focus → 5 min break. Urgent flips in the last 10%.</p>
     </div>
   </div>
 
@@ -450,6 +647,57 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
   ['mousemove', 'focusin'].forEach(ev => pill.addEventListener(ev, wake));
   pill.addEventListener('mouseleave', wake);
   wake();
+
+  // click-to-expand mini-panel
+  const hub = document.getElementById('hub');
+  const hubPill = document.getElementById('hub-pill');
+  hubPill.addEventListener('click', (e) => {
+    if (e.target.closest('.action')) return;
+    hub.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!hub.contains(e.target)) hub.classList.remove('open');
+  });
+
+  // timeline scrubber: 25 min focus + 5 min break
+  const slider = document.getElementById('scrub-slider');
+  const sPill = document.getElementById('scrub-pill');
+  const sRing = document.getElementById('scrub-ring');
+  const sTime = document.getElementById('scrub-time');
+  const sTitle = document.getElementById('scrub-title');
+  const sReadout = document.getElementById('scrub-readout');
+  const FOCUS = 25 * 60, BREAK = 5 * 60, TOTAL = FOCUS + BREAK;
+  const CIRC = 69.115;
+
+  function fmt(s) {
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.round(s) % 60).padStart(2, '0');
+  }
+
+  function scrub() {
+    const t = +slider.value;
+    sReadout.textContent = fmt(t);
+    if (t < FOCUS) {
+      const left = FOCUS - t;
+      sPill.classList.remove('break');
+      sPill.classList.add('running');
+      sTitle.textContent = 'Focus session';
+      sTime.textContent = fmt(left);
+      const frac = left / FOCUS;
+      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+      sPill.classList.toggle('urgent', frac <= 0.10);
+    } else {
+      const left = TOTAL - t;
+      sPill.classList.add('break');
+      sPill.classList.remove('urgent');
+      sTitle.textContent = 'Break';
+      sTime.textContent = fmt(left);
+      const frac = left / BREAK;
+      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+    }
+  }
+
+  slider.addEventListener('input', scrub);
+  scrub();
 
   // live demo: tick down and cross into urgent
   let secs = 24 * 60 + 32;
