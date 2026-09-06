@@ -1,0 +1,20 @@
+{
+  "name": "Tymos",
+  "install": "cd qa && npm install && npx playwright install --with-deps chromium",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8080",
+      "description": "Static file server for the Tymos web app at http://localhost:8080/"
+    },
+    {
+      "name": "pill-bridge",
+      "command": "python3 pill/bridge-dev/server.py",
+      "description": "Linux/CI stand-in for the Windows WinUI floating pill. Mirrors live timer state at http://127.0.0.1:17865/v1/state"
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 8080 },
+    { "name": "pill-bridge", "port": 17865 }
+  ]
+}
