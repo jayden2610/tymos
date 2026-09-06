@@ -348,7 +348,82 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
   font-weight: 700;
   color: var(--text);
   line-height: 1.35;
+  outline: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 150ms var(--ease);
+  padding-bottom: 2px;
 }
+
+.panel-task:hover, .panel-task:focus { border-bottom-color: var(--hairline); }
+
+.panel-head { margin-bottom: 4px; }
+
+.panel-kicker {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--title);
+  opacity: 0.7;
+}
+
+.subtasks {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.subtask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.subtask.done .sub-label { opacity: 0.45; text-decoration: line-through; }
+
+.tick {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ring);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.tick:hover { border-color: var(--ring); background: rgba(201, 168, 122, 0.12); }
+
+.sub-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.sub-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.sub-input::placeholder { color: var(--title); opacity: 0.55; }
 
 .panel-meta {
   font-size: 11px;
@@ -361,7 +436,15 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
 .panel-strip {
   display: flex;
   gap: 6px;
+  align-items: center;
   margin: 14px 0 4px;
+}
+
+.strip-count {
+  margin-left: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--title);
 }
 
 .dot {
@@ -404,42 +487,7 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
   letter-spacing: 0.06em;
 }
 
-/* ── Timeline scrubber showcase ──────────────── */
-.scrub {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  width: min(320px, calc(100% - 48px));
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: rgba(240, 233, 220, 0.5);
-}
-
-.scrub input[type="range"] {
-  flex: 1;
-  appearance: none;
-  -webkit-appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(240, 233, 220, 0.18);
-  outline: none;
-}
-
-.scrub input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #c9a87a;
-  cursor: pointer;
-  box-shadow: 0 0 8px rgba(201, 168, 122, 0.5);
-}
-
-.scrub .scrub-phase { min-width: 5.5em; text-transform: uppercase; letter-spacing: 0.1em; }
+/* ── Timeline scrubber showcase (removed) ────── */
 
 </style>
 </head>
@@ -498,10 +546,31 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
       <div class="desktop">
         <div class="hub" id="hub">
           <div class="panel">
-            <div class="panel-task">Ship floating pill</div>
-            <div class="panel-meta">Tymos · session 3 of 5</div>
+            <div class="panel-head">
+              <span class="panel-kicker">Focused task</span>
+              <div class="panel-task" id="panel-task" contenteditable="true" spellcheck="false">Ship floating pill</div>
+            </div>
+            <ul class="subtasks" id="subtasks">
+              <li class="subtask done">
+                <button class="tick" title="Toggle">✓</button>
+                <span class="sub-label" contenteditable="true" spellcheck="false">Wire /v1/state bridge</span>
+              </li>
+              <li class="subtask done">
+                <button class="tick" title="Toggle">✓</button>
+                <span class="sub-label" contenteditable="true" spellcheck="false">Idle-shrink + urgency states</span>
+              </li>
+              <li class="subtask">
+                <button class="tick" title="Toggle"></button>
+                <span class="sub-label" contenteditable="true" spellcheck="false">Match glass tokens in WinUI shell</span>
+              </li>
+              <li class="subtask new-row" id="subtask-new">
+                <button class="tick" title="Add" id="subtask-add">+</button>
+                <input class="sub-input" id="subtask-input" type="text" placeholder="Add a subtask…" aria-label="Add a subtask">
+              </li>
+            </ul>
             <div class="panel-strip" aria-label="3 of 5 sessions done">
               <span class="dot done"></span><span class="dot done"></span><span class="dot done"></span><span class="dot now"></span><span class="dot"></span>
+              <span class="strip-count" id="strip-count">2 of 3 subtasks</span>
             </div>
             <div class="panel-foot">
               <span class="panel-ends">ends 14:32</span>
@@ -533,27 +602,6 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
       <p class="hint">Click the pill to expand / collapse</p>
     </div>
 
-    <div>
-      <div class="scene-label">Timeline scrubber — a full session in seconds</div>
-      <div class="desktop">
-        <div class="pill running" id="scrub-pill">
-          <span class="orb" aria-hidden="true">
-            <svg viewBox="0 0 28 28">
-              <circle class="track" cx="14" cy="14" r="11"/>
-              <circle class="fill" id="scrub-ring" cx="14" cy="14" r="11" stroke-dasharray="69.115" stroke-dashoffset="1.29"/>
-            </svg>
-            <span class="core"></span>
-          </span>
-          <span class="time" id="scrub-time">25:00</span>
-          <span class="title" id="scrub-title">Focus session</span>
-        </div>
-        <div class="scrub">
-          <span id="scrub-readout">00:00</span>
-          <input type="range" id="scrub-slider" min="0" max="1800" value="0" step="10" aria-label="Session timeline">
-          <span>30:00</span>
-        </div>
-      </div>
-      <p class="hint">Drag: 25 min focus → 5 min break. Urgent flips in the last 10%.</p>
     </div>
   </div>
 
@@ -659,45 +707,61 @@ h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
     if (!hub.contains(e.target)) hub.classList.remove('open');
   });
 
-  // timeline scrubber: 25 min focus + 5 min break
-  const slider = document.getElementById('scrub-slider');
-  const sPill = document.getElementById('scrub-pill');
-  const sRing = document.getElementById('scrub-ring');
-  const sTime = document.getElementById('scrub-time');
-  const sTitle = document.getElementById('scrub-title');
-  const sReadout = document.getElementById('scrub-readout');
-  const FOCUS = 25 * 60, BREAK = 5 * 60, TOTAL = FOCUS + BREAK;
-  const CIRC = 69.115;
+  // editable task card: tick, add, rename
+  const taskEl = document.getElementById('panel-task');
+  const list = document.getElementById('subtasks');
+  const newRow = document.getElementById('subtask-new');
+  const addBtn = document.getElementById('subtask-add');
+  const input = document.getElementById('subtask-input');
+  const countEl = document.getElementById('strip-count');
+  const hubTitle = hubPill.querySelector('.title');
 
-  function fmt(s) {
-    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.round(s) % 60).padStart(2, '0');
+  taskEl.addEventListener('input', () => {
+    hubTitle.textContent = taskEl.textContent.trim() || 'Focus session';
+  });
+
+  function updateCount() {
+    const all = list.querySelectorAll('.subtask:not(.new-row)');
+    const done = list.querySelectorAll('.subtask.done:not(.new-row)');
+    countEl.textContent = done.length + ' of ' + all.length + ' subtasks';
   }
 
-  function scrub() {
-    const t = +slider.value;
-    sReadout.textContent = fmt(t);
-    if (t < FOCUS) {
-      const left = FOCUS - t;
-      sPill.classList.remove('break');
-      sPill.classList.add('running');
-      sTitle.textContent = 'Focus session';
-      sTime.textContent = fmt(left);
-      const frac = left / FOCUS;
-      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
-      sPill.classList.toggle('urgent', frac <= 0.10);
-    } else {
-      const left = TOTAL - t;
-      sPill.classList.add('break');
-      sPill.classList.remove('urgent');
-      sTitle.textContent = 'Break';
-      sTime.textContent = fmt(left);
-      const frac = left / BREAK;
-      sRing.style.strokeDashoffset = (CIRC * (1 - frac)).toFixed(2);
+  function makeSubtask(label) {
+    const li = document.createElement('li');
+    li.className = 'subtask';
+    const tick = document.createElement('button');
+    tick.className = 'tick';
+    tick.title = 'Toggle';
+    const span = document.createElement('span');
+    span.className = 'sub-label';
+    span.contentEditable = 'true';
+    span.spellcheck = false;
+    span.textContent = label;
+    li.append(tick, span);
+    return li;
+  }
+
+  function addSubtask() {
+    const label = input.value.trim();
+    if (!label) return;
+    list.insertBefore(makeSubtask(label), newRow);
+    input.value = '';
+    updateCount();
+  }
+
+  list.addEventListener('click', (e) => {
+    if (e.target.classList.contains('tick')) {
+      e.target.closest('.subtask').classList.toggle('done');
+      updateCount();
     }
-  }
+  });
 
-  slider.addEventListener('input', scrub);
-  scrub();
+  addBtn.addEventListener('click', addSubtask);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addSubtask(); }
+    if (e.key === 'Escape') { input.value = ''; input.blur(); }
+  });
+  updateCount();
 
   // live demo: tick down and cross into urgent
   let secs = 24 * 60 + 32;
